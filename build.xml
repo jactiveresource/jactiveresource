@@ -1,0 +1,184 @@
+<!--
+     $Id: build.xml 1410 2008-04-07 05:13:35Z jared $ -->
+
+<project name="jactiveresource" default="compile" basedir=".">
+
+<!-- ===================== Property Definitions ===========================
+
+  Each of the following properties are used in the build script.
+  Values for these properties are set by the first place they are
+  defined, from the following list:
+
+  * Definitions on the "ant" command line (ant -Dfoo=bar compile).
+
+  * Definitions from a "jsde.properties" file in the top level
+    source directory of this application.
+
+  * Default definitions in this build.xml file.
+
+-->
+
+  <property file="JActiveResource.properties"/>
+
+  <property name="app.name"       value="jactiveresource"/>
+  <property name="app.description" value="Java port of Ruby's ActiveResource"/>
+  <property name="app.version"    value="0.1"/>
+  <property name="build.home"     value="${basedir}/build"/>
+  <property name="dist.home"      value="${basedir}/dist"/>
+  <property name="jar.specificfilename"
+            value="${app.name}-${app.version}.jar"/>
+  <property name="jar.genericfilename"
+            value="${app.name}.jar"/>
+  <property name="jar.filename" value="${jar.genericfilename}"/>
+  <property name="testjar.filename" value="${app.name}tests-${app.version}.jar"/>
+  <property name="docs.home"      value="${dist.home}/docs"/>
+  <property name="src.home"       value="${basedir}/src"/>
+  <property name="testsrc.home"   value="${basedir}/testsrc"/>
+  <property name="testbuild.home" value="${basedir}/testbuild"/> 
+  <property name="install.directory" value="/usr/share/java"/>
+
+<!--  ==================== Compilation Control Options ==================== -->
+
+  <property name="compile.debug"       value="true"/>
+  <property name="compile.deprecation" value="false"/>
+  <property name="compile.optimize"    value="true"/>
+
+<!-- ==================== Classpaths =========================== -->
+
+  <path id="compile.classpath">
+  	<fileset dir="lib">
+  	  <include name="**/*.jar"/>
+  	</fileset>
+  </path>
+
+  <path id="compiletest.classpath">
+  	<fileset dir="lib">
+  	  <include name="**/*.jar"/>
+  	</fileset>
+  </path>
+
+  <path id="runtest.classpath">
+  	<fileset dir="lib">
+  	  <include name="**/*.jar"/>
+  	</fileset>
+  </path>
+
+<!-- ==================== All Target ====================================== -->
+
+  <target name="all" depends="clean,compile"
+   description="Clean build and dist directories, then compile"/>
+
+<!-- ==================== Clean Target ==================================== -->
+
+  <target name="clean"
+   description="Delete old build and dist directories">
+    <delete dir="${build.home}"/>
+    <delete dir="${dist.home}"/>
+    <delete dir="${testbuild.home}"/>
+    <delete dir="${docs.home}"/>
+  </target>
+
+<!-- ==================== Compile Target ================================== -->
+
+  <target name="compile"
+   description="Compile Java sources">
+
+    <mkdir    dir="${build.home}"/>
+    <javac srcdir="${src.home}"
+          destdir="${build.home}"
+            debug="${compile.debug}"
+      deprecation="${compile.deprecation}"
+         optimize="${compile.optimize}">
+        <classpath refid="compile.classpath"/>
+    </javac>
+
+  </target>
+
+<!-- ==================== Dist Target ===================================== -->
+
+  <target name="dist" depends="compile"
+   description="Create binary distribution">
+
+    <!-- Copy documentation subdirectories -->
+    <mkdir   dir="${dist.home}/docs"/>
+    <copy    todir="${dist.home}/docs">
+      <fileset dir="${docs.home}"/>
+    </copy>
+
+    <!-- Create application JAR file -->
+    <jar jarfile="${dist.home}/${jar.specificfilename}"
+         basedir="${build.home}">
+    	<manifest>
+				<!--<attribute name="Specification-Title" value="Example"/>
+				<attribute name="Specification-Version" value="${version}"/>
+				<attribute name="Specification-Vendor" value="Example Organization"/> -->
+				<attribute name="Implementation-Title" value="${app.description}"/>
+				<attribute name="Implementation-Version" value="${app.version}"/> 
+				<attribute name="Implementation-Vendor" value="RAD Solutions, Inc."/>
+    	</manifest>     	
+    </jar>
+    <copy file="${dist.home}/${jar.specificfilename}"
+          tofile="${dist.home}/${jar.genericfilename}"/>
+             
+  </target>
+
+<!-- ==================== Install Target ===================================== -->
+
+  <target name="install" depends="dist"
+   description="install jar">
+
+    <copy todir="${install.directory}"
+      file="${dist.home}/${jar.genericfilename}"/>
+      
+  </target>
+  
+<!-- ==================== Javadoc Target ================================== -->
+
+  <target name="javadoc" depends="compile"
+   description="Create Javadoc API documentation">
+
+    <mkdir dir="${docs.home}"/>
+    <mkdir          dir="${docs.home}/api"/>
+    <javadoc sourcepath="${src.home}"
+                destdir="${docs.home}/api"
+           packagenames="*">
+      <classpath refid="compile.classpath"/>
+    </javadoc>
+
+  </target>
+
+<!-- ==================== compiletests ================================== -->
+
+  <target name="compiletests" depends="dist"
+   description="Compile Java sources">
+
+    <!-- Compile Java classes as necessary -->
+    <mkdir    dir="${testbuild.home}"/>
+    <javac srcdir="${testsrc.home}"
+          destdir="${testbuild.home}"
+            debug="${compile.debug}"
+      deprecation="${compile.deprecation}"
+         optimize="${compile.optimize}">
+        <classpath refid="compiletest.classpath"/>
+    </javac>
+    <jar jarfile="${dist.home}/${testjar.filename}"
+         basedir="${testbuild.home}"
+    />
+
+  </target>
+
+<!-- ==================== runtests ================================== -->
+
+  <target name="runtests" depends="compiletests">
+    <junit>
+      <classpath refid="runtest.classpath"/>
+      <formatter type="brief" usefile="false"/>
+      <batchtest>
+        <fileset dir="${testsrc.home}">
+          <include name="**/Test*.java"/>
+        </fileset>
+      </batchtest>
+    </junit>
+  </target>
+
+</project>
