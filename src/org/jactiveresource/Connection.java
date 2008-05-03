@@ -1,3 +1,35 @@
+/*
+
+Copyright (c) 2008, Jared Crapo All rights reserved. 
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met: 
+
+- Redistributions of source code must retain the above copyright
+  notice, this list of conditions and the following disclaimer. 
+
+- Redistributions in binary form must reproduce the above copyright
+  notice, this list of conditions and the following disclaimer in the
+  documentation and/or other materials provided with the distribution. 
+
+- Neither the name of jactiveresource.org nor the names of its
+  contributors may be used to endorse or promote products derived from
+  this software without specific prior written permission. 
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+POSSIBILITY OF SUCH DAMAGE.
+
+*/
 
 package org.jactiveresource;
 
@@ -15,7 +47,8 @@ import org.apache.http.HttpHost;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpVersion;
-import org.apache.http.StatusLine;
+import org.apache.http.auth.AuthScope;
+import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.HttpClient;
 import org.apache.http.conn.ClientConnectionManager;
 import org.apache.http.conn.PlainSocketFactory;
@@ -32,12 +65,21 @@ import org.apache.http.params.HttpProtocolParams;
 import com.thoughtworks.xstream.XStream;
 import com.thoughtworks.xstream.converters.extended.ISO8601DateConverter;
 
+/**
+ * 
+ * @version $LastChangedRevision$ <br>
+ *          $LastChangedDate$
+ * @author $LastChangedBy$
+ */
 public class Connection {
 
     private URL site;
     private String prefix;
     private Format format;
     private XStream xstream;
+
+    private ClientConnectionManager connectionManager;
+    private DefaultHttpClient httpclient;
 
     enum Format {
         XML
@@ -96,16 +138,29 @@ public class Connection {
     // query_string(query_options)}"
 
     public String get( String URL ) throws HttpException, IOException,
-        InterruptedException {
+        InterruptedException, UnauthorizedException, ResourceNotFoundException,
+        ResourceConflictException, ClientError, ServerError {
 
         HttpHost host = new HttpHost( site.getHost(), site.getPort(), site
             .getProtocol() );
-        HttpClient client = createHttpClient();
+        HttpClient client = createHttpClient( site );
         HttpRequest request = createRequest( this.prefix + URL );
         HttpEntity entity = null;
         try {
             HttpResponse response = client.execute( host, request, null );
             entity = response.getEntity();
+            int status = response.getStatusLine().getStatusCode();
+            if ( status == 401 )
+                throw new UnauthorizedException();
+            else if ( status == 404 )
+                throw new ResourceNotFoundException();
+            else if ( status == 409 )
+                throw new ResourceConflictException();
+            else if ( status >= 401 && status <= 499 )
+                throw new ClientError();
+            else if ( status >= 500 && status <= 599 )
+                throw new ServerError();
+
             StringBuffer sb = new StringBuffer();
             BufferedReader reader = new BufferedReader( new InputStreamReader(
                 entity.getContent() ) );
@@ -123,27 +178,38 @@ public class Connection {
     }
 
     public BufferedReader getStream( String URL ) throws HttpException,
-        IOException, InterruptedException {
+        IOException, InterruptedException, UnauthorizedException,
+        ResourceNotFoundException, ResourceConflictException, ClientError,
+        ServerError {
+
         HttpHost host = new HttpHost( site.getHost(), site.getPort(), site
             .getProtocol() );
-        HttpClient client = createHttpClient();
+        HttpClient client = createHttpClient( site );
         HttpRequest request = createRequest( this.prefix + URL );
-        HttpEntity entity = null;
-//        try {
-            HttpResponse response = client.execute( host, request, null );
-            entity = response.getEntity();
-            StatusLine status = response.getStatusLine();
-            status.
-            
-            BufferedReader reader = new BufferedReader( new InputStreamReader(
-                entity.getContent() ) );
 
-            return reader;
-//        } finally {
-//            // if there is no entity, the connection is already released
-//            if ( entity != null )
-//                entity.consumeContent(); // release connection gracefully
-//        }
+        HttpEntity entity = null;
+        // try {
+        HttpResponse response = client.execute( host, request, null );
+        entity = response.getEntity();
+        int status = response.getStatusLine().getStatusCode();
+        if ( status == 401 )
+            throw new UnauthorizedException();
+        else if ( status == 404 )
+            throw new ResourceNotFoundException();
+        else if ( status == 409 )
+            throw new ResourceConflictException();
+        else if ( status >= 401 && status <= 499 )
+            throw new ClientError();
+        else if ( status >= 500 && status <= 599 )
+            throw new ServerError();
+        BufferedReader reader = new BufferedReader( new InputStreamReader(
+            entity.getContent() ) );
+        return reader;
+        // } finally {
+        // // if there is no entity, the connection is already released
+        // if ( entity != null )
+        // entity.consumeContent(); // release connection gracefully
+        // }
 
     }
 
@@ -156,15 +222,30 @@ public class Connection {
         return req;
     }
 
-    private HttpClient createHttpClient() {
+    /*
+     * create or retrieve a cached HttpClient object
+     */
+    private HttpClient createHttpClient( URL site ) {
 
-        ClientConnectionManager ccm = new ThreadSafeClientConnManager(
-            getParams(), supportedSchemes );
-        // new SingleClientConnManager(getParams(), supportedSchemes);
+        if ( connectionManager == null ) {
+            connectionManager = new ThreadSafeClientConnManager( getParams(),
+                supportedSchemes );
+        }
 
-        DefaultHttpClient dhc = new DefaultHttpClient( ccm, getParams() );
-
-        return dhc;
+        if ( httpclient == null ) {
+            httpclient = new DefaultHttpClient( connectionManager, getParams() );
+            String userinfo = site.getUserInfo();
+            if ( userinfo != null ) {
+                int pos = userinfo.indexOf( ":" );
+                if ( pos > 0 ) {
+                    httpclient.getCredentialsProvider().setCredentials(
+                        new AuthScope( site.getHost(), site.getPort() ),
+                        new UsernamePasswordCredentials( userinfo.substring( 0,
+                            pos ), userinfo.substring( pos + 1 ) ) );
+                }
+            }
+        }
+        return httpclient;
     }
 
     private final HttpParams getParams() {
