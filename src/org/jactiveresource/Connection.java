@@ -29,15 +29,18 @@ CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 
-*/
+ */
 
 package org.jactiveresource;
+
+import static org.jactiveresource.Inflector.dasherize;
+import static org.jactiveresource.Inflector.singularize;
+import static org.jactiveresource.Inflector.underscore;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
+import java.lang.reflect.Field;
 import java.net.MalformedURLException;
 import java.net.URL;
 
@@ -108,30 +111,19 @@ public class Connection {
         return xstream;
     }
 
-    public void registerResource( Class<?> clazz ) {
-        Method method;
-        try {
-            method = clazz.getDeclaredMethod( "setConnection",
-                new Class[] { Connection.class } );
-            method.invoke( null, new Object[] { this } );
-            // add the item to our stream parser
-            xstream.processAnnotations( clazz );
-        } catch ( SecurityException e ) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        } catch ( NoSuchMethodException e ) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        } catch ( IllegalArgumentException e ) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        } catch ( IllegalAccessException e ) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        } catch ( InvocationTargetException e ) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+    public <T extends ActiveResource> void registerResource( Class<T> clazz ) {
+
+        String xmlname = singularize( dasherize( ActiveResource
+            .getCollectionName( clazz ) ) );
+        xstream.alias( xmlname, clazz );
+
+        Field[] fields = clazz.getDeclaredFields();
+        for ( Field field : fields ) {
+            xmlname = dasherize( underscore( field.getName() ) );
+            xstream.aliasField( xmlname, clazz, field.getName() );
         }
+        // xstream.processAnnotations( clazz );
+
     }
 
     // "#{prefix(prefix_options)}#{collection_name}/#{id}.#{format.extension}#{
@@ -148,19 +140,8 @@ public class Connection {
         HttpEntity entity = null;
         try {
             HttpResponse response = client.execute( host, request, null );
+            checkStatus( response );
             entity = response.getEntity();
-            int status = response.getStatusLine().getStatusCode();
-            if ( status == 401 )
-                throw new UnauthorizedException();
-            else if ( status == 404 )
-                throw new ResourceNotFoundException();
-            else if ( status == 409 )
-                throw new ResourceConflictException();
-            else if ( status >= 401 && status <= 499 )
-                throw new ClientError();
-            else if ( status >= 500 && status <= 599 )
-                throw new ServerError();
-
             StringBuffer sb = new StringBuffer();
             BufferedReader reader = new BufferedReader( new InputStreamReader(
                 entity.getContent() ) );
@@ -190,7 +171,24 @@ public class Connection {
         HttpEntity entity = null;
         // try {
         HttpResponse response = client.execute( host, request, null );
+        checkStatus( response );
         entity = response.getEntity();
+
+        BufferedReader reader = new BufferedReader( new InputStreamReader(
+            entity.getContent() ) );
+        return reader;
+        // } finally {
+        // // if there is no entity, the connection is already released
+        // if ( entity != null )
+        // entity.consumeContent(); // release connection gracefully
+        // }
+
+    }
+
+    private final void checkStatus( HttpResponse response )
+        throws UnauthorizedException, ResourceNotFoundException,
+        ResourceConflictException, ClientError, ServerError {
+
         int status = response.getStatusLine().getStatusCode();
         if ( status == 401 )
             throw new UnauthorizedException();
@@ -202,15 +200,6 @@ public class Connection {
             throw new ClientError();
         else if ( status >= 500 && status <= 599 )
             throw new ServerError();
-        BufferedReader reader = new BufferedReader( new InputStreamReader(
-            entity.getContent() ) );
-        return reader;
-        // } finally {
-        // // if there is no entity, the connection is already released
-        // if ( entity != null )
-        // entity.consumeContent(); // release connection gracefully
-        // }
-
     }
 
     private final HttpRequest createRequest( String path ) {

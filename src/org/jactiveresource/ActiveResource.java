@@ -29,7 +29,7 @@ CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 
-*/
+ */
 
 package org.jactiveresource;
 
@@ -38,10 +38,10 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 
 import org.apache.http.HttpException;
+import org.jactiveresource.annotation.CollectionName;
 
 /**
  * 
@@ -60,29 +60,28 @@ public abstract class ActiveResource {
         ResourceNotFoundException, ResourceConflictException, ClientError,
         ServerError {
 
-        Method method = clazz.getDeclaredMethod( "getCollectionName",
-            new Class[] {} );
-        String resource = (String) method.invoke( null, new Object[] {} );
+        String collection = getCollectionName( clazz );
         // TODO fix format
-        String xml = connection.get( "/" + resource + "/" + id + ".xml" );
-        return (T) connection.getXStream().fromXML( xml );
+        String u = "/" + collection + "/" + id + ".xml";
+        String xml = connection.get( u );
+        return deserialize(clazz, connection, xml);
     }
 
     @SuppressWarnings("unchecked")
+    protected static <T extends ActiveResource> T deserialize(Class<T> clazz, Connection c, String xml) {
+        return (T) c.getXStream().fromXML( xml );        
+    }
+    
+    @SuppressWarnings("unchecked")
     protected static <T extends ActiveResource> ArrayList<T> findAll(
-        Class<T> clazz, Connection connection)
-        throws SecurityException, NoSuchMethodException,
-        IllegalArgumentException, IllegalAccessException,
-        InvocationTargetException, HttpException, IOException,
-        InterruptedException, ClassNotFoundException, UnauthorizedException,
+        Class<T> clazz, Connection connection ) throws HttpException,
+        IOException, InterruptedException, UnauthorizedException,
         ResourceNotFoundException, ResourceConflictException, ClientError,
-        ServerError {
+        ServerError, ClassNotFoundException {
 
-        Method method = clazz.getDeclaredMethod( "getCollectionName",
-            new Class[] {} );
-        String resource = (String) method.invoke( null, new Object[] {} );
+        String collection = getCollectionName( clazz );
         // TODO fix format
-        BufferedReader xml = connection.getStream( "/" + resource + ".xml" );
+        BufferedReader xml = connection.getStream( "/" + collection + ".xml" );
         ObjectInputStream in = connection.getXStream().createObjectInputStream(
             xml );
 
@@ -97,7 +96,34 @@ public abstract class ActiveResource {
         return list;
     }
 
-    public ActiveResource() {
+    /**
+     * guess the collection name for a particular class. Can be overridden by
+     * with a CollectionName annotation.
+     * 
+     * @param className
+     * @return
+     */
+    protected static String getCollectionName(
+        Class<? extends ActiveResource> clazz ) {
+        String name;
+
+        CollectionName cn = clazz.getAnnotation( CollectionName.class );
+        if ( cn != null ) {
+            name = cn.value();
+        } else {
+            name = Inflector.underscore( clazz.getSimpleName() );
+            name = Inflector.pluralize( name );
+        }
+        return name;
     }
 
+    /**
+     * guess the collection name for an instance of a subclass of
+     * ActiveResource. Calls the static getCollectionName() method.
+     * 
+     * @return
+     */
+    protected String getCollectionName() {
+        return ActiveResource.getCollectionName( this.getClass() );
+    }
 }
