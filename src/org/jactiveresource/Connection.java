@@ -81,26 +81,34 @@ public class Connection {
     private Format format;
     private XStream xstream;
 
+    private Format defaultFormat = Format.XML;
+
     private ClientConnectionManager connectionManager;
     private DefaultHttpClient httpclient;
 
-    enum Format {
-        XML
-    };
+    public Connection( URL site ) {
+        this.site = site;
+        init( Format.XML );
+    }
+
+    public Connection( String site ) throws MalformedURLException {
+        this.site = new URL( site );
+        init( defaultFormat );
+    }
+
+    public Connection( URL site, Format format ) {
+        this.site = site;
+        init( defaultFormat );
+    }
 
     public Connection( String site, Format format )
         throws MalformedURLException {
         this.site = new URL( site );
-        this.prefix = this.site.getPath();
-        this.format = format;
-        // set up xstream
-        xstream = new XStream();
-        xstream.registerConverter( new ISO8601DateConverter() );
-        init();
+        init( format );
     }
 
-    public String getSite() {
-        return this.site.toString();
+    public URL getSite() {
+        return this.site;
     }
 
     public Format getFormat() {
@@ -111,7 +119,13 @@ public class Connection {
         return xstream;
     }
 
-    public <T extends ActiveResource> void registerResource( Class<T> clazz ) {
+    /**
+     * register a resource with this connection
+     * 
+     * @param <T>
+     * @param clazz
+     */
+    public void registerResource( Class<? extends ActiveResource> clazz ) {
 
         String xmlname = singularize( dasherize( ActiveResource
             .getCollectionName( clazz ) ) );
@@ -251,7 +265,13 @@ public class Connection {
      */
     private static SchemeRegistry supportedSchemes;
 
-    private void init() {
+    private void init( Format format ) {
+        this.prefix = site.getPath();
+        this.format = format;
+        // set up xstream
+        xstream = new XStream();
+        xstream.registerConverter( new ISO8601DateConverter() );
+
         supportedSchemes = new SchemeRegistry();
 
         // Register the "http" protocol scheme, it is required

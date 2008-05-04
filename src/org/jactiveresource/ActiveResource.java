@@ -53,7 +53,7 @@ public abstract class ActiveResource {
 
     @SuppressWarnings("unchecked")
     protected static <T extends ActiveResource> T find( Class<T> clazz,
-        Connection connection, String id ) throws SecurityException,
+        Connection c, String id ) throws SecurityException,
         NoSuchMethodException, IllegalArgumentException,
         IllegalAccessException, InvocationTargetException, HttpException,
         IOException, InterruptedException, UnauthorizedException,
@@ -61,29 +61,22 @@ public abstract class ActiveResource {
         ServerError {
 
         String collection = getCollectionName( clazz );
-        // TODO fix format
-        String u = "/" + collection + "/" + id + ".xml";
-        String xml = connection.get( u );
-        return deserialize(clazz, connection, xml);
+        String u = "/" + collection + "/" + id + c.getFormat().extension();
+        String xml = c.get( u );
+        return deserialize( clazz, c, xml );
     }
 
-    @SuppressWarnings("unchecked")
-    protected static <T extends ActiveResource> T deserialize(Class<T> clazz, Connection c, String xml) {
-        return (T) c.getXStream().fromXML( xml );        
-    }
-    
     @SuppressWarnings("unchecked")
     protected static <T extends ActiveResource> ArrayList<T> findAll(
-        Class<T> clazz, Connection connection ) throws HttpException,
-        IOException, InterruptedException, UnauthorizedException,
-        ResourceNotFoundException, ResourceConflictException, ClientError,
-        ServerError, ClassNotFoundException {
+        Class<T> clazz, Connection c ) throws HttpException, IOException,
+        InterruptedException, UnauthorizedException, ResourceNotFoundException,
+        ResourceConflictException, ClientError, ServerError,
+        ClassNotFoundException {
 
         String collection = getCollectionName( clazz );
-        // TODO fix format
-        BufferedReader xml = connection.getStream( "/" + collection + ".xml" );
-        ObjectInputStream in = connection.getXStream().createObjectInputStream(
-            xml );
+        BufferedReader xml = c.getStream( "/" + collection
+            + c.getFormat().extension() );
+        ObjectInputStream in = c.getXStream().createObjectInputStream( xml );
 
         ArrayList<T> list = new ArrayList<T>();
         while ( true ) {
@@ -94,6 +87,22 @@ public abstract class ActiveResource {
             }
         }
         return list;
+    }
+
+    /*
+     * protected static <T extends ActiveResource> boolean exists( Class<T>
+     * clazz, Connection connection, String id ) { return false; }
+     */
+
+    /*
+     * protected static <T extends ActiveResource> void delete( Class<T> clazz,
+     * Connection connection, String id ) { }
+     */
+
+    @SuppressWarnings("unchecked")
+    protected static <T extends ActiveResource> T deserialize( Class<T> clazz,
+        Connection c, String xml ) {
+        return (T) c.getXStream().fromXML( xml );
     }
 
     /**
@@ -126,4 +135,48 @@ public abstract class ActiveResource {
     protected String getCollectionName() {
         return ActiveResource.getCollectionName( this.getClass() );
     }
+
+    /**
+     * serialize this object
+     * 
+     * @param c
+     * @return
+     */
+    public String serialize( Connection c ) {
+        return c.getXStream().toXML( this );
+    }
+
+    public boolean isNew() {
+        // TODO ticket:1
+        return true;
+    }
+
+    /**
+     * save this resource to the specified connection
+     * 
+     * @param c
+     */
+    public void save( Connection c ) {
+        if ( isNew() )
+            create( c );
+        else
+            update( c );
+    }
+
+    public void create( Connection c ) {
+        // do a post
+    }
+
+    public void update( Connection c ) {
+        // do a put
+    }
+
+    public void delete( Connection c ) {
+
+    }
+
+    public void destroy( Connection c ) {
+        delete( c );
+    }
+
 }
