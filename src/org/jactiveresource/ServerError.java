@@ -33,14 +33,16 @@ POSSIBILITY OF SUCH DAMAGE.
 
 package org.jactiveresource;
 
+import org.apache.http.HttpException;
+
 /**
- * exception for http status 500-599
+ * exception for http status 5xx
  * 
  * @version $LastChangedRevision$ <br>
  *          $LastChangedDate$
  * @author $LastChangedBy$
  */
-public class ServerError extends Exception {
+public class ServerError extends HttpException {
 
     private static final long serialVersionUID = 1L;
 
@@ -54,10 +56,6 @@ public class ServerError extends Exception {
 
     public ServerError( String message, Throwable cause ) {
         super( message, cause );
-    }
-
-    public ServerError( Throwable cause ) {
-        super( cause );
     }
 
 }

@@ -53,8 +53,7 @@ public abstract class ActiveResource {
     @SuppressWarnings("unchecked")
     protected static <T extends ActiveResource> T find( Class<T> clazz,
         Connection c, String id ) throws HttpException, IOException,
-        InterruptedException, UnauthorizedException, ResourceNotFoundException,
-        ResourceConflictException, ClientError, ServerError {
+        InterruptedException {
 
         String collection = getCollectionName( clazz );
         String u = "/" + collection + "/" + id + c.getFormat().extension();
@@ -65,9 +64,7 @@ public abstract class ActiveResource {
     @SuppressWarnings("unchecked")
     protected static <T extends ActiveResource> ArrayList<T> findAll(
         Class<T> clazz, Connection c ) throws HttpException, IOException,
-        InterruptedException, UnauthorizedException, ResourceNotFoundException,
-        ResourceConflictException, ClientError, ServerError,
-        ClassNotFoundException  {
+        InterruptedException, ClassNotFoundException {
 
         String collection = getCollectionName( clazz );
         BufferedReader xml = c.getStream( "/" + collection

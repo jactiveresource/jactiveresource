@@ -40,24 +40,20 @@ package org.jactiveresource;
  *          $LastChangedDate$
  * @author $LastChangedBy$
  */
-public class ResourceNotFoundException extends Exception {
+public class ResourceNotFound extends ClientError {
 
     private static final long serialVersionUID = 1L;
 
-    public ResourceNotFoundException() {
+    public ResourceNotFound() {
         super();
     }
 
-    public ResourceNotFoundException( String s ) {
+    public ResourceNotFound( String s ) {
         super( s );
     }
 
-    public ResourceNotFoundException( String message, Throwable cause ) {
+    public ResourceNotFound( String message, Throwable cause ) {
         super( message, cause );
-    }
-
-    public ResourceNotFoundException( Throwable cause ) {
-        super( cause );
     }
 
 }

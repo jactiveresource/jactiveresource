@@ -34,30 +34,28 @@ POSSIBILITY OF SUCH DAMAGE.
 package org.jactiveresource;
 
 /**
- * exception for http status 401 - Unauthorized
+ * exception for http status 403 - forbidden
  * 
  * @version $LastChangedRevision$ <br>
  *          $LastChangedDate$
  * @author $LastChangedBy$
  */
-public class UnauthorizedException extends Exception {
+public class ForbiddenAccess extends ClientError {
 
     private static final long serialVersionUID = 1L;
 
-    public UnauthorizedException() {
-        super();
+    public ForbiddenAccess() {
+        // TODO Auto-generated constructor stub
     }
 
-    public UnauthorizedException( String s ) {
+    public ForbiddenAccess( String s ) {
         super( s );
+        // TODO Auto-generated constructor stub
     }
 
-    public UnauthorizedException( String message, Throwable cause ) {
+    public ForbiddenAccess( String message, Throwable cause ) {
         super( message, cause );
-    }
-
-    public UnauthorizedException( Throwable cause ) {
-        super( cause );
+        // TODO Auto-generated constructor stub
     }
 
 }

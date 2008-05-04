@@ -33,28 +33,26 @@ POSSIBILITY OF SUCH DAMAGE.
 
 package org.jactiveresource;
 
-import org.apache.http.HttpException;
-
 /**
- * exception for http status 4xx
+ * exception for http status 401 - Unauthorized
  * 
  * @version $LastChangedRevision$ <br>
  *          $LastChangedDate$
  * @author $LastChangedBy$
  */
-public class ClientError extends HttpException {
+public class UnauthorizedAccess extends ClientError {
 
     private static final long serialVersionUID = 1L;
 
-    public ClientError() {
+    public UnauthorizedAccess() {
         super();
     }
 
-    public ClientError( String s ) {
+    public UnauthorizedAccess( String s ) {
         super( s );
     }
 
-    public ClientError( String message, Throwable cause ) {
+    public UnauthorizedAccess( String message, Throwable cause ) {
         super( message, cause );
     }
 

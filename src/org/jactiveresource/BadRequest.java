@@ -29,32 +29,29 @@ CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 
-*/
+ */
 
 package org.jactiveresource;
 
-import org.apache.http.HttpException;
-
 /**
- * exception for http status 4xx
+ * exception for http status 404 - not found
  * 
  * @version $LastChangedRevision$ <br>
  *          $LastChangedDate$
  * @author $LastChangedBy$
  */
-public class ClientError extends HttpException {
+public class BadRequest extends ClientError {
 
     private static final long serialVersionUID = 1L;
 
-    public ClientError() {
-        super();
+    public BadRequest() {
     }
 
-    public ClientError( String s ) {
+    public BadRequest( String s ) {
         super( s );
     }
 
-    public ClientError( String message, Throwable cause ) {
+    public BadRequest( String message, Throwable cause ) {
         super( message, cause );
     }
 

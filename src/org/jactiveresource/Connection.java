@@ -144,8 +144,7 @@ public class Connection {
     // query_string(query_options)}"
 
     public String get( String URL ) throws HttpException, IOException,
-        InterruptedException, UnauthorizedException, ResourceNotFoundException,
-        ResourceConflictException, ClientError, ServerError {
+        InterruptedException {
 
         HttpHost host = new HttpHost( site.getHost(), site.getPort(), site
             .getProtocol() );
@@ -173,9 +172,7 @@ public class Connection {
     }
 
     public BufferedReader getStream( String URL ) throws HttpException,
-        IOException, InterruptedException, UnauthorizedException,
-        ResourceNotFoundException, ResourceConflictException, ClientError,
-        ServerError {
+        IOException, InterruptedException {
 
         HttpHost host = new HttpHost( site.getHost(), site.getPort(), site
             .getProtocol() );
@@ -199,17 +196,27 @@ public class Connection {
 
     }
 
-    private final void checkStatus( HttpResponse response )
-        throws UnauthorizedException, ResourceNotFoundException,
-        ResourceConflictException, ClientError, ServerError {
+    public void put( String URL ) {
+    }
+
+    private final void checkStatus( HttpResponse response ) throws ClientError,
+        ServerError {
 
         int status = response.getStatusLine().getStatusCode();
-        if ( status == 401 )
-            throw new UnauthorizedException();
+        if ( status == 400 )
+            throw new BadRequest();
+        else if ( status == 401 )
+            throw new UnauthorizedAccess();
+        else if ( status == 403 )
+            throw new ForbiddenAccess();
         else if ( status == 404 )
-            throw new ResourceNotFoundException();
+            throw new ResourceNotFound();
+        else if ( status == 405 )
+            throw new MethodNotAllowed();
         else if ( status == 409 )
-            throw new ResourceConflictException();
+            throw new ResourceConflict();
+        else if ( status == 422 )
+            throw new ResourceInvalid();
         else if ( status >= 401 && status <= 499 )
             throw new ClientError();
         else if ( status >= 500 && status <= 599 )

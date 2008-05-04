@@ -29,35 +29,30 @@ CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 
-*/
+ */
 
 package org.jactiveresource;
 
 /**
- * exception for http status 404 - not found
+ * exception for http status 405 - Method Not Allowed
  * 
  * @version $LastChangedRevision$ <br>
  *          $LastChangedDate$
  * @author $LastChangedBy$
  */
-public class ResourceConflictException extends Exception {
+public class MethodNotAllowed extends ClientError {
 
     private static final long serialVersionUID = 1L;
 
-    public ResourceConflictException() {
-        super();
+    public MethodNotAllowed() {
     }
 
-    public ResourceConflictException( String s ) {
+    public MethodNotAllowed( String s ) {
         super( s );
     }
 
-    public ResourceConflictException( String message, Throwable cause ) {
+    public MethodNotAllowed( String message, Throwable cause ) {
         super( message, cause );
-    }
-
-    public ResourceConflictException( Throwable cause ) {
-        super( cause );
     }
 
 }

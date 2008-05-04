@@ -33,28 +33,26 @@ POSSIBILITY OF SUCH DAMAGE.
 
 package org.jactiveresource;
 
-import org.apache.http.HttpException;
-
 /**
- * exception for http status 4xx
+ * exception for http status 404 - not found
  * 
  * @version $LastChangedRevision$ <br>
  *          $LastChangedDate$
  * @author $LastChangedBy$
  */
-public class ClientError extends HttpException {
+public class ResourceConflict extends ClientError {
 
     private static final long serialVersionUID = 1L;
 
-    public ClientError() {
+    public ResourceConflict() {
         super();
     }
 
-    public ClientError( String s ) {
+    public ResourceConflict( String s ) {
         super( s );
     }
 
-    public ClientError( String message, Throwable cause ) {
+    public ResourceConflict( String message, Throwable cause ) {
         super( message, cause );
     }
 
