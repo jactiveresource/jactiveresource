@@ -37,6 +37,7 @@ import java.io.BufferedReader;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 
 import org.apache.http.HttpException;
@@ -53,7 +54,7 @@ public abstract class ActiveResource {
     @SuppressWarnings("unchecked")
     protected static <T extends ActiveResource> T find( Class<T> clazz,
         Connection c, String id ) throws HttpException, IOException,
-        InterruptedException {
+        InterruptedException, URISyntaxException {
 
         String collection = getCollectionName( clazz );
         String u = "/" + collection + "/" + id + c.getFormat().extension();
@@ -64,7 +65,7 @@ public abstract class ActiveResource {
     @SuppressWarnings("unchecked")
     protected static <T extends ActiveResource> ArrayList<T> findAll(
         Class<T> clazz, Connection c ) throws HttpException, IOException,
-        InterruptedException, ClassNotFoundException {
+        InterruptedException, ClassNotFoundException, URISyntaxException {
 
         String collection = getCollectionName( clazz );
         BufferedReader xml = c.getStream( "/" + collection

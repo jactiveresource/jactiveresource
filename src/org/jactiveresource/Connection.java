@@ -42,17 +42,17 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.lang.reflect.Field;
 import java.net.MalformedURLException;
+import java.net.URISyntaxException;
 import java.net.URL;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpException;
-import org.apache.http.HttpHost;
-import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpVersion;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
 import org.apache.http.conn.ClientConnectionManager;
 import org.apache.http.conn.PlainSocketFactory;
 import org.apache.http.conn.Scheme;
@@ -60,7 +60,6 @@ import org.apache.http.conn.SchemeRegistry;
 import org.apache.http.conn.SocketFactory;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
-import org.apache.http.message.BasicHttpRequest;
 import org.apache.http.params.BasicHttpParams;
 import org.apache.http.params.HttpParams;
 import org.apache.http.params.HttpProtocolParams;
@@ -77,7 +76,6 @@ import com.thoughtworks.xstream.converters.extended.ISO8601DateConverter;
 public class Connection {
 
     private URL site;
-    private String prefix;
     private Format format;
     private XStream xstream;
 
@@ -144,15 +142,13 @@ public class Connection {
     // query_string(query_options)}"
 
     public String get( String URL ) throws HttpException, IOException,
-        InterruptedException {
+        InterruptedException, URISyntaxException {
 
-        HttpHost host = new HttpHost( site.getHost(), site.getPort(), site
-            .getProtocol() );
         HttpClient client = createHttpClient( site );
-        HttpRequest request = createRequest( this.prefix + URL );
+        HttpGet request = new HttpGet( this.site.toString() + URL );
         HttpEntity entity = null;
         try {
-            HttpResponse response = client.execute( host, request, null );
+            HttpResponse response = client.execute( request );
             checkStatus( response );
             entity = response.getEntity();
             StringBuffer sb = new StringBuffer();
@@ -172,16 +168,14 @@ public class Connection {
     }
 
     public BufferedReader getStream( String URL ) throws HttpException,
-        IOException, InterruptedException {
+        IOException, InterruptedException, URISyntaxException {
 
-        HttpHost host = new HttpHost( site.getHost(), site.getPort(), site
-            .getProtocol() );
         HttpClient client = createHttpClient( site );
-        HttpRequest request = createRequest( this.prefix + URL );
+        HttpGet request = new HttpGet( this.site.toString() + URL );
 
         HttpEntity entity = null;
         // try {
-        HttpResponse response = client.execute( host, request, null );
+        HttpResponse response = client.execute( request );
         checkStatus( response );
         entity = response.getEntity();
 
@@ -221,15 +215,6 @@ public class Connection {
             throw new ClientError();
         else if ( status >= 500 && status <= 599 )
             throw new ServerError();
-    }
-
-    private final HttpRequest createRequest( String path ) {
-
-        HttpRequest req = new BasicHttpRequest( "GET", path,
-            HttpVersion.HTTP_1_1 );
-        // ("OPTIONS", "*", HttpVersion.HTTP_1_1);
-
-        return req;
     }
 
     /*
@@ -273,7 +258,6 @@ public class Connection {
     private static SchemeRegistry supportedSchemes;
 
     private void init( Format format ) {
-        this.prefix = site.getPath();
         this.format = format;
         // set up xstream
         xstream = new XStream();
