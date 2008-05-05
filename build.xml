@@ -6,7 +6,7 @@
 
 <project name="jactiveresource" default="dist" basedir=".">
 
-<!-- ===================== Property Definitions ===========================
+	<!-- ==================== properties ===========================
 
   Each of the following properties are used in the build script.
   Values for these properties are set by the first place they are
@@ -21,145 +21,118 @@
 
 -->
 
-  <property file="jactiveresource.properties"/>
+	<property file="jactiveresource.properties" />
 
-  <property name="app.name"       value="jactiveresource"/>
-  <property name="app.description" value="Java port of Ruby's ActiveResource"/>
-  <property name="app.version"    value="0.1"/>
-  <property name="build.home"     value="${basedir}/build"/>
-  <property name="dist.home"      value="${basedir}/dist"/>
-  <property name="jar.specificfilename"
-            value="${app.name}-${app.version}.jar"/>
-  <property name="jar.filename" value="${jar.genericfilename}"/>
-  <property name="testjar.filename" value="${app.name}tests-${app.version}.jar"/>
-  <property name="javadoc.home"      value="${basedir}/api"/>
-  <property name="src.home"       value="${basedir}/src"/>
-  <property name="testsrc.home"   value="${basedir}/testsrc"/>
-  <property name="testbuild.home" value="${basedir}/testbuild"/> 
+	<property name="app.name" value="jactiveresource" />
+	<property name="app.description" value="Java port of Ruby's ActiveResource" />
+	<property name="app.version" value="0.1" />
+	<property name="src.home" value="${basedir}/src" />
+	<property name="build.home" value="${basedir}/build" />
+	<property name="testsrc.home" value="${basedir}/testsrc" />
+	<property name="testbuild.home" value="${basedir}/testbuild" />
+	<property name="dist.home" value="${basedir}/dist" />
+	<property name="jar.filename" value="${app.name}-${app.version}.jar" />
+	<property name="javadoc.home" value="${basedir}/api" />
 
-<!--  ==================== Compilation Control Options ==================== -->
+	<property name="compile.debug" value="true" />
+	<property name="compile.deprecation" value="false" />
+	<property name="compile.optimize" value="true" />
 
-  <property name="compile.debug"       value="true"/>
-  <property name="compile.deprecation" value="false"/>
-  <property name="compile.optimize"    value="true"/>
+	<!-- ==================== classpaths =========================== -->
 
-<!-- ==================== Classpaths =========================== -->
+	<path id="compile.classpath">
+		<fileset dir="lib">
+			<include name="**/*.jar" />
+		</fileset>
+	</path>
 
-  <path id="compile.classpath">
-  	<fileset dir="lib">
-  	  <include name="**/*.jar"/>
-  	</fileset>
-  </path>
+	<path id="compiletest.classpath">
+		<fileset dir="lib">
+			<include name="**/*.jar" />
+		</fileset>
+		<fileset dir="dist">
+			<include name="**/*.jar" />
+		</fileset>
+	</path>
 
-  <path id="compiletest.classpath">
-    <fileset dir="lib">
-      <include name="**/*.jar"/>
-    </fileset>
-    <fileset dir="dist">
-      <include name="**/*.jar"/>
-    </fileset>
-  </path>
+	<path id="runtest.classpath">
+		<fileset dir="lib">
+			<include name="**/*.jar" />
+		</fileset>
+		<fileset dir="dist">
+			<include name="**/*.jar" />
+		</fileset>
+	</path>
 
-  <path id="runtest.classpath">
-    <fileset dir="lib">
-      <include name="**/*.jar"/>
-    </fileset>
-    <fileset dir="dist">
-      <include name="**/*.jar"/>
-    </fileset>
-  </path>
+	<!-- ==================== clean ==================================== -->
 
-<!-- ==================== Clean Target ==================================== -->
+	<target name="clean" description="Delete old build and dist directories">
+		<delete dir="${build.home}" />
+		<delete dir="${dist.home}" />
+		<delete dir="${testbuild.home}" />
+		<delete dir="${javadoc.home}" />
+	</target>
 
-  <target name="clean"
-   description="Delete old build and dist directories">
-    <delete dir="${build.home}"/>
-    <delete dir="${dist.home}"/>
-    <delete dir="${testbuild.home}"/>
-    <delete dir="${javadoc.home}"/>
-  </target>
+	<!-- ==================== compile ================================== -->
 
-<!-- ==================== Compile Target ================================== -->
+	<target name="compile" description="Compile Java sources">
 
-  <target name="compile"
-   description="Compile Java sources">
+		<mkdir dir="${build.home}" />
+		<javac srcdir="${src.home}" destdir="${build.home}" debug="${compile.debug}" deprecation="${compile.deprecation}" optimize="${compile.optimize}">
+			<classpath refid="compile.classpath" />
+		</javac>
 
-    <mkdir    dir="${build.home}"/>
-    <javac srcdir="${src.home}"
-          destdir="${build.home}"
-            debug="${compile.debug}"
-      deprecation="${compile.deprecation}"
-         optimize="${compile.optimize}">
-        <classpath refid="compile.classpath"/>
-    </javac>
+	</target>
 
-  </target>
+	<!-- ==================== dist ===================================== -->
 
-<!-- ==================== Dist Target ===================================== -->
+	<target name="dist" depends="compile" description="Create binary distribution">
 
-  <target name="dist" depends="compile"
-   description="Create binary distribution">
+		<mkdir dir="${dist.home}" />
+		<jar jarfile="${dist.home}/${jar.filename}" basedir="${build.home}">
+			<manifest>
+				<attribute name="Implementation-Title" value="${app.description}" />
+				<attribute name="Implementation-Version" value="${app.version}" />
+				<attribute name="Implementation-Vendor" value="jactiveresource.org" />
+			</manifest>
+		</jar>
 
-    <!-- Create application JAR file -->
-    <jar jarfile="${dist.home}/${jar.specificfilename}"
-         basedir="${build.home}">
-    	<manifest>
-				<!--<attribute name="Specification-Title" value="Example"/>
-				<attribute name="Specification-Version" value="${version}"/>
-				<attribute name="Specification-Vendor" value="Example Organization"/> -->
-				<attribute name="Implementation-Title" value="${app.description}"/>
-				<attribute name="Implementation-Version" value="${app.version}"/> 
-				<attribute name="Implementation-Vendor" value="jactiveresource.org"/>
-    	</manifest>     	
-    </jar>
-             
-  </target>
+	</target>
 
-<!-- ==================== Javadoc Target ================================== -->
+	<!-- ==================== javadoc ================================== -->
 
-  <target name="javadoc" description="Create Javadoc API documentation">
+	<target name="javadoc" description="Create Javadoc API documentation">
 
-    <mkdir dir="${javadoc.home}"/>
-    <javadoc sourcepath="${src.home}"
-                destdir="${javadoc.home}"
-           packagenames="*">
-      <classpath refid="compile.classpath"/>
-    </javadoc>
+		<mkdir dir="${javadoc.home}" />
+		<javadoc sourcepath="${src.home}" destdir="${javadoc.home}" packagenames="*">
+			<classpath refid="compile.classpath" />
+		</javadoc>
 
-  </target>
+	</target>
 
-<!-- ==================== compiletests ================================== -->
+	<!-- ==================== compiletests ================================== -->
 
-  <target name="compiletests" depends="dist"
-   description="Compile test classes">
+	<target name="compiletests" depends="dist" description="Compile test classes">
 
-    <!-- Compile Java classes as necessary -->
-    <mkdir    dir="${testbuild.home}"/>
-    <javac srcdir="${testsrc.home}"
-          destdir="${testbuild.home}"
-            debug="${compile.debug}"
-      deprecation="${compile.deprecation}"
-         optimize="${compile.optimize}">
-        <classpath refid="compiletest.classpath"/>
-    </javac>
-    <jar jarfile="${dist.home}/${testjar.filename}"
-         basedir="${testbuild.home}"
-    />
+		<mkdir dir="${testbuild.home}" />
+		<javac srcdir="${testsrc.home}" destdir="${testbuild.home}" debug="${compile.debug}" deprecation="${compile.deprecation}" optimize="${compile.optimize}">
+			<classpath refid="compiletest.classpath" />
+		</javac>
 
-  </target>
+	</target>
 
-<!-- ==================== runtests ================================== -->
+	<!-- ==================== runtests ================================== -->
 
-  <target name="runtests" depends="compiletests">
-    <junit fork="true">
-      <classpath refid="runtest.classpath"/>
-      <formatter type="brief" usefile="false"/>
-      <batchtest>
-        <fileset dir="${testsrc.home}">
-          <include name="**/*.java"/>
-        </fileset>
-      </batchtest>
-    </junit>
-  </target>
+	<target name="runtests" depends="compiletests">
+		<junit fork="true">
+			<classpath refid="runtest.classpath" />
+			<formatter type="brief" usefile="false" />
+			<batchtest>
+				<fileset dir="${testsrc.home}">
+					<include name="**/*.java" />
+				</fileset>
+			</batchtest>
+		</junit>
+	</target>
 
 </project>
