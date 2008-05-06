@@ -83,10 +83,35 @@ public abstract class ActiveResource {
         return list;
     }
 
-    /*
-     * protected static <T extends ActiveResource> boolean exists( Class<T>
-     * clazz, Connection connection, String id ) { return false; }
+    /**
+     * A static method that returns whether a resource exists or not.
+     * 
+     * @param <T>
+     * @param clazz
+     *        the class representing the resource you want to check
+     * @param c
+     *        the connection to check against
+     * @param id
+     *        the id you want to see if exists
+     * @return true if the resource exists, false if it does not
      */
+    protected static <T extends ActiveResource> boolean exists( Class<T> clazz,
+        Connection c, String id ) {
+        String collection = getCollectionName( clazz );
+        String u = "/" + collection + "/" + id + c.getFormat().extension();
+        try {
+            c.get( u );
+            return true;
+        } catch ( HttpException e ) {
+            return false;
+        } catch ( IOException e ) {
+            return false;
+        } catch ( InterruptedException e ) {
+            return false;
+        } catch ( URISyntaxException e ) {
+            return false;
+        }
+    }
 
     /*
      * protected static <T extends ActiveResource> void delete( Class<T> clazz,
