@@ -44,6 +44,8 @@ import org.apache.http.HttpException;
 import org.jactiveresource.annotation.CollectionName;
 
 /**
+ * an abstract class which you can subclass to easily connect to RESTful
+ * resources provided by Ruby on Rails
  * 
  * @version $LastChangedRevision$ <br>
  *          $LastChangedDate$
@@ -51,25 +53,97 @@ import org.jactiveresource.annotation.CollectionName;
  */
 public abstract class ActiveResource {
 
-    @SuppressWarnings("unchecked")
+    /**
+     * get the object with a given id
+     * 
+     * @param <T>
+     * @param clazz
+     * @param c
+     * @param id
+     * @return
+     * @throws HttpException
+     * @throws IOException
+     * @throws InterruptedException
+     * @throws URISyntaxException
+     */
     protected static <T extends ActiveResource> T find( Class<T> clazz,
         Connection c, String id ) throws HttpException, IOException,
         InterruptedException, URISyntaxException {
 
         String collection = getCollectionName( clazz );
-        String u = "/" + collection + "/" + id + c.getFormat().extension();
-        String xml = c.get( u );
+        String url = "/" + collection + "/" + id + c.getFormat().extension();
+        return getOne( clazz, c, url );
+    }
+
+    /**
+     * get the url on a given connection, and try and deserialize one object
+     * from the response
+     * 
+     * @param <T>
+     * @param clazz
+     *        the type of object to try and deserialize
+     * @param c
+     *        the connection to use
+     * @param url
+     *        the url, including parameters, to get
+     * @return an object of type <T>
+     * @throws HttpException
+     * @throws IOException
+     * @throws InterruptedException
+     * @throws URISyntaxException
+     */
+    protected static <T extends ActiveResource> T getOne( Class<T> clazz,
+        Connection c, String url ) throws HttpException, IOException,
+        InterruptedException, URISyntaxException {
+
+        String xml = c.get( url );
         return deserialize( clazz, c, xml );
     }
 
-    @SuppressWarnings("unchecked")
+    /**
+     * get all objects of the given type
+     * 
+     * @param <T>
+     * @param clazz
+     * @param c
+     * @return
+     * @throws HttpException
+     * @throws IOException
+     * @throws InterruptedException
+     * @throws URISyntaxException
+     */
     protected static <T extends ActiveResource> ArrayList<T> findAll(
         Class<T> clazz, Connection c ) throws HttpException, IOException,
-        InterruptedException, ClassNotFoundException, URISyntaxException {
+        InterruptedException, URISyntaxException {
 
         String collection = getCollectionName( clazz );
-        BufferedReader xml = c.getStream( "/" + collection
-            + c.getFormat().extension() );
+        String url = "/" + collection + c.getFormat().extension();
+        return getMany( clazz, c, url );
+    }
+
+    /**
+     * get the url on a given connection, and try and deserialize a list of
+     * objects from the response
+     * 
+     * @param <T>
+     * @param clazz
+     *        the type of objects to try and deserialize
+     * @param c
+     *        the connection to use
+     * @param url
+     *        the url, including parameters, to get
+     * @return an ArrayList of objects of type <T>
+     * @throws HttpException
+     * @throws IOException
+     * @throws InterruptedException
+     * @throws URISyntaxException
+     */
+    @SuppressWarnings("unchecked")
+    protected static <T extends ActiveResource> ArrayList<T> getMany(
+        Class<T> clazz, Connection c, String url ) throws HttpException,
+        IOException, InterruptedException, URISyntaxException {
+
+        BufferedReader xml = c.getStream( url );
         ObjectInputStream in = c.getXStream().createObjectInputStream( xml );
 
         ArrayList<T> list = new ArrayList<T>();
@@ -78,6 +152,8 @@ public abstract class ActiveResource {
                 list.add( (T) in.readObject() );
             } catch ( EOFException e ) {
                 break;
+            } catch ( ClassNotFoundException e ) {
+                // do nothing
             }
         }
         return list;
@@ -174,8 +250,13 @@ public abstract class ActiveResource {
      * save this resource to the specified connection
      * 
      * @param c
+     * @throws InterruptedException
+     * @throws IOException
+     * @throws HttpException
+     * @throws URISyntaxException
      */
-    public void save( Connection c ) {
+    public void save( Connection c ) throws URISyntaxException, HttpException,
+        IOException, InterruptedException {
         if ( isNew() )
             create( c );
         else
@@ -186,8 +267,14 @@ public abstract class ActiveResource {
         // do a post
     }
 
-    public void update( Connection c ) {
+    public void update( Connection c ) throws URISyntaxException,
+        HttpException, IOException, InterruptedException {
         // do a put
+        String collection = getCollectionName( this.getClass() );
+        String u = "/" + collection + "/" + this.getId()
+            + c.getFormat().extension();
+        String xml = serialize( c );
+        c.put( u, xml );
     }
 
     public void delete( Connection c ) {
@@ -198,4 +285,7 @@ public abstract class ActiveResource {
         delete( c );
     }
 
+    public abstract String getId();
+
+    public abstract void setId( String id );
 }
