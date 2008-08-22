@@ -53,11 +53,13 @@ import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPut;
 import org.apache.http.conn.ClientConnectionManager;
 import org.apache.http.conn.PlainSocketFactory;
 import org.apache.http.conn.Scheme;
 import org.apache.http.conn.SchemeRegistry;
 import org.apache.http.conn.SocketFactory;
+import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
 import org.apache.http.params.BasicHttpParams;
@@ -134,6 +136,7 @@ public class Connection {
             xmlname = dasherize( underscore( field.getName() ) );
             xstream.aliasField( xmlname, clazz, field.getName() );
         }
+        
         // xstream.processAnnotations( clazz );
 
     }
@@ -141,11 +144,11 @@ public class Connection {
     // "#{prefix(prefix_options)}#{collection_name}/#{id}.#{format.extension}#{
     // query_string(query_options)}"
 
-    public String get( String URL ) throws HttpException, IOException,
+    public String get( String url ) throws HttpException, IOException,
         InterruptedException, URISyntaxException {
 
         HttpClient client = createHttpClient( site );
-        HttpGet request = new HttpGet( this.site.toString() + URL );
+        HttpGet request = new HttpGet( this.site.toString() + url );
         HttpEntity entity = null;
         try {
             HttpResponse response = client.execute( request );
@@ -167,11 +170,11 @@ public class Connection {
         }
     }
 
-    public BufferedReader getStream( String URL ) throws HttpException,
+    public BufferedReader getStream( String url ) throws HttpException,
         IOException, InterruptedException, URISyntaxException {
 
         HttpClient client = createHttpClient( site );
-        HttpGet request = new HttpGet( this.site.toString() + URL );
+        HttpGet request = new HttpGet( this.site.toString() + url );
 
         HttpEntity entity = null;
         // try {
@@ -190,7 +193,15 @@ public class Connection {
 
     }
 
-    public void put( String URL ) {
+    public void put( String url, String body ) throws URISyntaxException,
+        HttpException, IOException, InterruptedException {
+
+        HttpClient client = createHttpClient( site );
+        HttpPut request = new HttpPut( this.site.toString() + url );
+        StringEntity entity = new StringEntity( body );
+        request.setEntity( entity );
+        HttpResponse response = client.execute( request );
+        checkStatus( response );
     }
 
     private final void checkStatus( HttpResponse response ) throws ClientError,
@@ -260,6 +271,11 @@ public class Connection {
     private void init( Format format ) {
         this.format = format;
         // set up xstream
+        //final RailsConverter rc = new RailsConverter();
+        
+        //XStream xstream = new XStream(null, new XppDriver(), new ClassLoaderReference(new
+        //CompositeClassLoader()), null, rc, rc );
+        
         xstream = new XStream();
         xstream.registerConverter( new ISO8601DateConverter() );
 
@@ -277,4 +293,5 @@ public class Connection {
         HttpProtocolParams.setUseExpectContinue( params, true );
         defaultParameters = params;
     }
+
 }
