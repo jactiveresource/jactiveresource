@@ -59,6 +59,7 @@ import org.apache.http.conn.PlainSocketFactory;
 import org.apache.http.conn.Scheme;
 import org.apache.http.conn.SchemeRegistry;
 import org.apache.http.conn.SocketFactory;
+import org.apache.http.conn.params.HttpConnectionManagerParams;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
@@ -98,7 +99,7 @@ public class Connection {
 
     public Connection( URL site, Format format ) {
         this.site = site;
-        init( defaultFormat );
+        init( format );
     }
 
     public Connection( String site, Format format )
@@ -136,7 +137,7 @@ public class Connection {
             xmlname = dasherize( underscore( field.getName() ) );
             xstream.aliasField( xmlname, clazz, field.getName() );
         }
-        
+
         // xstream.processAnnotations( clazz );
 
     }
@@ -147,8 +148,8 @@ public class Connection {
     public String get( String url ) throws HttpException, IOException,
         InterruptedException, URISyntaxException {
 
-        HttpClient client = createHttpClient( site );
-        HttpGet request = new HttpGet( this.site.toString() + url );
+        HttpClient client = createHttpClient( this.getSite() );
+        HttpGet request = new HttpGet( this.getSite().toString() + url );
         HttpEntity entity = null;
         try {
             HttpResponse response = client.execute( request );
@@ -173,11 +174,10 @@ public class Connection {
     public BufferedReader getStream( String url ) throws HttpException,
         IOException, InterruptedException, URISyntaxException {
 
-        HttpClient client = createHttpClient( site );
-        HttpGet request = new HttpGet( this.site.toString() + url );
+        HttpClient client = createHttpClient( this.getSite() );
+        HttpGet request = new HttpGet( this.getSite().toString() + url );
 
         HttpEntity entity = null;
-        // try {
         HttpResponse response = client.execute( request );
         checkStatus( response );
         entity = response.getEntity();
@@ -185,19 +185,13 @@ public class Connection {
         BufferedReader reader = new BufferedReader( new InputStreamReader(
             entity.getContent() ) );
         return reader;
-        // } finally {
-        // // if there is no entity, the connection is already released
-        // if ( entity != null )
-        // entity.consumeContent(); // release connection gracefully
-        // }
-
     }
 
     public void put( String url, String body ) throws URISyntaxException,
         HttpException, IOException, InterruptedException {
 
-        HttpClient client = createHttpClient( site );
-        HttpPut request = new HttpPut( this.site.toString() + url );
+        HttpClient client = createHttpClient( this.getSite() );
+        HttpPut request = new HttpPut( this.getSite().toString() + url );
         StringEntity entity = new StringEntity( body );
         request.setEntity( entity );
         HttpResponse response = client.execute( request );
@@ -233,25 +227,26 @@ public class Connection {
      */
     private HttpClient createHttpClient( URL site ) {
 
-        if ( connectionManager == null ) {
-            connectionManager = new ThreadSafeClientConnManager( getParams(),
-                supportedSchemes );
+        if ( this.connectionManager == null ) {
+            this.connectionManager = new ThreadSafeClientConnManager(
+                getParams(), supportedSchemes );
         }
 
-        if ( httpclient == null ) {
-            httpclient = new DefaultHttpClient( connectionManager, getParams() );
+        if ( this.httpclient == null ) {
+            this.httpclient = new DefaultHttpClient( this.connectionManager,
+                getParams() );
             String userinfo = site.getUserInfo();
             if ( userinfo != null ) {
                 int pos = userinfo.indexOf( ":" );
                 if ( pos > 0 ) {
-                    httpclient.getCredentialsProvider().setCredentials(
+                    this.httpclient.getCredentialsProvider().setCredentials(
                         new AuthScope( site.getHost(), site.getPort() ),
                         new UsernamePasswordCredentials( userinfo.substring( 0,
                             pos ), userinfo.substring( pos + 1 ) ) );
                 }
             }
         }
-        return httpclient;
+        return this.httpclient;
     }
 
     private final HttpParams getParams() {
@@ -259,23 +254,24 @@ public class Connection {
     }
 
     /**
-     * The default parameters. Instantiated in {@link #setup setup}.
+     * The default parameters. Instantiated in {@link #init setup}.
      */
     private static HttpParams defaultParameters = null;
 
     /**
-     * The scheme registry. Instantiated in {@link #setup setup}.
+     * The scheme registry. Instantiated in {@link #init setup}.
      */
     private static SchemeRegistry supportedSchemes;
 
     private void init( Format format ) {
         this.format = format;
         // set up xstream
-        //final RailsConverter rc = new RailsConverter();
-        
-        //XStream xstream = new XStream(null, new XppDriver(), new ClassLoaderReference(new
-        //CompositeClassLoader()), null, rc, rc );
-        
+        // final RailsConverter rc = new RailsConverter();
+
+        // XStream xstream = new XStream(null, new XppDriver(), new
+        // ClassLoaderReference(new
+        // CompositeClassLoader()), null, rc, rc );
+
         xstream = new XStream();
         xstream.registerConverter( new ISO8601DateConverter() );
 
@@ -290,8 +286,10 @@ public class Connection {
         HttpParams params = new BasicHttpParams();
         HttpProtocolParams.setVersion( params, HttpVersion.HTTP_1_1 );
         HttpProtocolParams.setContentCharset( params, "UTF-8" );
-        HttpProtocolParams.setUseExpectContinue( params, true );
+        // HttpProtocolParams.setUseExpectContinue( params, true );
+        HttpConnectionManagerParams.setMaxTotalConnections( params, 200 );
         defaultParameters = params;
+
     }
 
 }
