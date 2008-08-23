@@ -156,6 +156,7 @@ public abstract class ActiveResource {
                 // do nothing
             }
         }
+        in.close();
         return list;
     }
 
