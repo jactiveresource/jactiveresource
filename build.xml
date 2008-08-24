@@ -25,7 +25,7 @@
 
 	<property name="app.name" value="jactiveresource" />
 	<property name="app.description" value="Java port of Ruby's ActiveResource" />
-	<property name="app.version" value="0.1" />
+	<property name="app.version" value="0.2" />
 	<property name="src.home" value="${basedir}/src" />
 	<property name="build.home" value="${basedir}/build" />
 	<property name="testsrc.home" value="${basedir}/testsrc" />
