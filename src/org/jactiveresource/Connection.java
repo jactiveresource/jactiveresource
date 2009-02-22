@@ -287,7 +287,7 @@ public class Connection {
         HttpProtocolParams.setVersion( params, HttpVersion.HTTP_1_1 );
         HttpProtocolParams.setContentCharset( params, "UTF-8" );
         // HttpProtocolParams.setUseExpectContinue( params, true );
-        HttpConnectionManagerParams.setMaxTotalConnections( params, 200 );
+        HttpConnectionManagerParams.setMaxTotalConnections( params, 400 );
         defaultParameters = params;
 
     }
