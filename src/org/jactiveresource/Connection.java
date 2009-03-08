@@ -55,11 +55,11 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.conn.ClientConnectionManager;
-import org.apache.http.conn.PlainSocketFactory;
-import org.apache.http.conn.Scheme;
-import org.apache.http.conn.SchemeRegistry;
-import org.apache.http.conn.SocketFactory;
-import org.apache.http.conn.params.HttpConnectionManagerParams;
+import org.apache.http.conn.scheme.PlainSocketFactory;
+import org.apache.http.conn.scheme.Scheme;
+import org.apache.http.conn.scheme.SchemeRegistry;
+import org.apache.http.conn.scheme.SocketFactory;
+import org.apache.http.conn.params.ConnManagerParams;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
@@ -227,12 +227,12 @@ public class Connection {
      */
     private HttpClient createHttpClient( URL site ) {
 
-        if ( this.connectionManager == null ) {
+        //if ( this.connectionManager == null ) {
             this.connectionManager = new ThreadSafeClientConnManager(
                 getParams(), supportedSchemes );
-        }
+        //}
 
-        if ( this.httpclient == null ) {
+        //if ( this.httpclient == null ) {
             this.httpclient = new DefaultHttpClient( this.connectionManager,
                 getParams() );
             String userinfo = site.getUserInfo();
@@ -245,7 +245,7 @@ public class Connection {
                             pos ), userinfo.substring( pos + 1 ) ) );
                 }
             }
-        }
+        //}
         return this.httpclient;
     }
 
@@ -287,7 +287,7 @@ public class Connection {
         HttpProtocolParams.setVersion( params, HttpVersion.HTTP_1_1 );
         HttpProtocolParams.setContentCharset( params, "UTF-8" );
         // HttpProtocolParams.setUseExpectContinue( params, true );
-        HttpConnectionManagerParams.setMaxTotalConnections( params, 400 );
+        ConnManagerParams.setMaxTotalConnections( params, 400 );
         defaultParameters = params;
 
     }
