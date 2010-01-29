@@ -33,7 +33,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 package org.jactiveresource.test;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 import org.jactiveresource.ReplacementRule;
 import org.junit.Test;

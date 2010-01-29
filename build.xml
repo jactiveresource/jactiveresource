@@ -50,18 +50,15 @@
 		<fileset dir="lib">
 			<include name="**/*.jar" />
 		</fileset>
-		<fileset dir="dist">
-			<include name="**/*.jar" />
-		</fileset>
+		<pathelement location="${build.home}" />
 	</path>
 
 	<path id="runtest.classpath">
 		<fileset dir="lib">
 			<include name="**/*.jar" />
 		</fileset>
-		<fileset dir="dist">
-			<include name="**/*.jar" />
-		</fileset>
+		<pathelement location="${build.home}" />
+		<pathelement location="${testbuild.home}" />
 	</path>
 
 	<!-- ==================== clean ==================================== -->
@@ -112,7 +109,7 @@
 
 	<!-- ==================== compiletests ================================== -->
 
-	<target name="compiletests" depends="dist" description="Compile test classes">
+	<target name="compiletests" depends="compile" description="Compile test classes">
 
 		<mkdir dir="${testbuild.home}" />
 		<javac srcdir="${testsrc.home}" destdir="${testbuild.home}" debug="${compile.debug}" deprecation="${compile.deprecation}" optimize="${compile.optimize}">

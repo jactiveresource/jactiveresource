@@ -40,7 +40,7 @@ import java.lang.annotation.*;
  * URL to use to find your collection.
  * 
  * If the list of people in our application can be retrieved by
- *   GET http://api.people.com:3000/people.xml
+ *   GET http://localhost:3000/people.xml
  *   
  * And you have a Person class, you could annotate the class with
  *   @CollectionName("people")
