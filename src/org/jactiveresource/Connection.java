@@ -51,15 +51,18 @@ import org.apache.http.HttpResponse;
 import org.apache.http.HttpVersion;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
 import org.apache.http.conn.ClientConnectionManager;
+import org.apache.http.conn.params.ConnManagerParams;
 import org.apache.http.conn.scheme.PlainSocketFactory;
 import org.apache.http.conn.scheme.Scheme;
 import org.apache.http.conn.scheme.SchemeRegistry;
 import org.apache.http.conn.scheme.SocketFactory;
-import org.apache.http.conn.params.ConnManagerParams;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
@@ -78,218 +81,283 @@ import com.thoughtworks.xstream.converters.extended.ISO8601DateConverter;
  */
 public class Connection {
 
-    private URL site;
-    private Format format;
-    private XStream xstream;
+	private URL site;
+	private Format format;
+	private XStream xstream;
 
-    private Format defaultFormat = Format.XML;
+	private Format defaultFormat = Format.XML;
 
-    private ClientConnectionManager connectionManager;
-    private DefaultHttpClient httpclient;
+	private ClientConnectionManager connectionManager;
+	private DefaultHttpClient httpclient;
 
-    public Connection( URL site ) {
-        this.site = site;
-        init( Format.XML );
-    }
+	private static final String CONTENT_TYPE = "Content-type";
 
-    public Connection( String site ) throws MalformedURLException {
-        this.site = new URL( site );
-        init( defaultFormat );
-    }
+	// TODO remove trailing slashes
+	public Connection(URL site) {
+		this.site = site;
+		init(Format.XML);
+	}
 
-    public Connection( URL site, Format format ) {
-        this.site = site;
-        init( format );
-    }
+	public Connection(String site) throws MalformedURLException {
+		this.site = new URL(site);
+		init(defaultFormat);
+	}
 
-    public Connection( String site, Format format )
-        throws MalformedURLException {
-        this.site = new URL( site );
-        init( format );
-    }
+	public Connection(URL site, Format format) {
+		this.site = site;
+		init(format);
+	}
 
-    public URL getSite() {
-        return this.site;
-    }
+	public Connection(String site, Format format) throws MalformedURLException {
+		this.site = new URL(site);
+		init(format);
+	}
 
-    public Format getFormat() {
-        return this.format;
-    }
+	public URL getSite() {
+		return this.site;
+	}
 
-    public XStream getXStream() {
-        return xstream;
-    }
+	public Format getFormat() {
+		return this.format;
+	}
 
-    /**
-     * register a resource with this connection
-     * 
-     * @param <T>
-     * @param clazz
-     */
-    public void registerResource( Class<? extends ActiveResource> clazz ) {
+	public XStream getXStream() {
+		return xstream;
+	}
 
-        String xmlname = singularize( dasherize( ActiveResource
-            .getCollectionName( clazz ) ) );
-        xstream.alias( xmlname, clazz );
+	/**
+	 * register a resource with this connection
+	 * 
+	 * @param <T>
+	 * @param clazz
+	 */
+	public void registerResource(Class<? extends ActiveResource> clazz) {
 
-        Field[] fields = clazz.getDeclaredFields();
-        for ( Field field : fields ) {
-            xmlname = dasherize( underscore( field.getName() ) );
-            xstream.aliasField( xmlname, clazz, field.getName() );
-        }
+		String xmlname = singularize(dasherize(ActiveResource
+				.getCollectionName(clazz)));
+		xstream.alias(xmlname, clazz);
 
-        // xstream.processAnnotations( clazz );
+		Field[] fields = clazz.getDeclaredFields();
+		for (Field field : fields) {
+			xmlname = dasherize(underscore(field.getName()));
+			xstream.aliasField(xmlname, clazz, field.getName());
+		}
 
-    }
+		xstream.processAnnotations(clazz);
 
-    // "#{prefix(prefix_options)}#{collection_name}/#{id}.#{format.extension}#{
-    // query_string(query_options)}"
+	}
 
-    public String get( String url ) throws HttpException, IOException,
-        InterruptedException, URISyntaxException {
+	// "#{prefix(prefix_options)}#{collection_name}/#{id}.#{format.extension}#{
+	// query_string(query_options)}"
 
-        HttpClient client = createHttpClient( this.getSite() );
-        HttpGet request = new HttpGet( this.getSite().toString() + url );
-        HttpEntity entity = null;
-        try {
-            HttpResponse response = client.execute( request );
-            checkStatus( response );
-            entity = response.getEntity();
-            StringBuffer sb = new StringBuffer();
-            BufferedReader reader = new BufferedReader( new InputStreamReader(
-                entity.getContent() ) );
+	public String get(String url) throws HttpException, IOException,
+			InterruptedException, URISyntaxException {
 
-            int c;
-            while ( ( c = reader.read() ) != -1 )
-                sb.append( (char) c );
+		HttpClient client = createHttpClient(this.getSite());
+		HttpGet request = new HttpGet(this.getSite().toString() + url);
+		HttpEntity entity = null;
+		try {
+			HttpResponse response = client.execute(request);
+			checkStatus(response);
+			entity = response.getEntity();
+			StringBuffer sb = new StringBuffer();
+			BufferedReader reader = new BufferedReader(new InputStreamReader(
+					entity.getContent()));
 
-            return sb.toString();
-        } finally {
-            // if there is no entity, the connection is already released
-            if ( entity != null )
-                entity.consumeContent(); // release connection gracefully
-        }
-    }
+			int c;
+			while ((c = reader.read()) != -1)
+				sb.append((char) c);
 
-    public BufferedReader getStream( String url ) throws HttpException,
-        IOException, InterruptedException, URISyntaxException {
+			return sb.toString();
+		} finally {
+			// if there is no entity, the connection is already released
+			if (entity != null)
+				entity.consumeContent(); // release connection gracefully
+		}
+	}
 
-        HttpClient client = createHttpClient( this.getSite() );
-        HttpGet request = new HttpGet( this.getSite().toString() + url );
+	public BufferedReader getStream(String url) throws HttpException,
+			IOException, InterruptedException, URISyntaxException {
 
-        HttpEntity entity = null;
-        HttpResponse response = client.execute( request );
-        checkStatus( response );
-        entity = response.getEntity();
+		HttpClient client = createHttpClient(this.getSite());
+		HttpGet request = new HttpGet(this.getSite().toString() + url);
 
-        BufferedReader reader = new BufferedReader( new InputStreamReader(
-            entity.getContent() ) );
-        return reader;
-    }
+		HttpEntity entity = null;
+		HttpResponse response = client.execute(request);
+		checkStatus(response);
+		entity = response.getEntity();
 
-    public void put( String url, String body ) throws URISyntaxException,
-        HttpException, IOException, InterruptedException {
+		BufferedReader reader = new BufferedReader(new InputStreamReader(entity
+				.getContent()));
+		return reader;
+	}
 
-        HttpClient client = createHttpClient( this.getSite() );
-        HttpPut request = new HttpPut( this.getSite().toString() + url );
-        StringEntity entity = new StringEntity( body );
-        request.setEntity( entity );
-        HttpResponse response = client.execute( request );
-        checkStatus( response );
-    }
+	public void put(String url, String body, String contentType)
+			throws URISyntaxException, HttpException, IOException,
+			InterruptedException {
 
-    private final void checkStatus( HttpResponse response ) throws ClientError,
-        ServerError {
+		HttpClient client = createHttpClient(this.getSite());
+		HttpPut request = new HttpPut(this.getSite().toString() + url);
+		request.setHeader(CONTENT_TYPE, contentType);
+		StringEntity entity = new StringEntity(body);
+		request.setEntity(entity);
+		HttpResponse response = client.execute(request);
+		checkStatus(response);
+	}
 
-        int status = response.getStatusLine().getStatusCode();
-        if ( status == 400 )
-            throw new BadRequest();
-        else if ( status == 401 )
-            throw new UnauthorizedAccess();
-        else if ( status == 403 )
-            throw new ForbiddenAccess();
-        else if ( status == 404 )
-            throw new ResourceNotFound();
-        else if ( status == 405 )
-            throw new MethodNotAllowed();
-        else if ( status == 409 )
-            throw new ResourceConflict();
-        else if ( status == 422 )
-            throw new ResourceInvalid();
-        else if ( status >= 401 && status <= 499 )
-            throw new ClientError();
-        else if ( status >= 500 && status <= 599 )
-            throw new ServerError();
-    }
+	/**
+	 * 
+	 * @param url
+	 * @param body
+	 * @throws ClientProtocolException
+	 * @throws IOException
+	 * @throws ClientError
+	 * @throws ServerError
+	 */
+	public String post(String url, String body, String contentType)
+			throws ClientProtocolException, IOException, ClientError,
+			ServerError {
+		HttpClient client = createHttpClient(this.getSite());
+		HttpPost request = new HttpPost(this.getSite().toString() + url);
+		request.setHeader(CONTENT_TYPE, contentType);
+		StringEntity entity = new StringEntity(body);
+		request.setEntity(entity);
 
-    /*
-     * create or retrieve a cached HttpClient object
-     */
-    private HttpClient createHttpClient( URL site ) {
+		try {
+			HttpResponse response = client.execute(request);
+			checkStatus(response);
+			HttpEntity responseBody = response.getEntity();
+			StringBuffer sb = new StringBuffer();
+			BufferedReader reader = new BufferedReader(new InputStreamReader(
+					responseBody.getContent()));
 
-        //if ( this.connectionManager == null ) {
-            this.connectionManager = new ThreadSafeClientConnManager(
-                getParams(), supportedSchemes );
-        //}
+			int c;
+			while ((c = reader.read()) != -1)
+				sb.append((char) c);
 
-        //if ( this.httpclient == null ) {
-            this.httpclient = new DefaultHttpClient( this.connectionManager,
-                getParams() );
-            String userinfo = site.getUserInfo();
-            if ( userinfo != null ) {
-                int pos = userinfo.indexOf( ":" );
-                if ( pos > 0 ) {
-                    this.httpclient.getCredentialsProvider().setCredentials(
-                        new AuthScope( site.getHost(), site.getPort() ),
-                        new UsernamePasswordCredentials( userinfo.substring( 0,
-                            pos ), userinfo.substring( pos + 1 ) ) );
-                }
-            }
-        //}
-        return this.httpclient;
-    }
+			return sb.toString();
+		} finally {
+			// if there is no entity, the connection is already released
+			if (entity != null)
+				entity.consumeContent(); // release connection gracefully
+		}
+	}
 
-    private final HttpParams getParams() {
-        return defaultParameters;
-    }
+	/**
+	 * delete a resource on the server
+	 * 
+	 * @param url
+	 * @throws ClientError
+	 * @throws ServerError
+	 * @throws ClientProtocolException
+	 * @throws IOException
+	 */
+	public void delete(String url) throws ClientError, ServerError,
+			ClientProtocolException, IOException {
+		HttpClient client = createHttpClient(this.getSite());
+		HttpDelete request = new HttpDelete(this.getSite().toString() + url);
+		HttpResponse response = client.execute(request);
+		checkStatus(response);
+	}
 
-    /**
-     * The default parameters. Instantiated in {@link #init setup}.
-     */
-    private static HttpParams defaultParameters = null;
+	/**
+	 * check the status in the HTTP response and throw an appropriate exception
+	 * 
+	 * @param response
+	 * @throws ClientError
+	 * @throws ServerError
+	 */
+	private final void checkStatus(HttpResponse response) throws ClientError,
+			ServerError {
 
-    /**
-     * The scheme registry. Instantiated in {@link #init setup}.
-     */
-    private static SchemeRegistry supportedSchemes;
+		int status = response.getStatusLine().getStatusCode();
+		if (status == 400)
+			throw new BadRequest();
+		else if (status == 401)
+			throw new UnauthorizedAccess();
+		else if (status == 403)
+			throw new ForbiddenAccess();
+		else if (status == 404)
+			throw new ResourceNotFound();
+		else if (status == 405)
+			throw new MethodNotAllowed();
+		else if (status == 409)
+			throw new ResourceConflict();
+		else if (status == 422)
+			throw new ResourceInvalid();
+		else if (status >= 401 && status <= 499)
+			throw new ClientError();
+		else if (status >= 500 && status <= 599)
+			throw new ServerError();
+	}
 
-    private void init( Format format ) {
-        this.format = format;
-        // set up xstream
-        // final RailsConverter rc = new RailsConverter();
+	/*
+	 * create or retrieve a cached HttpClient object
+	 */
+	private HttpClient createHttpClient(URL site) {
 
-        // XStream xstream = new XStream(null, new XppDriver(), new
-        // ClassLoaderReference(new
-        // CompositeClassLoader()), null, rc, rc );
+		// if ( this.connectionManager == null ) {
+		this.connectionManager = new ThreadSafeClientConnManager(getParams(),
+				supportedSchemes);
+		// }
 
-        xstream = new XStream();
-        xstream.registerConverter( new ISO8601DateConverter() );
+		// if ( this.httpclient == null ) {
+		this.httpclient = new DefaultHttpClient(this.connectionManager,
+				getParams());
+		String userinfo = site.getUserInfo();
+		if (userinfo != null) {
+			int pos = userinfo.indexOf(":");
+			if (pos > 0) {
+				this.httpclient.getCredentialsProvider().setCredentials(
+						new AuthScope(site.getHost(), site.getPort()),
+						new UsernamePasswordCredentials(userinfo.substring(0,
+								pos), userinfo.substring(pos + 1)));
+			}
+		}
+		// }
+		return this.httpclient;
+	}
 
-        supportedSchemes = new SchemeRegistry();
+	private final HttpParams getParams() {
+		return defaultParameters;
+	}
 
-        // Register the "http" protocol scheme, it is required
-        // by the default operator to look up socket factories.
-        SocketFactory sf = PlainSocketFactory.getSocketFactory();
-        supportedSchemes.register( new Scheme( "http", sf, 80 ) );
+	/**
+	 * The default parameters. Instantiated in {@link #init setup}.
+	 */
+	private static HttpParams defaultParameters = null;
 
-        // prepare parameters
-        HttpParams params = new BasicHttpParams();
-        HttpProtocolParams.setVersion( params, HttpVersion.HTTP_1_1 );
-        HttpProtocolParams.setContentCharset( params, "UTF-8" );
-        // HttpProtocolParams.setUseExpectContinue( params, true );
-        ConnManagerParams.setMaxTotalConnections( params, 400 );
-        defaultParameters = params;
+	/**
+	 * The scheme registry. Instantiated in {@link #init setup}.
+	 */
+	private static SchemeRegistry supportedSchemes;
 
-    }
+	private void init(Format format) {
+		this.format = format;
+		// set up xstream
+		// final RailsConverter rc = new RailsConverter();
+
+		// XStream xstream = new XStream(null, new XppDriver(), new
+		// ClassLoaderReference(new
+		// CompositeClassLoader()), null, rc, rc );
+
+		xstream = new XStream();
+		xstream.registerConverter(new ISO8601DateConverter());
+
+		supportedSchemes = new SchemeRegistry();
+
+		// Register the "http" protocol scheme, it is required
+		// by the default operator to look up socket factories.
+		SocketFactory sf = PlainSocketFactory.getSocketFactory();
+		supportedSchemes.register(new Scheme("http", sf, 80));
+
+		// prepare parameters
+		HttpParams params = new BasicHttpParams();
+		HttpProtocolParams.setVersion(params, HttpVersion.HTTP_1_1);
+		HttpProtocolParams.setContentCharset(params, "UTF-8");
+		// HttpProtocolParams.setUseExpectContinue( params, true );
+		ConnManagerParams.setMaxTotalConnections(params, 400);
+		defaultParameters = params;
+	}
 
 }

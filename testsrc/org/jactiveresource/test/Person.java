@@ -31,7 +31,16 @@ POSSIBILITY OF SUCH DAMAGE.
 
  */
 
-package org.jactiveresource;
+package org.jactiveresource.test;
+
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.Date;
+
+import org.apache.http.HttpException;
+import org.jactiveresource.ActiveResource;
+import org.jactiveresource.Connection;
 
 /**
  * 
@@ -39,22 +48,69 @@ package org.jactiveresource;
  *          $LastChangedDate$
  * @author $LastChangedBy$
  */
-public enum Format {
-    XML(".xml", "text/xml");
+public class Person extends ActiveResource {
 
-    private final String extension;
-    private final String contentType;
-    
-    Format( String ext, String contentType ) {
-        this.extension = ext;
-        this.contentType = contentType;
-    }
+	public static Person find(Connection c, String id) throws HttpException,
+			IOException, InterruptedException, URISyntaxException {
 
-    public String extension() {
-        return extension;
-    }
-    
-    public String contentType() {
-    	return contentType;
-    }
+		return ActiveResource.find(Person.class, c, id);
+	}
+
+	public static ArrayList<Person> findAll(Connection c) throws HttpException,
+			IOException, InterruptedException, ClassNotFoundException,
+			URISyntaxException {
+
+		return ActiveResource.findAll(Person.class, c);
+	}
+
+	public static Boolean exists(Connection c, String id) {
+		return ActiveResource.exists(Person.class, c, id);
+	}
+	
+	private String id;
+	private String name;
+	private Date birthdate;
+	private Date createdAt;
+	private Date updatedAt;
+
+	public String getId() {
+		return id;
+	}
+
+	public void setId(String id) {
+		this.id = id;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public Date getBirthdate() {
+		return birthdate;
+	}
+
+	public void setBirthdate(Date birthdate) {
+		this.birthdate = birthdate;
+	}
+
+	public Date getCreatedAt() {
+		return createdAt;
+	}
+
+	public void setCreatedAt(Date createdAt) {
+		this.createdAt = createdAt;
+	}
+
+	public Date getUpdatedAt() {
+		return updatedAt;
+	}
+
+	public void setUpdatedAt(Date updatedAt) {
+		this.updatedAt = updatedAt;
+	}
+
 }
