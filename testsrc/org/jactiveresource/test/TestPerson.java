@@ -41,7 +41,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.Date;
 
-import org.jactiveresource.Connection;
+import org.jactiveresource.ResourceConnection;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -54,13 +54,13 @@ import org.junit.Test;
 
 public class TestPerson {
 
-    private Connection c;
+    private ResourceConnection c;
     private PersonFactory pf;
     private Person p;
     
     @Before
     public void setUp() throws Exception {
-        c = new Connection("http://localhost:3000");
+        c = new ResourceConnection("http://localhost:3000");
         pf = new PersonFactory(c);
     }
     

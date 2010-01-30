@@ -60,11 +60,11 @@ import com.thoughtworks.xstream.converters.extended.ISO8601DateConverter;
  */
 public abstract class ResourceFactory {
 
-	private Connection connection;
+	private ResourceConnection connection;
 	private Class<? extends ActiveResource> clazz;
 	private XStream xstream;
 
-	public ResourceFactory(Connection c, Class<? extends ActiveResource> clazz) {
+	public ResourceFactory(ResourceConnection c, Class<? extends ActiveResource> clazz) {
 		this.connection = c;
 		this.clazz = clazz;
 
@@ -99,7 +99,7 @@ public abstract class ResourceFactory {
 	public <T extends ActiveResource> T find(String id) throws HttpException,
 			IOException, InterruptedException, URISyntaxException {
 		String url = "/" + getCollectionName() + "/" + id
-				+ getFormat().extension();
+				+ getResourceFormat().extension();
 		return getOne(url);
 	}
 
@@ -115,7 +115,7 @@ public abstract class ResourceFactory {
 	public <T extends ActiveResource> ArrayList<T> findAll()
 			throws HttpException, IOException, InterruptedException,
 			URISyntaxException {
-		String url = "/" + getCollectionName() + getFormat().extension();
+		String url = "/" + getCollectionName() + getResourceFormat().extension();
 		return getMany(url);
 	}
 
@@ -128,7 +128,7 @@ public abstract class ResourceFactory {
 	 */
 	public boolean exists(String id) {
 		String url = "/" + getCollectionName() + "/" + id
-				+ getFormat().extension();
+				+ getResourceFormat().extension();
 		try {
 			connection.get(url);
 			return true;
@@ -168,9 +168,9 @@ public abstract class ResourceFactory {
 	 */
 	public void create(ActiveResource r) throws ClientProtocolException,
 			ClientError, ServerError, IOException {
-		String url = "/" + getCollectionName() + getFormat().extension();
+		String url = "/" + getCollectionName() + getResourceFormat().extension();
 		String xml = xstream.toXML(r);
-		String response = connection.post(url, xml, Format.XML.contentType());
+		String response = connection.post(url, xml, ResourceFormat.XML.contentType());
 
 		xstream.fromXML(response, r);
 		r.setFactory(this);
@@ -187,9 +187,9 @@ public abstract class ResourceFactory {
 	public void update(ActiveResource r) throws URISyntaxException,
 			HttpException, IOException, InterruptedException {
 		String url = "/" + getCollectionName() + "/" + r.getId()
-				+ getFormat().extension();
+				+ getResourceFormat().extension();
 		String xml = xstream.toXML(r);
-		connection.put(url, xml, getFormat().contentType());
+		connection.put(url, xml, getResourceFormat().contentType());
 	}
 
 	/**
@@ -204,7 +204,7 @@ public abstract class ResourceFactory {
 	public void delete(ActiveResource r) throws ClientError, ServerError,
 			ClientProtocolException, IOException {
 		String url = "/" + getCollectionName() + "/" + r.getId()
-				+ getFormat().extension();
+				+ getResourceFormat().extension();
 		connection.delete(url);
 	}
 
@@ -270,8 +270,8 @@ public abstract class ResourceFactory {
 	 * 
 	 * @return
 	 */
-	protected Format getFormat() {
-		return Format.XML;
+	protected ResourceFormat getResourceFormat() {
+		return ResourceFormat.XML;
 	}
 
 	/**

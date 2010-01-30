@@ -39,8 +39,22 @@ package org.jactiveresource;
  *          $LastChangedDate$
  * @author $LastChangedBy$
  */
-public interface ResourceConfiguration {
+public enum ResourceFormat {
+    XML(".xml", "text/xml");
 
-    public void registerResources( Connection c );
+    private final String extension;
+    private final String contentType;
+    
+    ResourceFormat( String ext, String contentType ) {
+        this.extension = ext;
+        this.contentType = contentType;
+    }
 
+    public String extension() {
+        return extension;
+    }
+    
+    public String contentType() {
+    	return contentType;
+    }
 }

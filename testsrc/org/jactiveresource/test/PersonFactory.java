@@ -33,7 +33,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
 package org.jactiveresource.test;
 
-import org.jactiveresource.Connection;
+import org.jactiveresource.ResourceConnection;
 import org.jactiveresource.ResourceFactory;
 
 /**
@@ -44,7 +44,7 @@ import org.jactiveresource.ResourceFactory;
  */
 public class PersonFactory extends ResourceFactory {
 
-	public PersonFactory(Connection c) {
+	public PersonFactory(ResourceConnection c) {
 		super(c, Person.class);
 	}
 

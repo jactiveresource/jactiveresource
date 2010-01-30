@@ -71,7 +71,7 @@ import org.apache.http.params.HttpProtocolParams;
  *          $LastChangedDate$
  * @author $LastChangedBy$
  */
-public class Connection {
+public class ResourceConnection {
 
 	private URL site;
 
@@ -81,22 +81,22 @@ public class Connection {
 	private static final String CONTENT_TYPE = "Content-type";
 
 	// TODO remove trailing slashes
-	public Connection(URL site) {
+	public ResourceConnection(URL site) {
 		this.site = site;
 		init();
 	}
 
-	public Connection(String site) throws MalformedURLException {
+	public ResourceConnection(String site) throws MalformedURLException {
 		this.site = new URL(site);
 		init();
 	}
 
-	public Connection(URL site, Format format) {
+	public ResourceConnection(URL site, ResourceFormat format) {
 		this.site = site;
 		init();
 	}
 
-	public Connection(String site, Format format) throws MalformedURLException {
+	public ResourceConnection(String site, ResourceFormat format) throws MalformedURLException {
 		this.site = new URL(site);
 		init();
 	}
