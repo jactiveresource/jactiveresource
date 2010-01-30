@@ -160,30 +160,13 @@ public abstract class ResourceFactory {
 
 	/**
 	 * 
-	 * @param <T>
 	 * @param r
-	 * @return
 	 * @throws ClientProtocolException
 	 * @throws ClientError
 	 * @throws ServerError
 	 * @throws IOException
 	 */
-	public <T extends ActiveResource> T create(ActiveResource r)
-			throws ClientProtocolException, ClientError, ServerError,
-			IOException {
-		String url = "/" + getCollectionName() + getFormat().extension();
-		String xml = xstream.toXML(r);
-		String response = connection.post(url, xml, Format.XML.contentType());
-
-		T obj = (T) xstream.fromXML(response);
-		obj.setFactory(this);
-		return obj;
-		// xstream.fromXML(response,r);
-		// r.setFactory(this);
-		// return r;
-	}
-
-	public void qqqcreate(ActiveResource r) throws ClientProtocolException,
+	public void create(ActiveResource r) throws ClientProtocolException,
 			ClientError, ServerError, IOException {
 		String url = "/" + getCollectionName() + getFormat().extension();
 		String xml = xstream.toXML(r);
@@ -209,6 +192,15 @@ public abstract class ResourceFactory {
 		connection.put(url, xml, getFormat().contentType());
 	}
 
+	/**
+	 * delete a resource
+	 * 
+	 * @param r
+	 * @throws ClientError
+	 * @throws ServerError
+	 * @throws ClientProtocolException
+	 * @throws IOException
+	 */
 	public void delete(ActiveResource r) throws ClientError, ServerError,
 			ClientProtocolException, IOException {
 		String url = "/" + getCollectionName() + "/" + r.getId()

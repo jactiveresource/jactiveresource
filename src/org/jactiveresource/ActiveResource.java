@@ -60,56 +60,51 @@ public abstract class ActiveResource {
 	}
 
 	/**
-	 * returns true if all of the following are true: - the resource was not
-	 * created from the server - the resource has not yet been saved to the
-	 * server
+	 * create a new resource
 	 * 
-	 * @return
-	 */
-	public boolean isNew() {
-		// TODO ticket:1
-		return true;
-	}
-
-	/**
-	 * TODO create if it hasn't been, update otherwise
-	 * 
-	 * @param c
-	 * @throws InterruptedException
-	 * @throws IOException
-	 * @throws HttpException
-	 * @throws URISyntaxException
-	 */
-	/*
-	 * public save();
-	 */
-
-	/**
-	 * save this object
-	 */
-	public void update() throws URISyntaxException, HttpException, IOException,
-			InterruptedException {
-		factory.update(this);
-	}
-
-	/**
-	 * 
-	 * @param <T>
-	 * @return
 	 * @throws ClientProtocolException
 	 * @throws ClientError
 	 * @throws ServerError
 	 * @throws IOException
 	 */
-	public <T extends ActiveResource> T create()
-			throws ClientProtocolException, ClientError, ServerError,
-			IOException {
-		return factory.create(this);
+	public void create() throws ClientProtocolException, ClientError,
+			ServerError, IOException {
+		factory.create(this);
 	}
 
-	public void qqqcreate() throws ClientProtocolException, ClientError,
-			ServerError, IOException {
-		factory.qqqcreate(this);
+	/**
+	 * save the resource
+	 * 
+	 * @throws URISyntaxException
+	 * @throws HttpException
+	 * @throws IOException
+	 * @throws InterruptedException
+	 */
+	public void update() throws URISyntaxException, HttpException, IOException,
+			InterruptedException {
+		factory.update(this);
+	}
+	
+	/**
+	 * create if it hasn't been, update otherwise
+	 * 
+	 * @param c
+	 * @throws IOException
+	 * @throws ClientProtocolException
+	 * @throws InterruptedException
+	 * @throws IOException
+	 * @throws InterruptedException
+	 * @throws HttpException
+	 * @throws URISyntaxException
+	 * @throws HttpException
+	 * @throws URISyntaxException
+	 */
+	public void save() throws ClientProtocolException, IOException,
+			URISyntaxException, HttpException, InterruptedException {
+		if (isNew())
+			factory.create(this);
+		else
+			factory.update(this);
 	}
 
 	/**
@@ -146,6 +141,17 @@ public abstract class ActiveResource {
 	public void destroy() throws ClientError, ServerError,
 			ClientProtocolException, IOException {
 		delete();
+	}
+
+	/**
+	 * returns true if all of the following are true: - the resource was not
+	 * created from the server - the resource has not yet been saved to the
+	 * server
+	 * 
+	 * @return
+	 */
+	public boolean isNew() {
+		return getId() == null;
 	}
 
 	public abstract String getId();

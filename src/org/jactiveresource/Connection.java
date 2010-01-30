@@ -33,14 +33,9 @@ POSSIBILITY OF SUCH DAMAGE.
 
 package org.jactiveresource;
 
-import static org.jactiveresource.Inflector.dasherize;
-import static org.jactiveresource.Inflector.singularize;
-import static org.jactiveresource.Inflector.underscore;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.lang.reflect.Field;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -70,9 +65,6 @@ import org.apache.http.params.BasicHttpParams;
 import org.apache.http.params.HttpParams;
 import org.apache.http.params.HttpProtocolParams;
 
-import com.thoughtworks.xstream.XStream;
-import com.thoughtworks.xstream.converters.extended.ISO8601DateConverter;
-
 /**
  * 
  * @version $LastChangedRevision$ <br>
@@ -82,9 +74,6 @@ import com.thoughtworks.xstream.converters.extended.ISO8601DateConverter;
 public class Connection {
 
 	private URL site;
-	private XStream xstream;
-
-	private Format defaultFormat = Format.XML;
 
 	private ClientConnectionManager connectionManager;
 	private DefaultHttpClient httpclient;

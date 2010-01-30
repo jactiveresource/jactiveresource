@@ -70,9 +70,7 @@ public class TestPerson {
         assertNull(p.getId());
         p.setName("King Tut");
         p.setBirthdate(new Date());
-        //p = p.create();
-        //pf.qqqcreate(p);
-        p.qqqcreate();
+        p.save();
                 
         String id = p.getId();
         assertEquals(p.getName(),"King Tut");
@@ -81,7 +79,7 @@ public class TestPerson {
         p = pf.find(id);
         assertEquals(p.getName(),"King Tut");
         p.setName("Alexander the Great");
-        p.update();
+        p.save();
         
         p = pf.find(id);
         assertEquals(p.getName(),"Alexander the Great");
