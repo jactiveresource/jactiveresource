@@ -192,6 +192,18 @@ public class Connection {
 		return reader;
 	}
 
+	/**
+	 * send an http put request to the server.  This is a bit unique because
+	 * there is no response returned from the server.
+	 * 
+	 * @param url
+	 * @param body
+	 * @param contentType
+	 * @throws URISyntaxException
+	 * @throws HttpException
+	 * @throws IOException
+	 * @throws InterruptedException
+	 */
 	public void put(String url, String body, String contentType)
 			throws URISyntaxException, HttpException, IOException,
 			InterruptedException {
@@ -206,6 +218,7 @@ public class Connection {
 	}
 
 	/**
+	 * send a post request, used to create a new resource
 	 * 
 	 * @param url
 	 * @param body

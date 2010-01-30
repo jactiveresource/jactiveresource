@@ -43,7 +43,6 @@ import java.util.ArrayList;
 import org.apache.http.HttpException;
 import org.apache.http.client.ClientProtocolException;
 import org.jactiveresource.annotation.CollectionName;
-import org.jactiveresource.test.Person;
 
 /**
  * an abstract class which you can subclass to easily connect to RESTful
@@ -209,10 +208,10 @@ public abstract class ActiveResource {
 	 * Connection connection, String id ) { }
 	 */
 
+	@SuppressWarnings("unchecked")
 	protected static <T extends ActiveResource> T deserialize(Class<T> clazz,
 			Connection c, String xml) {
-		T obj = (T) c.getXStream().fromXML(xml);
-		return obj;
+		return (T) c.getXStream().fromXML(xml);
 	}
 
 	/**
@@ -296,6 +295,7 @@ public abstract class ActiveResource {
 	 * @throws ServerError
 	 * @throws IOException
 	 */
+	@SuppressWarnings("unchecked")
 	public <T extends ActiveResource> T create(Connection c)
 			throws ClientProtocolException, ClientError, ServerError,
 			IOException {
