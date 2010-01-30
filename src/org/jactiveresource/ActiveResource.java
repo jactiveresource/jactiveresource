@@ -41,6 +41,7 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 
 import org.apache.http.HttpException;
+import org.apache.http.client.ClientProtocolException;
 import org.jactiveresource.annotation.CollectionName;
 
 /**
@@ -53,240 +54,301 @@ import org.jactiveresource.annotation.CollectionName;
  */
 public abstract class ActiveResource {
 
-    /**
-     * get the object with a given id
-     * 
-     * @param <T>
-     * @param clazz
-     * @param c
-     * @param id
-     * @return
-     * @throws HttpException
-     * @throws IOException
-     * @throws InterruptedException
-     * @throws URISyntaxException
-     */
-    protected static <T extends ActiveResource> T find( Class<T> clazz,
-        Connection c, String id ) throws HttpException, IOException,
-        InterruptedException, URISyntaxException {
+	/**
+	 * get the object with a given id
+	 * 
+	 * @param <T>
+	 * @param clazz
+	 * @param c
+	 * @param id
+	 * @return
+	 * @throws HttpException
+	 * @throws IOException
+	 * @throws InterruptedException
+	 * @throws URISyntaxException
+	 */
+	protected static <T extends ActiveResource> T find(Class<T> clazz,
+			Connection c, String id) throws HttpException, IOException,
+			InterruptedException, URISyntaxException {
 
-        String collection = getCollectionName( clazz );
-        String url = "/" + collection + "/" + id + c.getFormat().extension();
-        return getOne( clazz, c, url );
-    }
+		String collection = getCollectionName(clazz);
+		String url = "/" + collection + "/" + id + c.getFormat().extension();
+		return getOne(clazz, c, url);
+	}
 
-    /**
-     * get the url on a given connection, and try and deserialize one object
-     * from the response
-     * 
-     * @param <T>
-     * @param clazz
-     *        the type of object to try and deserialize
-     * @param c
-     *        the connection to use
-     * @param url
-     *        the url, including parameters, to get
-     * @return an object of type <T>
-     * @throws HttpException
-     * @throws IOException
-     * @throws InterruptedException
-     * @throws URISyntaxException
-     */
-    protected static <T extends ActiveResource> T getOne( Class<T> clazz,
-        Connection c, String url ) throws HttpException, IOException,
-        InterruptedException, URISyntaxException {
+	/**
+	 * get the url on a given connection, and try and deserialize one object
+	 * from the response
+	 * 
+	 * @param <T>
+	 * @param clazz
+	 *            the type of object to try and deserialize
+	 * @param c
+	 *            the connection to use
+	 * @param url
+	 *            the url, including parameters, to get
+	 * @return an object of type <T>
+	 * @throws HttpException
+	 * @throws IOException
+	 * @throws InterruptedException
+	 * @throws URISyntaxException
+	 */
+	protected static <T extends ActiveResource> T getOne(Class<T> clazz,
+			Connection c, String url) throws HttpException, IOException,
+			InterruptedException, URISyntaxException {
 
-        String xml = c.get( url );
-        return deserialize( clazz, c, xml );
-    }
+		String xml = c.get(url);
+		return deserialize(clazz, c, xml);
+	}
 
-    /**
-     * get all objects of the given type
-     * 
-     * @param <T>
-     * @param clazz
-     * @param c
-     * @return
-     * @throws HttpException
-     * @throws IOException
-     * @throws InterruptedException
-     * @throws URISyntaxException
-     */
-    protected static <T extends ActiveResource> ArrayList<T> findAll(
-        Class<T> clazz, Connection c ) throws HttpException, IOException,
-        InterruptedException, URISyntaxException {
+	/**
+	 * get all objects of the given type
+	 * 
+	 * @param <T>
+	 * @param clazz
+	 * @param c
+	 * @return
+	 * @throws HttpException
+	 * @throws IOException
+	 * @throws InterruptedException
+	 * @throws URISyntaxException
+	 */
+	protected static <T extends ActiveResource> ArrayList<T> findAll(
+			Class<T> clazz, Connection c) throws HttpException, IOException,
+			InterruptedException, URISyntaxException {
 
-        String collection = getCollectionName( clazz );
-        String url = "/" + collection + c.getFormat().extension();
-        return getMany( clazz, c, url );
-    }
+		String collection = getCollectionName(clazz);
+		String url = "/" + collection + c.getFormat().extension();
+		return getMany(clazz, c, url);
+	}
 
-    /**
-     * get the url on a given connection, and try and deserialize a list of
-     * objects from the response
-     * 
-     * @param <T>
-     * @param clazz
-     *        the type of objects to try and deserialize
-     * @param c
-     *        the connection to use
-     * @param url
-     *        the url, including parameters, to get
-     * @return an ArrayList of objects of type <T>
-     * @throws HttpException
-     * @throws IOException
-     * @throws InterruptedException
-     * @throws URISyntaxException
-     */
-    @SuppressWarnings("unchecked")
-    protected static <T extends ActiveResource> ArrayList<T> getMany(
-        Class<T> clazz, Connection c, String url ) throws HttpException,
-        IOException, InterruptedException, URISyntaxException {
+	/**
+	 * get the url on a given connection, and try and deserialize a list of
+	 * objects from the response
+	 * 
+	 * @param <T>
+	 * @param clazz
+	 *            the type of objects to try and deserialize
+	 * @param c
+	 *            the connection to use
+	 * @param url
+	 *            the url, including parameters, to get
+	 * @return an ArrayList of objects of type <T>
+	 * @throws HttpException
+	 * @throws IOException
+	 * @throws InterruptedException
+	 * @throws URISyntaxException
+	 */
+	@SuppressWarnings("unchecked")
+	protected static <T extends ActiveResource> ArrayList<T> getMany(
+			Class<T> clazz, Connection c, String url) throws HttpException,
+			IOException, InterruptedException, URISyntaxException {
 
-        BufferedReader xml = c.getStream( url );
-        ObjectInputStream in = c.getXStream().createObjectInputStream( xml );
+		BufferedReader xml = c.getStream(url);
+		ObjectInputStream in = c.getXStream().createObjectInputStream(xml);
 
-        ArrayList<T> list = new ArrayList<T>();
-        while ( true ) {
-            try {
-                list.add( (T) in.readObject() );
-            } catch ( EOFException e ) {
-                break;
-            } catch ( ClassNotFoundException e ) {
-                // do nothing
-            }
-        }
-        in.close();
-        return list;
-    }
+		ArrayList<T> list = new ArrayList<T>();
+		while (true) {
+			try {
+				list.add((T) in.readObject());
+			} catch (EOFException e) {
+				break;
+			} catch (ClassNotFoundException e) {
+				// do nothing
+			}
+		}
+		in.close();
+		return list;
+	}
 
-    /**
-     * A static method that returns whether a resource exists or not.
-     * 
-     * @param <T>
-     * @param clazz
-     *        the class representing the resource you want to check
-     * @param c
-     *        the connection to check against
-     * @param id
-     *        the id you want to see if exists
-     * @return true if the resource exists, false if it does not
-     */
-    protected static <T extends ActiveResource> boolean exists( Class<T> clazz,
-        Connection c, String id ) {
-        String collection = getCollectionName( clazz );
-        String u = "/" + collection + "/" + id + c.getFormat().extension();
-        try {
-            c.get( u );
-            return true;
-        } catch ( HttpException e ) {
-            return false;
-        } catch ( IOException e ) {
-            return false;
-        } catch ( InterruptedException e ) {
-            return false;
-        } catch ( URISyntaxException e ) {
-            return false;
-        }
-    }
+	/**
+	 * A static method that returns whether a resource exists or not. This is
+	 * meant to be utilized by our subclasses. For example, if If you create a
+	 * Person class like this:
+	 * 
+	 * public class Person extends ActiveResource { public static Boolean
+	 * exists(Connection c, String id) { return
+	 * ActiveResource.exists(Person.class, c, id); } }
+	 * 
+	 * Now you can use:
+	 * 
+	 * Person.exists(c,"1")
+	 * 
+	 * To see whether a person with a particular id exists or not.
+	 * 
+	 * @param <T>
+	 * @param clazz
+	 *            the class representing the resource you want to check
+	 * @param c
+	 *            the connection to check against
+	 * @param id
+	 *            the id you want to see if exists
+	 * @return true if the resource exists, false if it does not
+	 */
+	protected static <T extends ActiveResource> boolean exists(Class<T> clazz,
+			Connection c, String id) {
+		String collection = getCollectionName(clazz);
+		String u = "/" + collection + "/" + id + c.getFormat().extension();
+		try {
+			c.get(u);
+			return true;
+		} catch (HttpException e) {
+			return false;
+		} catch (IOException e) {
+			return false;
+		} catch (InterruptedException e) {
+			return false;
+		} catch (URISyntaxException e) {
+			return false;
+		}
+	}
 
-    /*
-     * protected static <T extends ActiveResource> void delete( Class<T> clazz,
-     * Connection connection, String id ) { }
-     */
+	/*
+	 * protected static <T extends ActiveResource> void delete( Class<T> clazz,
+	 * Connection connection, String id ) { }
+	 */
 
-    @SuppressWarnings("unchecked")
-    protected static <T extends ActiveResource> T deserialize( Class<T> clazz,
-        Connection c, String xml ) {
-        return (T) c.getXStream().fromXML( xml );
-    }
+	@SuppressWarnings("unchecked")
+	protected static <T extends ActiveResource> T deserialize(Class<T> clazz,
+			Connection c, String xml) {
+		return (T) c.getXStream().fromXML(xml);
+	}
 
-    /**
-     * guess the collection name for a particular class. Can be overridden by
-     * with a CollectionName annotation.
-     * 
-     * @param className
-     * @return
-     */
-    protected static String getCollectionName(
-        Class<? extends ActiveResource> clazz ) {
-        String name;
+	/**
+	 * guess the collection name for a particular class. Can be overridden by
+	 * with a CollectionName annotation.
+	 * 
+	 * @param className
+	 * @return
+	 */
+	protected static String getCollectionName(
+			Class<? extends ActiveResource> clazz) {
+		String name;
 
-        CollectionName cn = clazz.getAnnotation( CollectionName.class );
-        if ( cn != null ) {
-            name = cn.value();
-        } else {
-            name = Inflector.underscore( clazz.getSimpleName() );
-            name = Inflector.pluralize( name );
-        }
-        return name;
-    }
+		CollectionName cn = clazz.getAnnotation(CollectionName.class);
+		if (cn != null) {
+			name = cn.value();
+		} else {
+			name = Inflector.underscore(clazz.getSimpleName());
+			name = Inflector.pluralize(name);
+		}
+		return name;
+	}
 
-    /**
-     * guess the collection name for an instance of a subclass of
-     * ActiveResource. Calls the static getCollectionName() method.
-     * 
-     * @return
-     */
-    protected String getCollectionName() {
-        return ActiveResource.getCollectionName( this.getClass() );
-    }
+	/**
+	 * guess the collection name for an instance of a subclass of
+	 * ActiveResource. Calls the static getCollectionName() method.
+	 * 
+	 * @return
+	 */
+	protected String getCollectionName() {
+		return ActiveResource.getCollectionName(this.getClass());
+	}
 
-    /**
-     * serialize this object
-     * 
-     * @param c
-     * @return
-     */
-    public String serialize( Connection c ) {
-        return c.getXStream().toXML( this );
-    }
+	/**
+	 * serialize this object
+	 * 
+	 * @param c
+	 * @return
+	 */
+	public String serialize(Connection c) {
+		return c.getXStream().toXML(this);
+	}
 
-    public boolean isNew() {
-        // TODO ticket:1
-        return true;
-    }
+	/**
+	 * returns true if all of the following are true: - the resource was not
+	 * created from the server - the resource has not yet been saved to the
+	 * server
+	 * 
+	 * @return
+	 */
+	public boolean isNew() {
+		// TODO ticket:1
+		return true;
+	}
 
-    /**
-     * save this resource to the specified connection
-     * 
-     * @param c
-     * @throws InterruptedException
-     * @throws IOException
-     * @throws HttpException
-     * @throws URISyntaxException
-     */
-    public void save( Connection c ) throws URISyntaxException, HttpException,
-        IOException, InterruptedException {
-        if ( isNew() )
-            create( c );
-        else
-            update( c );
-    }
+	/**
+	 * save this resource to the specified connection
+	 * 
+	 * @param c
+	 * @throws InterruptedException
+	 * @throws IOException
+	 * @throws HttpException
+	 * @throws URISyntaxException
+	 */
+	/*
+	public <T extends ActiveResource> T save(Connection c) throws URISyntaxException, HttpException,
+			IOException, InterruptedException {
+		if (isNew())
+			return create(c);
+		else
+			return update(c);
+	}*/
 
-    public void create( Connection c ) {
-        // do a post
-    }
+	/**
+	 * create a new resource by serializing this object and posting it to the
+	 * service referenced by Connection c
+	 * 
+	 * @param c
+	 * @throws ClientProtocolException
+	 * @throws ClientError
+	 * @throws ServerError
+	 * @throws IOException
+	 */
+	@SuppressWarnings("unchecked")
+	public <T extends ActiveResource> T create(Connection c)
+			throws ClientProtocolException, ClientError, ServerError,
+			IOException {
+		String collection = getCollectionName(this.getClass());
+		String u = "/" + collection + c.getFormat().extension();
+		String xml = serialize(c);
+		String response = c.post(u, xml, Format.XML.contentType());
+		return (T) c.getXStream().fromXML(response);
+	}
 
-    public void update( Connection c ) throws URISyntaxException,
-        HttpException, IOException, InterruptedException {
-        // do a put
-        String collection = getCollectionName( this.getClass() );
-        String u = "/" + collection + "/" + this.getId()
-            + c.getFormat().extension();
-        String xml = serialize( c );
-        c.put( u, xml );
-    }
+	public void update(Connection c)
+			throws URISyntaxException, HttpException, IOException,
+			InterruptedException {
+		// do a put
+		String collection = getCollectionName(this.getClass());
+		String u = "/" + collection + "/" + this.getId()
+				+ c.getFormat().extension();
+		String xml = serialize(c);
+		c.put(u, xml, Format.XML.contentType());
+	}
 
-    public void delete( Connection c ) {
+	/**
+	 * delete
+	 * 
+	 * @param c
+	 * @throws IOException
+	 * @throws ClientProtocolException
+	 * @throws ServerError
+	 * @throws ClientError
+	 */
+	public void delete(Connection c) throws ClientError, ServerError,
+			ClientProtocolException, IOException {
+		String collection = getCollectionName(this.getClass());
+		String u = "/" + collection + "/" + this.getId()
+				+ c.getFormat().extension();
+		c.delete(u);
+	}
 
-    }
+	/**
+	 * synonym for delete
+	 * 
+	 * @param c
+	 * @throws IOException
+	 * @throws ClientProtocolException
+	 * @throws ServerError
+	 * @throws ClientError
+	 */
+	public void destroy(Connection c) throws ClientError, ServerError,
+			ClientProtocolException, IOException {
+		delete(c);
+	}
 
-    public void destroy( Connection c ) {
-        delete( c );
-    }
+	public abstract String getId();
 
-    public abstract String getId();
-
-    public abstract void setId( String id );
+	public abstract void setId(String id);
 }

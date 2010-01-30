@@ -29,9 +29,17 @@ CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 
- */
+*/
 
-package org.jactiveresource;
+package org.jactiveresource.test;
+
+import static org.junit.Assert.*;
+
+import java.util.Date;
+
+import org.jactiveresource.Connection;
+import org.junit.Before;
+import org.junit.Test;
 
 /**
  * 
@@ -39,22 +47,55 @@ package org.jactiveresource;
  *          $LastChangedDate$
  * @author $LastChangedBy$
  */
-public enum Format {
-    XML(".xml", "text/xml");
 
-    private final String extension;
-    private final String contentType;
-    
-    Format( String ext, String contentType ) {
-        this.extension = ext;
-        this.contentType = contentType;
+public class TestPerson {
+
+    private Connection c;
+
+    @Before
+    public void setUp() throws Exception {
+        c = new Connection("http://localhost:3000");
+        c.registerResource( Person.class );
     }
 
-    public String extension() {
-        return extension;
+    @Test
+    public void testBasicOperations() throws Exception {
+        Person p = new Person();
+        p.setName("King Tut");
+        p.setBirthdate(new Date());
+        p = p.create(c);
+        String id = p.getId();
+        assertEquals(p.getName(),"King Tut");
+        assertNotNull("No id present",p.getId());
+        
+        p = Person.find(c, id);
+        assertEquals(p.getName(),"King Tut");
+        p.setName("Alexander the Great");
+        p.update(c);
+        
+        p = Person.find(c, id);
+        assertEquals(p.getName(),"Alexander the Great");
+        
+        assertTrue(Person.exists(c, id));
+        p.delete(c);
+        assertFalse(Person.exists(c, id));
     }
     
-    public String contentType() {
-    	return contentType;
+    /*@Test
+    public void testFind() throws Exception {
+    	Person p = Person.find(c,"1");
+    	assertEquals("King Tut",p.getName());
     }
+    
+    @Test
+    public void testExists() throws Exception {
+    	assertEquals(true,Person.exists(c,"1"));
+    }
+    
+    @Test
+    public void testUpdate() throws Exception {
+    	Person p = Person.find(c,"1");
+    	p.setName("Alexander the Great");
+    	p.update(c);
+    }*/
 }
