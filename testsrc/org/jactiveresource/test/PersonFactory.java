@@ -1,6 +1,6 @@
 /*
 
-Copyright (c) 2008, Jared Crapo All rights reserved. 
+Copyright (c) 2010, Jared Crapo All rights reserved. 
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions
@@ -29,13 +29,12 @@ CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 
- */
+*/
 
 package org.jactiveresource.test;
 
-import java.util.Date;
-
-import org.jactiveresource.ActiveResource;
+import org.jactiveresource.Connection;
+import org.jactiveresource.ResourceFactory;
 
 /**
  * 
@@ -43,52 +42,10 @@ import org.jactiveresource.ActiveResource;
  *          $LastChangedDate$
  * @author $LastChangedBy$
  */
-public class Person extends ActiveResource {
+public class PersonFactory extends ResourceFactory {
 
-	private String id;
-	private String name;
-	private Date birthdate;
-	private Date createdAt;
-	private Date updatedAt;
-
-	public String getId() {
-		return id;
-	}
-
-	public void setId(String id) {
-		this.id = id;
-	}
-
-	public String getName() {
-		return name;
-	}
-
-	public void setName(String name) {
-		this.name = name;
-	}
-
-	public Date getBirthdate() {
-		return birthdate;
-	}
-
-	public void setBirthdate(Date birthdate) {
-		this.birthdate = birthdate;
-	}
-
-	public Date getCreatedAt() {
-		return createdAt;
-	}
-
-	public void setCreatedAt(Date createdAt) {
-		this.createdAt = createdAt;
-	}
-
-	public Date getUpdatedAt() {
-		return updatedAt;
-	}
-
-	public void setUpdatedAt(Date updatedAt) {
-		this.updatedAt = updatedAt;
+	public PersonFactory(Connection c) {
+		super(c, Person.class);
 	}
 
 }

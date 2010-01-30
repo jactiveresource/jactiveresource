@@ -82,7 +82,6 @@ import com.thoughtworks.xstream.converters.extended.ISO8601DateConverter;
 public class Connection {
 
 	private URL site;
-	private Format format;
 	private XStream xstream;
 
 	private Format defaultFormat = Format.XML;
@@ -95,60 +94,27 @@ public class Connection {
 	// TODO remove trailing slashes
 	public Connection(URL site) {
 		this.site = site;
-		init(Format.XML);
+		init();
 	}
 
 	public Connection(String site) throws MalformedURLException {
 		this.site = new URL(site);
-		init(defaultFormat);
+		init();
 	}
 
 	public Connection(URL site, Format format) {
 		this.site = site;
-		init(format);
+		init();
 	}
 
 	public Connection(String site, Format format) throws MalformedURLException {
 		this.site = new URL(site);
-		init(format);
+		init();
 	}
 
 	public URL getSite() {
 		return this.site;
 	}
-
-	public Format getFormat() {
-		return this.format;
-	}
-
-	public XStream getXStream() {
-		return xstream;
-	}
-
-	/**
-	 * register a resource with this connection
-	 * 
-	 * @param <T>
-	 * @param clazz
-	 */
-	public void registerResource(Class<? extends ActiveResource> clazz) {
-
-		String xmlname = singularize(dasherize(ActiveResource
-				.getCollectionName(clazz)));
-		xstream.alias(xmlname, clazz);
-
-		Field[] fields = clazz.getDeclaredFields();
-		for (Field field : fields) {
-			xmlname = dasherize(underscore(field.getName()));
-			xstream.aliasField(xmlname, clazz, field.getName());
-		}
-
-		xstream.processAnnotations(clazz);
-
-	}
-
-	// "#{prefix(prefix_options)}#{collection_name}/#{id}.#{format.extension}#{
-	// query_string(query_options)}"
 
 	public String get(String url) throws HttpException, IOException,
 			InterruptedException, URISyntaxException {
@@ -345,18 +311,7 @@ public class Connection {
 	 */
 	private static SchemeRegistry supportedSchemes;
 
-	private void init(Format format) {
-		this.format = format;
-		// set up xstream
-		// final RailsConverter rc = new RailsConverter();
-
-		// XStream xstream = new XStream(null, new XppDriver(), new
-		// ClassLoaderReference(new
-		// CompositeClassLoader()), null, rc, rc );
-
-		xstream = new XStream();
-		xstream.registerConverter(new ISO8601DateConverter());
-
+	private void init() {
 		supportedSchemes = new SchemeRegistry();
 
 		// Register the "http" protocol scheme, it is required
@@ -373,4 +328,7 @@ public class Connection {
 		defaultParameters = params;
 	}
 
+	public String toString() {
+		return site.toString();
+	}
 }

@@ -33,7 +33,11 @@ POSSIBILITY OF SUCH DAMAGE.
 
 package org.jactiveresource.test;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import java.util.Date;
 
@@ -51,34 +55,40 @@ import org.junit.Test;
 public class TestPerson {
 
     private Connection c;
-
+    private PersonFactory pf;
+    private Person p;
+    
     @Before
     public void setUp() throws Exception {
         c = new Connection("http://localhost:3000");
-        c.registerResource( Person.class );
+        pf = new PersonFactory(c);
     }
-
+    
     @Test
     public void testBasicOperations() throws Exception {
-        Person p = new Person();
+    	p = pf.instantiate();
+        assertNull(p.getId());
         p.setName("King Tut");
         p.setBirthdate(new Date());
-        p = p.create(c);
+        //p = p.create();
+        //pf.qqqcreate(p);
+        p.qqqcreate();
+                
         String id = p.getId();
         assertEquals(p.getName(),"King Tut");
         assertNotNull("No id present",p.getId());
         
-        p = Person.find(c, id);
+        p = pf.find(id);
         assertEquals(p.getName(),"King Tut");
         p.setName("Alexander the Great");
-        p.update(c);
+        p.update();
         
-        p = Person.find(c, id);
+        p = pf.find(id);
         assertEquals(p.getName(),"Alexander the Great");
         
-        assertTrue(Person.exists(c, id));
-        p.delete(c);
-        assertFalse(Person.exists(c, id));
+        assertTrue(pf.exists(id));
+        p.delete();
+        assertFalse(pf.exists(id));
     }
     
     /*@Test
