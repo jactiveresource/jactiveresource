@@ -57,7 +57,7 @@ public class Inflector {
      * replace underscores with dashes in a string
      * 
      * @param word
-     * @return
+     * @return a string with no underscores
      */
     public static String dasherize( String word ) {
         Matcher m = underscorePattern.matcher( word );
@@ -70,7 +70,7 @@ public class Inflector {
      * replace dashes with underscores in a string
      * 
      * @param word
-     * @return
+     * @return a string with no dashes
      */
     public static String underscorize( String word ) {
         Matcher m = dashPattern.matcher( word );
@@ -86,11 +86,17 @@ public class Inflector {
     /**
      * The reverse of camelize. Makes an underscored form from the expression in
      * the string.
-     * 
+     * <p>
      * Changes '::' to '/' to convert namespaces to paths.
-     * 
+     * <p>
+     * The following expressions are all true:
+     * <pre>
+     * {@code
+     * Inflector.underscore("LongClassName") == "long_class_name"
+     * Inflector.underscore("Person") == "person"
+     * }
      * @param word
-     * @return
+     * @return word with underscores
      */
     public static String underscore( String word ) {
 
@@ -112,10 +118,10 @@ public class Inflector {
     }
 
     /**
-     * return the plural form of word
+     * return the plural form of a word
      * 
      * @param word
-     * @return
+     * @return plural form
      */
     public static String pluralize( String word ) {
         String out = new String( word );
@@ -132,10 +138,10 @@ public class Inflector {
     }
 
     /**
-     * return the singular form of word
+     * return the singular form of a word
      * 
      * @param word
-     * @return
+     * @return singular form
      */
     public static String singularize( String word ) {
         String out = new String( word );

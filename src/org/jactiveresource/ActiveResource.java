@@ -86,18 +86,14 @@ public abstract class ActiveResource {
 	}
 
 	/**
-	 * create if it hasn't been, update otherwise
+	 * create the record if it doesn't exist on the server, or update it if it
+	 * already exists
 	 * 
-	 * @param c
-	 * @throws IOException
 	 * @throws ClientProtocolException
-	 * @throws InterruptedException
 	 * @throws IOException
+	 * @throws URISyntaxException
+	 * @throws HttpException
 	 * @throws InterruptedException
-	 * @throws HttpException
-	 * @throws URISyntaxException
-	 * @throws HttpException
-	 * @throws URISyntaxException
 	 */
 	public void save() throws ClientProtocolException, IOException,
 			URISyntaxException, HttpException, InterruptedException {
@@ -118,17 +114,12 @@ public abstract class ActiveResource {
 	}
 
 	/**
-	 * delete
+	 * delete this resource from the server
 	 * 
-	 * @param c
-	 * @throws IOException
-	 * @throws ClientProtocolException
-	 * @throws ServerError
 	 * @throws ClientError
-	 * @throws IOException
-	 * @throws ClientProtocolException
 	 * @throws ServerError
-	 * @throws ClientError
+	 * @throws ClientProtocolException
+	 * @throws IOException
 	 */
 	public void delete() throws ClientError, ServerError,
 			ClientProtocolException, IOException {
@@ -138,15 +129,10 @@ public abstract class ActiveResource {
 	/**
 	 * synonym for delete
 	 * 
-	 * @param c
-	 * @throws IOException
-	 * @throws ClientProtocolException
-	 * @throws ServerError
 	 * @throws ClientError
-	 * @throws IOException
-	 * @throws ClientProtocolException
 	 * @throws ServerError
-	 * @throws ClientError
+	 * @throws ClientProtocolException
+	 * @throws IOException
 	 */
 	public void destroy() throws ClientError, ServerError,
 			ClientProtocolException, IOException {
@@ -154,11 +140,13 @@ public abstract class ActiveResource {
 	}
 
 	/**
-	 * returns true if all of the following are true: - the resource was not
-	 * created from the server - the resource has not yet been saved to the
-	 * server
+	 * returns true if all of the following are true:
+	 * <ul>
+	 * <li>the resource was not created from the server</li>
+	 * <li>the resource has not yet been saved to the server</li>
+	 * </ul>
 	 * 
-	 * @return
+	 * @return true if the record hasn't been saved yet
 	 */
 	public boolean isNew() {
 		return getId() == null;

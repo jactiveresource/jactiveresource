@@ -161,9 +161,14 @@ public class ResourceConnection {
 	}
 
 	/**
+	 * append url to the site this
+	 * {@link ResourceConnection#ResourceConnection(String) ResourceConnection}
+	 * was created with, issue a HTTP GET request, and return the body of the
+	 * HTTP response
 	 * 
 	 * @param url
-	 * @return
+	 *            the url to retrieve
+	 * @return a string containing the body of the response
 	 * @throws HttpException
 	 * @throws IOException
 	 * @throws InterruptedException
@@ -196,9 +201,13 @@ public class ResourceConnection {
 	}
 
 	/**
+	 * append url to the site this
+	 * {@link ResourceConnection#ResourceConnection(String) ResourceConnection}
+	 * was created with, issue a HTTP GET request, and return a buffered input
+	 * stream of the body of the HTTP response
 	 * 
 	 * @param url
-	 * @return
+	 * @return a buffered stream of the response
 	 * @throws HttpException
 	 * @throws IOException
 	 * @throws InterruptedException

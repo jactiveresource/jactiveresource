@@ -88,10 +88,13 @@ public class ResourceFactory {
 	}
 
 	/**
+	 * Retrieve the resource identified by <code>id</code>, and return a new
+	 * instance of the appropriate object
 	 * 
 	 * @param <T>
 	 * @param id
-	 * @return
+	 *            the primary identifier
+	 * @return a new instance of a subclass of @{link ActiveResource}
 	 * @throws URISyntaxException
 	 * @throws InterruptedException
 	 * @throws IOException
@@ -105,9 +108,10 @@ public class ResourceFactory {
 	}
 
 	/**
+	 * Retrieve an ordered list of all resources available at the service
 	 * 
 	 * @param <T>
-	 * @return
+	 * @return a list of objects
 	 * @throws HttpException
 	 * @throws IOException
 	 * @throws InterruptedException
@@ -149,7 +153,7 @@ public class ResourceFactory {
 	 * create a new instance of a resource
 	 * 
 	 * @param <T>
-	 * @return
+	 * @return a new instance of a resource
 	 * @throws InstantiationException
 	 * @throws IllegalAccessException
 	 */
@@ -255,7 +259,7 @@ public class ResourceFactory {
 	 * 
 	 * @param <T>
 	 * @param url
-	 * @return
+	 * @return a new object representing the data returned by the url
 	 * @throws HttpException
 	 * @throws IOException
 	 * @throws InterruptedException
@@ -276,21 +280,21 @@ public class ResourceFactory {
 	 * 
 	 * @param <T>
 	 * @param url
-	 * @param r
-	 * @return
+	 * @param resource the object to update
+	 * @return the updated resource object you passed in
 	 * @throws HttpException
 	 * @throws IOException
 	 * @throws InterruptedException
 	 * @throws URISyntaxException
 	 */
-	protected <T extends ActiveResource> T getOne(String url, T r)
+	protected <T extends ActiveResource> T getOne(String url, T resource)
 			throws HttpException, IOException, InterruptedException,
 			URISyntaxException {
 
 		String data = connection.get(url);
-		xstream.fromXML(data, r);
-		r.setFactory(this);
-		return r;
+		xstream.fromXML(data, resource);
+		resource.setFactory(this);
+		return resource;
 	}
 
 	/**
@@ -298,7 +302,7 @@ public class ResourceFactory {
 	 * 
 	 * @param <T>
 	 * @param url
-	 * @return
+	 * @return an array of objects
 	 * @throws HttpException
 	 * @throws IOException
 	 * @throws InterruptedException
@@ -329,7 +333,7 @@ public class ResourceFactory {
 	 * 
 	 * You can override this in your subclasses to change it
 	 * 
-	 * @return
+	 * @return a resource format
 	 */
 	protected ResourceFormat getResourceFormat() {
 		return ResourceFormat.XML;
@@ -343,9 +347,7 @@ public class ResourceFactory {
 	 * knows how to create. If there is no annotation, then it guesses based on
 	 * the name of the class.
 	 * 
-	 * If you want to be declarative, then override this method
-	 * 
-	 * @return
+	 * @return the name of the collection
 	 */
 	protected String getCollectionName() {
 		String name;
