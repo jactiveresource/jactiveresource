@@ -42,6 +42,7 @@ import static org.junit.Assert.assertTrue;
 import java.util.Date;
 
 import org.jactiveresource.ResourceConnection;
+import org.jactiveresource.ResourceFactory;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -55,13 +56,16 @@ import org.junit.Test;
 public class TestPerson {
 
     private ResourceConnection c;
-    private PersonFactory pf;
+    //private PersonFactory pf;
+    private ResourceFactory pf;
     private Person p;
     
     @Before
     public void setUp() throws Exception {
         c = new ResourceConnection("http://localhost:3000");
-        pf = new PersonFactory(c);
+        c.setUsername("Ace");
+        c.setPassword("newenglandclamchowder");
+        pf = new ResourceFactory(c,Person.class);
     }
     
     @Test
@@ -69,7 +73,8 @@ public class TestPerson {
     	p = pf.instantiate();
         assertNull(p.getId());
         p.setName("King Tut");
-        p.setBirthdate(new Date());
+        Date old = new Date(new Long("-99999999999999"));
+        p.setBirthdate(old);
         p.save();
                 
         String id = p.getId();

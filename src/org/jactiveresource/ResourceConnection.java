@@ -74,6 +74,8 @@ import org.apache.http.params.HttpProtocolParams;
 public class ResourceConnection {
 
 	private URL site;
+	private String username;
+	private String password;
 
 	private ClientConnectionManager connectionManager;
 	private DefaultHttpClient httpclient;
@@ -96,15 +98,59 @@ public class ResourceConnection {
 		init();
 	}
 
-	public ResourceConnection(String site, ResourceFormat format) throws MalformedURLException {
+	public ResourceConnection(String site, ResourceFormat format)
+			throws MalformedURLException {
 		this.site = new URL(site);
 		init();
 	}
 
+	/**
+	 * 
+	 * @return the URL object for the site this connection is attached to
+	 */
 	public URL getSite() {
 		return this.site;
 	}
 
+	/**
+	 * @return the username used for authentication
+	 */
+	public String getUsername() {
+		return username;
+	}
+
+	/**
+	 * @param username
+	 *            the username to use for authentication
+	 */
+	public void setUsername(String username) {
+		this.username = username;
+	}
+
+	/**
+	 * @return the password used for authentication
+	 */
+	public String getPassword() {
+		return password;
+	}
+
+	/**
+	 * @param password
+	 *            the password to use for authentication
+	 */
+	public void setPassword(String password) {
+		this.password = password;
+	}
+
+	/**
+	 * 
+	 * @param url
+	 * @return
+	 * @throws HttpException
+	 * @throws IOException
+	 * @throws InterruptedException
+	 * @throws URISyntaxException
+	 */
 	public String get(String url) throws HttpException, IOException,
 			InterruptedException, URISyntaxException {
 
@@ -131,6 +177,15 @@ public class ResourceConnection {
 		}
 	}
 
+	/**
+	 * 
+	 * @param url
+	 * @return
+	 * @throws HttpException
+	 * @throws IOException
+	 * @throws InterruptedException
+	 * @throws URISyntaxException
+	 */
 	public BufferedReader getStream(String url) throws HttpException,
 			IOException, InterruptedException, URISyntaxException {
 
@@ -148,7 +203,7 @@ public class ResourceConnection {
 	}
 
 	/**
-	 * send an http put request to the server.  This is a bit unique because
+	 * send an http put request to the server. This is a bit unique because
 	 * there is no response returned from the server.
 	 * 
 	 * @param url
@@ -264,25 +319,36 @@ public class ResourceConnection {
 	 */
 	private HttpClient createHttpClient(URL site) {
 
-		// if ( this.connectionManager == null ) {
 		this.connectionManager = new ThreadSafeClientConnManager(getParams(),
 				supportedSchemes);
-		// }
 
-		// if ( this.httpclient == null ) {
 		this.httpclient = new DefaultHttpClient(this.connectionManager,
 				getParams());
-		String userinfo = site.getUserInfo();
-		if (userinfo != null) {
-			int pos = userinfo.indexOf(":");
-			if (pos > 0) {
-				this.httpclient.getCredentialsProvider().setCredentials(
-						new AuthScope(site.getHost(), site.getPort()),
-						new UsernamePasswordCredentials(userinfo.substring(0,
-								pos), userinfo.substring(pos + 1)));
+
+		// check for authentication credentials
+		String u = null, p = null;
+		if (this.username != null) {
+			// we have explicit username and password
+			u = this.username;
+			p = this.password;
+		} else {
+			// check the URI
+			String userinfo = site.getUserInfo();
+			if (userinfo != null) {
+				int pos = userinfo.indexOf(":");
+				if (pos > 0) {
+					u = userinfo.substring(0, pos);
+					p = userinfo.substring(pos + 1);
+
+				}
 			}
 		}
-		// }
+		// use the credentials if we have them
+		if (u != null) {
+			this.httpclient.getCredentialsProvider().setCredentials(
+					new AuthScope(site.getHost(), site.getPort()),
+					new UsernamePasswordCredentials(u, p));
+		}
 		return this.httpclient;
 	}
 

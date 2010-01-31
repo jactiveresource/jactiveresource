@@ -58,7 +58,7 @@ import com.thoughtworks.xstream.converters.extended.ISO8601DateConverter;
  *          $LastChangedDate$
  * @author $LastChangedBy$
  */
-public abstract class ResourceFactory {
+public class ResourceFactory {
 
 	private ResourceConnection connection;
 	private Class<? extends ActiveResource> clazz;
