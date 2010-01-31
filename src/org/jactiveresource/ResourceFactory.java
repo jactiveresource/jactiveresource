@@ -64,7 +64,8 @@ public class ResourceFactory {
 	private Class<? extends ActiveResource> clazz;
 	private XStream xstream;
 
-	public ResourceFactory(ResourceConnection c, Class<? extends ActiveResource> clazz) {
+	public ResourceFactory(ResourceConnection c,
+			Class<? extends ActiveResource> clazz) {
 		this.connection = c;
 		this.clazz = clazz;
 
@@ -115,7 +116,8 @@ public class ResourceFactory {
 	public <T extends ActiveResource> ArrayList<T> findAll()
 			throws HttpException, IOException, InterruptedException,
 			URISyntaxException {
-		String url = "/" + getCollectionName() + getResourceFormat().extension();
+		String url = "/" + getCollectionName()
+				+ getResourceFormat().extension();
 		return getMany(url);
 	}
 
@@ -168,9 +170,11 @@ public class ResourceFactory {
 	 */
 	public void create(ActiveResource r) throws ClientProtocolException,
 			ClientError, ServerError, IOException {
-		String url = "/" + getCollectionName() + getResourceFormat().extension();
+		String url = "/" + getCollectionName()
+				+ getResourceFormat().extension();
 		String xml = xstream.toXML(r);
-		String response = connection.post(url, xml, ResourceFormat.XML.contentType());
+		String response = connection.post(url, xml, ResourceFormat.XML
+				.contentType());
 
 		xstream.fromXML(response, r);
 		r.setFactory(this);
@@ -190,6 +194,41 @@ public class ResourceFactory {
 				+ getResourceFormat().extension();
 		String xml = xstream.toXML(r);
 		connection.put(url, xml, getResourceFormat().contentType());
+	}
+
+	/**
+	 * create the resource if it is new, otherwise update it
+	 * 
+	 * @param r
+	 * @throws ClientProtocolException
+	 * @throws IOException
+	 * @throws URISyntaxException
+	 * @throws HttpException
+	 * @throws InterruptedException
+	 */
+	public void save(ActiveResource r) throws ClientProtocolException,
+			IOException, URISyntaxException, HttpException,
+			InterruptedException {
+		if (r.isNew())
+			create(r);
+		else
+			update(r);
+	}
+
+	/**
+	 * repopulate a local object with data from the service
+	 * 
+	 * @param r
+	 * @throws HttpException
+	 * @throws IOException
+	 * @throws InterruptedException
+	 * @throws URISyntaxException
+	 */
+	public void reload(ActiveResource r) throws HttpException, IOException,
+			InterruptedException, URISyntaxException {
+		String url = "/" + getCollectionName() + "/" + r.getId()
+				+ getResourceFormat().extension();
+		getOne(url, r);
 	}
 
 	/**
@@ -230,6 +269,28 @@ public class ResourceFactory {
 		T obj = (T) xstream.fromXML(data);
 		obj.setFactory(this);
 		return obj;
+	}
+
+	/**
+	 * Update an existing object with data from the given url
+	 * 
+	 * @param <T>
+	 * @param url
+	 * @param r
+	 * @return
+	 * @throws HttpException
+	 * @throws IOException
+	 * @throws InterruptedException
+	 * @throws URISyntaxException
+	 */
+	protected <T extends ActiveResource> T getOne(String url, T r)
+			throws HttpException, IOException, InterruptedException,
+			URISyntaxException {
+
+		String data = connection.get(url);
+		xstream.fromXML(data, r);
+		r.setFactory(this);
+		return r;
 	}
 
 	/**

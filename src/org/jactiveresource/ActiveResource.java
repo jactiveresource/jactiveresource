@@ -84,7 +84,7 @@ public abstract class ActiveResource {
 			InterruptedException {
 		factory.update(this);
 	}
-	
+
 	/**
 	 * create if it hasn't been, update otherwise
 	 * 
@@ -101,10 +101,20 @@ public abstract class ActiveResource {
 	 */
 	public void save() throws ClientProtocolException, IOException,
 			URISyntaxException, HttpException, InterruptedException {
-		if (isNew())
-			factory.create(this);
-		else
-			factory.update(this);
+		factory.save(this);
+	}
+
+	/**
+	 * repopulate this object with data retrieved from the remote service
+	 * 
+	 * @throws HttpException
+	 * @throws IOException
+	 * @throws InterruptedException
+	 * @throws URISyntaxException
+	 */
+	public void reload() throws HttpException, IOException,
+			InterruptedException, URISyntaxException {
+		factory.reload(this);
 	}
 
 	/**

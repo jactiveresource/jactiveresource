@@ -94,6 +94,18 @@ public class TestPerson {
 		assertFalse(pf.exists(id));
 	}
 
+	@Test
+	public void testReload() throws Exception {
+		p = pf.instantiate();
+		p.setName("George Burns");
+		p.setBirthdate(new Date());
+		p.save();
+		
+		p.setName("Fred Flintstone");
+		p.reload();
+		assertEquals("George Burns", p.getName());
+	}
+	
 	/*
 	 * @Test public void testFind() throws Exception { Person p =
 	 * Person.find(c,"1"); assertEquals("King Tut",p.getName()); }
