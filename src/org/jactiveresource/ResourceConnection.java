@@ -66,6 +66,24 @@ import org.apache.http.params.HttpParams;
 import org.apache.http.params.HttpProtocolParams;
 
 /**
+ * <h3>Overview</h3>
+ * <p>
+ * 
+ * <h3>HTTP Parameters</h3>
+ * <p>
+ * You can custom http parameters, like connection or socket timeouts, by
+ * changing the httpParams property. There are static methods in
+ * <code>org.apache.http.params.HttpProtocolParams</code> that set the various
+ * parameters.
+ * 
+ * <pre>
+ * {@code
+ * ResourceConnection c = new ResourceConnection("http://localhost:3000");
+ * HttpParams params = c.getHttpParams();
+ * HttpProtocolParams.setConnectionTimeout(httpParams, 5000);
+ * c.setHttpParams(params);
+ * }
+ * </pre>
  * 
  * @version $LastChangedRevision$ <br>
  *          $LastChangedDate$
@@ -319,11 +337,11 @@ public class ResourceConnection {
 	 */
 	private HttpClient createHttpClient(URL site) {
 
-		this.connectionManager = new ThreadSafeClientConnManager(getParams(),
-				supportedSchemes);
+		this.connectionManager = new ThreadSafeClientConnManager(
+				getHttpParams(), supportedSchemes);
 
 		this.httpclient = new DefaultHttpClient(this.connectionManager,
-				getParams());
+				getHttpParams());
 
 		// check for authentication credentials
 		String u = null, p = null;
@@ -352,20 +370,24 @@ public class ResourceConnection {
 		return this.httpclient;
 	}
 
-	private final HttpParams getParams() {
-		return defaultParameters;
+	private HttpParams httpParams;
+
+	public HttpParams getHttpParams() {
+		return httpParams;
 	}
 
-	/**
-	 * The default parameters. Instantiated in {@link #init setup}.
-	 */
-	private static HttpParams defaultParameters = null;
+	public void setHttpParams(HttpParams params) {
+		this.httpParams = params;
+	}
 
 	/**
 	 * The scheme registry. Instantiated in {@link #init setup}.
 	 */
 	private static SchemeRegistry supportedSchemes;
 
+	/**
+	 * initialize http client settings
+	 */
 	private void init() {
 		supportedSchemes = new SchemeRegistry();
 
@@ -374,13 +396,12 @@ public class ResourceConnection {
 		SocketFactory sf = PlainSocketFactory.getSocketFactory();
 		supportedSchemes.register(new Scheme("http", sf, 80));
 
-		// prepare parameters
-		HttpParams params = new BasicHttpParams();
-		HttpProtocolParams.setVersion(params, HttpVersion.HTTP_1_1);
-		HttpProtocolParams.setContentCharset(params, "UTF-8");
-		// HttpProtocolParams.setUseExpectContinue( params, true );
-		ConnManagerParams.setMaxTotalConnections(params, 400);
-		defaultParameters = params;
+		// set parameters
+		httpParams = new BasicHttpParams();
+		HttpProtocolParams.setVersion(httpParams, HttpVersion.HTTP_1_1);
+		HttpProtocolParams.setContentCharset(httpParams, "UTF-8");
+		ConnManagerParams.setMaxTotalConnections(httpParams, 400);
+
 	}
 
 	public String toString() {
