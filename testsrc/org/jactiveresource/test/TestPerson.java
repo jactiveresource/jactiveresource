@@ -39,6 +39,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import java.util.ArrayList;
 import java.util.Date;
 
 import org.jactiveresource.ResourceConnection;
@@ -104,6 +105,26 @@ public class TestPerson {
 		p.setName("Fred Flintstone");
 		p.reload();
 		assertEquals("George Burns", p.getName());
+		
+		p.delete();
+	}
+	
+	@Test
+	public void testFindAll() throws Exception {
+		ArrayList<Person> people, otherpeople;
+		people = pf.findAll();
+		
+		p = pf.instantiate();
+		p.setName("George Burns");
+		p.setBirthdate(new Date());
+		p.save();
+		
+		otherpeople = pf.findAll();
+		assertEquals(otherpeople.size(), people.size()+1);
+		p.delete();
+		
+		otherpeople = pf.findAll();
+		assertEquals(otherpeople.size(), people.size());
 	}
 	
 	/*
