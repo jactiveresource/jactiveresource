@@ -29,7 +29,7 @@ CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 
-*/
+ */
 
 package org.jactiveresource.test;
 
@@ -55,60 +55,53 @@ import org.junit.Test;
 
 public class TestPerson {
 
-    private ResourceConnection c;
-    //private PersonFactory pf;
-    private ResourceFactory pf;
-    private Person p;
-    
-    @Before
-    public void setUp() throws Exception {
-        c = new ResourceConnection("http://localhost:3000");
-        c.setUsername("Ace");
-        c.setPassword("newenglandclamchowder");
-        pf = new ResourceFactory(c,Person.class);
-    }
-    
-    @Test
-    public void testBasicOperations() throws Exception {
-    	p = pf.instantiate();
-        assertNull(p.getId());
-        p.setName("King Tut");
-        Date old = new Date(new Long("-99999999999999"));
-        p.setBirthdate(old);
-        p.save();
-                
-        String id = p.getId();
-        assertEquals(p.getName(),"King Tut");
-        assertNotNull("No id present",p.getId());
-        
-        p = pf.find(id);
-        assertEquals(p.getName(),"King Tut");
-        p.setName("Alexander the Great");
-        p.save();
-        
-        p = pf.find(id);
-        assertEquals(p.getName(),"Alexander the Great");
-        
-        assertTrue(pf.exists(id));
-        p.delete();
-        assertFalse(pf.exists(id));
-    }
-    
-    /*@Test
-    public void testFind() throws Exception {
-    	Person p = Person.find(c,"1");
-    	assertEquals("King Tut",p.getName());
-    }
-    
-    @Test
-    public void testExists() throws Exception {
-    	assertEquals(true,Person.exists(c,"1"));
-    }
-    
-    @Test
-    public void testUpdate() throws Exception {
-    	Person p = Person.find(c,"1");
-    	p.setName("Alexander the Great");
-    	p.update(c);
-    }*/
+	private ResourceConnection c;
+	// private PersonFactory pf;
+	private ResourceFactory pf;
+	private Person p;
+
+	@Before
+	public void setUp() throws Exception {
+		c = new ResourceConnection("http://localhost:3000");
+		c.setUsername("Ace");
+		c.setPassword("newenglandclamchowder");
+		pf = new ResourceFactory(c, Person.class);
+	}
+
+	@Test
+	public void testBasicOperations() throws Exception {
+		p = pf.instantiate();
+		assertNull(p.getId());
+		p.setName("King Tut");
+		Date old = new Date(new Long("-99999999999999"));
+		p.setBirthdate(old);
+		p.save();
+
+		String id = p.getId();
+		assertEquals(p.getName(), "King Tut");
+		assertNotNull("No id present", p.getId());
+
+		p = pf.find(id);
+		assertEquals(p.getName(), "King Tut");
+		p.setName("Alexander the Great");
+		p.save();
+
+		p = pf.find(id);
+		assertEquals(p.getName(), "Alexander the Great");
+
+		assertTrue(pf.exists(id));
+		p.delete();
+		assertFalse(pf.exists(id));
+	}
+
+	/*
+	 * @Test public void testFind() throws Exception { Person p =
+	 * Person.find(c,"1"); assertEquals("King Tut",p.getName()); }
+	 * 
+	 * @Test public void testExists() throws Exception {
+	 * assertEquals(true,Person.exists(c,"1")); }
+	 * 
+	 * @Test public void testUpdate() throws Exception { Person p =
+	 * Person.find(c,"1"); p.setName("Alexander the Great"); p.update(c); }
+	 */
 }
