@@ -288,6 +288,7 @@ public class ResourceFactory {
 	}
 
 	/**
+	 * create a new resource on the server from a local object
 	 * 
 	 * @param r
 	 * @throws ClientProtocolException
@@ -308,7 +309,7 @@ public class ResourceFactory {
 	}
 
 	/**
-	 * 
+	 * update the server resource associated with an object
 	 * @param r
 	 * @throws URISyntaxException
 	 * @throws HttpException
@@ -489,13 +490,24 @@ public class ResourceFactory {
 	}
 
 	/**
+	 * take a url and append a query string from the map of parameters provided.
+	 * <pre>
+	 * {@code
+	 * String url = "/people.xml";
+	 * HashMap<String,String> params = new HashMap<String,String>();
+	 * params.put("position", "manager");
+	 * url = ResourceFactory.appendQueryString(url,params); 
+	 * }
+	 * The url variable would now contain <code>/people.xml?position=manager</code>.
+	 * </pre>
+	 * 
 	 * @param url
 	 *            the base url
 	 * @param params
 	 *            a map of query parameters
 	 * @return a new url
 	 */
-	protected String appendQueryString(String url, Map<String, String> params) {
+	protected static String appendQueryString(String url, Map<String, String> params) {
 		StringBuffer out = new StringBuffer(url);
 
 		String querySeparator = "?";
