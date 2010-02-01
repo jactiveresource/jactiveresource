@@ -53,6 +53,7 @@ import com.thoughtworks.xstream.XStream;
 import com.thoughtworks.xstream.converters.extended.ISO8601DateConverter;
 
 /**
+ * <h3>Finding Resources</h3>
  * 
  * @version $LastChangedRevision$ <br>
  *          $LastChangedDate$
@@ -108,7 +109,121 @@ public class ResourceFactory {
 	}
 
 	/**
-	 * Retrieve an ordered list of all resources available at the service
+	 * Fetch a single resource using a custom method. Say I have a collection of
+	 * people at <code>http://localhost:3000/people.xml</code>. Say there is a
+	 * custom method managers at
+	 * <code>http://localhost:3000/people/geeks.xml</code> which returns only
+	 * the people who are geeks. If I want the first geek, I would do:
+	 * 
+	 * <pre>
+	 * {@code
+	 * c = new ResourceConnection("http://localhost:3000");
+	 * rf = new ResourceFactory(c, Person.class);
+	 * Person geek = rf.find(QueryScope.FIRST,"geeks");
+	 * }</pre>
+	 * 
+	 * For the last geek you can use:
+	 * 
+	 * <pre>
+	 * {@code
+	 * c = new ResourceConnection("http://localhost:3000");
+	 * rf = new ResourceFactory(c, Person.class);
+	 * Person geek = rf.find(QueryScope.LAST,"geeks");
+	 * }</pre>
+	 * <p>
+	 * If I had a method which I knew only returned a single object, like
+	 * <code>http://localhost:3000/people/alphageek.xml</code>, then you could
+	 * use:
+	 * 
+	 * <pre>
+	 * {@code
+	 * c = new ResourceConnection("http://localhost:3000");
+	 * rf = new ResourceFactory(c, Person.class);
+	 * Person geek = rf.find(QueryScope.ONE,"alphageek");
+	 * }</pre>
+	 * This last one is not the safest, because we really don't have a way of
+	 * knowing that the alphageek method will only return a single object. It
+	 * would be safer to use the {@link #findAll(String)} method instead.
+	 * 
+	 * @param <T>
+	 * @param scope
+	 * @param from
+	 *            the name of the custom method
+	 * @return an object if found, null otherwise
+	 * @throws URISyntaxException
+	 * @throws InterruptedException
+	 * @throws IOException
+	 * @throws HttpException
+	 */
+	public <T extends ActiveResource> T find(QueryScope scope, String from)
+			throws HttpException, IOException, InterruptedException,
+			URISyntaxException {
+		ArrayList<T> list;
+		String url = "/" + getCollectionName() + "/" + from
+				+ getResourceFormat().extension();
+		if (scope == QueryScope.ONE) {
+			return getOne(url);
+		} else if (scope == QueryScope.FIRST) {
+			list = getMany(url);
+			try {
+				return list.get(0);
+			} catch (IndexOutOfBoundsException e) {
+				return null;
+			}
+		} else if (scope == QueryScope.LAST) {
+			list = getMany(url);
+			try {
+				return list.get(list.size() - 1);
+			} catch (IndexOutOfBoundsException e) {
+				return null;
+			}
+		} else {
+			return null;
+		}
+	}
+
+	/**
+	 * Fetch a list of resources using a custom method. Say I have a collection
+	 * of people at <code>http://localhost:3000/people.xml</code>. Say there is
+	 * a custom method managers at
+	 * <code>http://localhost:3000/people/geeks.xml</code> which returns only
+	 * the people who are geeks. To get the list of geeks I would use:
+	 * 
+	 * <pre>
+	 * {@code
+	 * c = new ResourceConnection("http://localhost:3000");
+	 * rf = new ResourceFactory(c, Person.class);
+	 * ArrayList<Person> geeks = rf.findAll("geeks");
+	 * }</pre>
+	 * 
+	 * @param <T>
+	 * @param from
+	 *            the name of the custom method
+	 * @return a list of objects
+	 * @throws HttpException
+	 * @throws IOException
+	 * @throws InterruptedException
+	 * @throws URISyntaxException
+	 */
+	public <T extends ActiveResource> ArrayList<T> findAll(String from)
+			throws HttpException, IOException, InterruptedException,
+			URISyntaxException {
+		String url = "/" + getCollectionName() + "/" + from
+				+ getResourceFormat().extension();
+		return getMany(url);
+	}
+
+	/**
+	 * Fetch all the resources. Say I have a person service at
+	 * <code>http://localhost:3000/</code>. The following would return the list
+	 * of people returned by <code>http://localhost:3000/people.xml</code>.
+	 * 
+	 * <pre>
+	 * {@code
+	 * c = new ResourceConnection("http://localhost:3000");
+	 * rf = new ResourceFactory(c, Person.class);
+	 * ArrayList<Person> people = rf.findAll();
+	 * }</pre>
 	 * 
 	 * @param <T>
 	 * @return a list of objects
@@ -126,10 +241,20 @@ public class ResourceFactory {
 	}
 
 	/**
-	 * Returns true if a resource with a given id exists.
+	 * Return true if a resource exists. Say I have a person service at
+	 * <code>http://localhost:3000/</code>. If the following is a valid URL
+	 * which returns data <code>http://localhost:3000/people/5.xml</code>, then
+	 * <code>fred</code> is true.
+	 * 
+	 * <pre>
+	 * {@code
+	 * c = new ResourceConnection("http://localhost:3000");
+	 * rf = new ResourceFactory(c, Person.class);
+	 * boolean fred = rf.exists("5");
+	 * }</pre>
 	 * 
 	 * @param id
-	 *            the id you want to see if exists
+	 *            the id you want to check
 	 * @return true if the resource exists, false if it does not
 	 */
 	public boolean exists(String id) {
@@ -280,7 +405,8 @@ public class ResourceFactory {
 	 * 
 	 * @param <T>
 	 * @param url
-	 * @param resource the object to update
+	 * @param resource
+	 *            the object to update
 	 * @return the updated resource object you passed in
 	 * @throws HttpException
 	 * @throws IOException
