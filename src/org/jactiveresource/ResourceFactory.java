@@ -155,7 +155,7 @@ public class ResourceFactory {
 	 *  
 	 * @param <T>
 	 * @param params
-	 * @return
+	 * @return a list of objects
 	 * @throws HttpException
 	 * @throws IOException
 	 * @throws InterruptedException
@@ -224,7 +224,7 @@ public class ResourceFactory {
 	 * @param <T>
 	 * @param from
 	 * @param params
-	 * @return
+	 * @return a list of objects
 	 * @throws HttpException
 	 * @throws IOException
 	 * @throws InterruptedException
