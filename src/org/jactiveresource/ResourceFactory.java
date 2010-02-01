@@ -44,6 +44,7 @@ import java.io.ObjectInputStream;
 import java.lang.reflect.Field;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Map;
 
 import org.apache.http.HttpException;
 import org.apache.http.client.ClientProtocolException;
@@ -105,81 +106,67 @@ public class ResourceFactory {
 			IOException, InterruptedException, URISyntaxException {
 		String url = "/" + getCollectionName() + "/" + id
 				+ getResourceFormat().extension();
-		return getOne(url);
+		return fetchOne(url);
 	}
 
 	/**
-	 * Fetch a single resource using a custom method. Say I have a collection of
-	 * people at <code>http://localhost:3000/people.xml</code>. Say there is a
-	 * custom method managers at
-	 * <code>http://localhost:3000/people/geeks.xml</code> which returns only
-	 * the people who are geeks. If I want the first geek, I would do:
+	 * Fetch all the resources. Say I have a person service at
+	 * <code>http://localhost:3000/</code>. The following would return the list
+	 * of people returned by <code>http://localhost:3000/people.xml</code>.
 	 * 
 	 * <pre>
 	 * {@code
 	 * c = new ResourceConnection("http://localhost:3000");
 	 * rf = new ResourceFactory(c, Person.class);
-	 * Person geek = rf.find(QueryScope.FIRST,"geeks");
+	 * ArrayList<Person> people = rf.findAll();
 	 * }</pre>
-	 * 
-	 * For the last geek you can use:
-	 * 
-	 * <pre>
-	 * {@code
-	 * c = new ResourceConnection("http://localhost:3000");
-	 * rf = new ResourceFactory(c, Person.class);
-	 * Person geek = rf.find(QueryScope.LAST,"geeks");
-	 * }</pre>
-	 * <p>
-	 * If I had a method which I knew only returned a single object, like
-	 * <code>http://localhost:3000/people/alphageek.xml</code>, then you could
-	 * use:
-	 * 
-	 * <pre>
-	 * {@code
-	 * c = new ResourceConnection("http://localhost:3000");
-	 * rf = new ResourceFactory(c, Person.class);
-	 * Person geek = rf.find(QueryScope.ONE,"alphageek");
-	 * }</pre>
-	 * This last one is not the safest, because we really don't have a way of
-	 * knowing that the alphageek method will only return a single object. It
-	 * would be safer to use the {@link #findAll(String)} method instead.
 	 * 
 	 * @param <T>
-	 * @param scope
-	 * @param from
-	 *            the name of the custom method
-	 * @return an object if found, null otherwise
-	 * @throws URISyntaxException
-	 * @throws InterruptedException
-	 * @throws IOException
+	 * @return a list of objects
 	 * @throws HttpException
+	 * @throws IOException
+	 * @throws InterruptedException
+	 * @throws URISyntaxException
 	 */
-	public <T extends ActiveResource> T find(QueryScope scope, String from)
+	public <T extends ActiveResource> ArrayList<T> findAll()
 			throws HttpException, IOException, InterruptedException,
 			URISyntaxException {
-		ArrayList<T> list;
-		String url = "/" + getCollectionName() + "/" + from
+		String url = "/" + getCollectionName()
 				+ getResourceFormat().extension();
-		if (scope == QueryScope.ONE) {
-			return getOne(url);
-		} else if (scope == QueryScope.FIRST) {
-			list = getMany(url);
-			try {
-				return list.get(0);
-			} catch (IndexOutOfBoundsException e) {
-				return null;
-			}
-		} else if (scope == QueryScope.LAST) {
-			list = getMany(url);
-			try {
-				return list.get(list.size() - 1);
-			} catch (IndexOutOfBoundsException e) {
-				return null;
-			}
-		} else {
-			return null;
-		}
+		return fetchMany(url);
+	}
+	
+	/**
+	 * Fetch resources using query parameters. Say I have a
+	 * collection of people at <code>http://localhost:3000/people.xml</code>.
+	 * I can specify a
+	 * parameter to limit the people to those who hold a position of manager 
+	 * by using
+	 * <code>http://localhost:3000/people.xml?position=manager</code>.
+	 * 
+	 * <pre>
+	 * {@code
+	 * ResourceConnection c = new ResourceConnection("http://localhost:3000");
+	 * ResourceFactory rf = new ResourceFactory(c, Person.class);
+	 * HashMap<String,String> params = new HashMap<String,String>();
+	 * params.put("position", "manager");
+	 * ArrayList<Person> rubydevs = rf.findAll(,params);
+	 * }</pre>
+	 *  
+	 * @param <T>
+	 * @param params
+	 * @return
+	 * @throws HttpException
+	 * @throws IOException
+	 * @throws InterruptedException
+	 * @throws URISyntaxException
+	 */
+	public <T extends ActiveResource> ArrayList<T> findAll(
+			Map<String, String> params) throws HttpException, IOException,
+			InterruptedException, URISyntaxException {
+		String url = "/" + getCollectionName()
+				+ getResourceFormat().extension();
+		return fetchMany(appendQueryString(url, params));
 	}
 
 	/**
@@ -210,34 +197,45 @@ public class ResourceFactory {
 			URISyntaxException {
 		String url = "/" + getCollectionName() + "/" + from
 				+ getResourceFormat().extension();
-		return getMany(url);
+		return fetchMany(url);
 	}
 
 	/**
-	 * Fetch all the resources. Say I have a person service at
-	 * <code>http://localhost:3000/</code>. The following would return the list
-	 * of people returned by <code>http://localhost:3000/people.xml</code>.
+	 * Fetch resources using a custom method and query parameters. Say I have a
+	 * collection of people at <code>http://localhost:3000/people.xml</code>.
+	 * Say there is a custom method <code>developers</code> at
+	 * <code>http://localhost:3000/people/developers.xml</code> which returns
+	 * only the people who are developers. Additionally, I can specify a
+	 * parameter to limit the developers to those who are skilled in a
+	 * particular language by using
+	 * <code>http://localhost:3000/people/developers.xml?language=ruby</code>
+	 * <p>
+	 * To get the ruby developers:
 	 * 
 	 * <pre>
 	 * {@code
-	 * c = new ResourceConnection("http://localhost:3000");
-	 * rf = new ResourceFactory(c, Person.class);
-	 * ArrayList<Person> people = rf.findAll();
+	 * ResourceConnection c = new ResourceConnection("http://localhost:3000");
+	 * ResourceFactory rf = new ResourceFactory(c, Person.class);
+	 * HashMap<String,String> params = new HashMap<String,String>();
+	 * params.put("language", "ruby");
+	 * ArrayList<Person> rubydevs = rf.findAll("developers",params);
 	 * }</pre>
 	 * 
 	 * @param <T>
-	 * @return a list of objects
+	 * @param from
+	 * @param params
+	 * @return
 	 * @throws HttpException
 	 * @throws IOException
 	 * @throws InterruptedException
 	 * @throws URISyntaxException
 	 */
-	public <T extends ActiveResource> ArrayList<T> findAll()
-			throws HttpException, IOException, InterruptedException,
-			URISyntaxException {
-		String url = "/" + getCollectionName()
+	public <T extends ActiveResource> ArrayList<T> findAll(String from,
+			Map<String, String> params) throws HttpException, IOException,
+			InterruptedException, URISyntaxException {
+		String url = "/" + getCollectionName() + "/" + from
 				+ getResourceFormat().extension();
-		return getMany(url);
+		return fetchMany(appendQueryString(url, params));
 	}
 
 	/**
@@ -357,7 +355,7 @@ public class ResourceFactory {
 			InterruptedException, URISyntaxException {
 		String url = "/" + getCollectionName() + "/" + r.getId()
 				+ getResourceFormat().extension();
-		getOne(url, r);
+		fetchOne(url, r);
 	}
 
 	/**
@@ -390,7 +388,7 @@ public class ResourceFactory {
 	 * @throws InterruptedException
 	 * @throws URISyntaxException
 	 */
-	protected <T extends ActiveResource> T getOne(String url)
+	protected <T extends ActiveResource> T fetchOne(String url)
 			throws HttpException, IOException, InterruptedException,
 			URISyntaxException {
 
@@ -413,7 +411,7 @@ public class ResourceFactory {
 	 * @throws InterruptedException
 	 * @throws URISyntaxException
 	 */
-	protected <T extends ActiveResource> T getOne(String url, T resource)
+	protected <T extends ActiveResource> T fetchOne(String url, T resource)
 			throws HttpException, IOException, InterruptedException,
 			URISyntaxException {
 
@@ -434,16 +432,19 @@ public class ResourceFactory {
 	 * @throws InterruptedException
 	 * @throws URISyntaxException
 	 */
-	protected <T extends ActiveResource> ArrayList<T> getMany(String url)
+	protected <T extends ActiveResource> ArrayList<T> fetchMany(String url)
 			throws HttpException, IOException, InterruptedException,
 			URISyntaxException {
 		BufferedReader xml = connection.getStream(url);
 		ObjectInputStream in = xstream.createObjectInputStream(xml);
 
 		ArrayList<T> list = new ArrayList<T>();
+		T obj;
 		while (true) {
 			try {
-				list.add((T) in.readObject());
+				obj = (T) in.readObject();
+				obj.setFactory(this);
+				list.add(obj);
 			} catch (EOFException e) {
 				break;
 			} catch (ClassNotFoundException e) {
@@ -486,4 +487,28 @@ public class ResourceFactory {
 		}
 		return name;
 	}
+
+	/**
+	 * @param url
+	 *            the base url
+	 * @param params
+	 *            a map of query parameters
+	 * @return a new url
+	 */
+	protected String appendQueryString(String url, Map<String, String> params) {
+		StringBuffer out = new StringBuffer(url);
+
+		String querySeparator = "?";
+		if (params.size() > 0) {
+			for (Map.Entry<String, String> param : params.entrySet()) {
+				out.append(querySeparator);
+				out.append(param.getKey());
+				out.append("=");
+				out.append(param.getValue());
+				querySeparator = "&";
+			}
+		}
+		return out.toString();
+	}
+
 }
