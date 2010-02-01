@@ -135,14 +135,12 @@ public class ResourceFactory {
 				+ getResourceFormat().extension();
 		return fetchMany(url);
 	}
-	
+
 	/**
-	 * Fetch resources using query parameters. Say I have a
-	 * collection of people at <code>http://localhost:3000/people.xml</code>.
-	 * I can specify a
-	 * parameter to limit the people to those who hold a position of manager 
-	 * by using
-	 * <code>http://localhost:3000/people.xml?position=manager</code>.
+	 * Fetch resources using query parameters. Say I have a collection of people
+	 * at <code>http://localhost:3000/people.xml</code>. I can specify a
+	 * parameter to limit the people to those who hold a position of manager by
+	 * using <code>http://localhost:3000/people.xml?position=manager</code>.
 	 * 
 	 * <pre>
 	 * {@code
@@ -152,7 +150,7 @@ public class ResourceFactory {
 	 * params.put("position", "manager");
 	 * ArrayList<Person> rubydevs = rf.findAll(,params);
 	 * }</pre>
-	 *  
+	 * 
 	 * @param <T>
 	 * @param params
 	 * @return a list of objects
@@ -273,7 +271,22 @@ public class ResourceFactory {
 	}
 
 	/**
-	 * create a new instance of a resource
+	 * Create a new instance of a resource. This method calls the default
+	 * constructor of your resource class, and also attaches the factory to the
+	 * resource class. Say we had a Person class like this:
+	 * 
+	 * <pre>
+	 * {@code
+	 * public class Person extends ActiveResource {
+	 *   private String id;
+	 *   public String getId() {
+     *     return id;
+     *   }
+     *   public void setId( String id ) {
+     *     this.id = id;
+     *   }
+	 * }
+	 * </pre>
 	 * 
 	 * @param <T>
 	 * @return a new instance of a resource
@@ -310,6 +323,7 @@ public class ResourceFactory {
 
 	/**
 	 * update the server resource associated with an object
+	 * 
 	 * @param r
 	 * @throws URISyntaxException
 	 * @throws HttpException
@@ -389,11 +403,23 @@ public class ResourceFactory {
 	 * @throws InterruptedException
 	 * @throws URISyntaxException
 	 */
-	protected <T extends ActiveResource> T fetchOne(String url)
+	public <T extends ActiveResource> T fetchOne(String url)
 			throws HttpException, IOException, InterruptedException,
 			URISyntaxException {
+		return deserializeOne(connection.get(url));
+	}
 
-		String data = connection.get(url);
+	/**
+	 * Inflate (or unmarshall) an object from serialized data
+	 * 
+	 * @param <T>
+	 * @param data
+	 *            a string of serialized data
+	 * @return a new object
+	 * @throws IOException
+	 */
+	public <T extends ActiveResource> T deserializeOne(String data)
+			throws IOException {
 		T obj = (T) xstream.fromXML(data);
 		obj.setFactory(this);
 		return obj;
@@ -412,11 +438,25 @@ public class ResourceFactory {
 	 * @throws InterruptedException
 	 * @throws URISyntaxException
 	 */
-	protected <T extends ActiveResource> T fetchOne(String url, T resource)
+	public <T extends ActiveResource> T fetchOne(String url, T resource)
 			throws HttpException, IOException, InterruptedException,
 			URISyntaxException {
+		return deserializeAndUpdateOne(connection.get(url), resource);
+	}
 
-		String data = connection.get(url);
+	/**
+	 * Weasel method to update an existing object with serialized data.
+	 * 
+	 * @param <T>
+	 * @param data
+	 *            serialized data
+	 * @param resource
+	 *            the object to update
+	 * @return the updated resource object you passed in
+	 * @throws IOException
+	 */
+	public <T extends ActiveResource> T deserializeAndUpdateOne(String data,
+			T resource) throws IOException {
 		xstream.fromXML(data, resource);
 		resource.setFactory(this);
 		return resource;
@@ -430,20 +470,36 @@ public class ResourceFactory {
 	 * @return an array of objects
 	 * @throws HttpException
 	 * @throws IOException
-	 * @throws InterruptedException
+	 * @throws InterruptedExceptionInflate
+	 *             (or unmarshall) a list of objects from a stream
 	 * @throws URISyntaxException
 	 */
-	protected <T extends ActiveResource> ArrayList<T> fetchMany(String url)
+	public <T extends ActiveResource> ArrayList<T> fetchMany(String url)
 			throws HttpException, IOException, InterruptedException,
 			URISyntaxException {
-		BufferedReader xml = connection.getStream(url);
-		ObjectInputStream in = xstream.createObjectInputStream(xml);
+		return deserializeMany(connection.getStream(url));
+	}
+
+	/**
+	 * Inflate (or unmarshall) a list of objects from a stream using XStream.
+	 * This method exhausts and closes the stream.
+	 * 
+	 * @param <T>
+	 * @param stream
+	 *            an open input stream
+	 * @return a list of objects
+	 * @throws IOException
+	 */
+	public <T extends ActiveResource> ArrayList<T> deserializeMany(
+			BufferedReader stream) throws IOException {
+
+		ObjectInputStream ostream = xstream.createObjectInputStream(stream);
 
 		ArrayList<T> list = new ArrayList<T>();
 		T obj;
 		while (true) {
 			try {
-				obj = (T) in.readObject();
+				obj = (T) ostream.readObject();
 				obj.setFactory(this);
 				list.add(obj);
 			} catch (EOFException e) {
@@ -452,7 +508,7 @@ public class ResourceFactory {
 				// do nothing
 			}
 		}
-		in.close();
+		ostream.close();
 		return list;
 	}
 
@@ -491,6 +547,7 @@ public class ResourceFactory {
 
 	/**
 	 * take a url and append a query string from the map of parameters provided.
+	 * 
 	 * <pre>
 	 * {@code
 	 * String url = "/people.xml";
@@ -507,7 +564,8 @@ public class ResourceFactory {
 	 *            a map of query parameters
 	 * @return a new url
 	 */
-	protected static String appendQueryString(String url, Map<String, String> params) {
+	public static final String appendQueryString(String url,
+			Map<String, String> params) {
 		StringBuffer out = new StringBuffer(url);
 
 		String querySeparator = "?";
