@@ -67,9 +67,9 @@ public abstract class ActiveResource {
 	 * @throws ServerError
 	 * @throws IOException
 	 */
-	public void create() throws ClientProtocolException, ClientError,
+	public boolean create() throws ClientProtocolException, ClientError,
 			ServerError, IOException {
-		factory.create(this);
+		return factory.create(this);
 	}
 
 	/**
@@ -80,9 +80,9 @@ public abstract class ActiveResource {
 	 * @throws IOException
 	 * @throws InterruptedException
 	 */
-	public void update() throws URISyntaxException, HttpException, IOException,
+	public boolean update() throws URISyntaxException, HttpException, IOException,
 			InterruptedException {
-		factory.update(this);
+		return factory.update(this);
 	}
 
 	/**
@@ -95,9 +95,9 @@ public abstract class ActiveResource {
 	 * @throws HttpException
 	 * @throws InterruptedException
 	 */
-	public void save() throws ClientProtocolException, IOException,
+	public boolean save() throws ClientProtocolException, IOException,
 			URISyntaxException, HttpException, InterruptedException {
-		factory.save(this);
+		return factory.save(this);
 	}
 
 	/**
