@@ -153,6 +153,4 @@ public abstract class ActiveResource {
 	}
 
 	public abstract String getId();
-
-	public abstract void setId(String id);
 }
