@@ -45,96 +45,96 @@ import org.junit.Test;
 
 public class TestPerson {
 
-    private ResourceConnection c;
-    // private PersonFactory pf;
-    private ResourceFactory pf;
-    private Person p;
+	private ResourceConnection c;
+	// private PersonFactory pf;
+	private ResourceFactory pf;
+	private Person p;
 
-    @Before
-    public void setUp() throws Exception {
-        c = new ResourceConnection("http://localhost:3000");
-        c.setUsername("Ace");
-        c.setPassword("newenglandclamchowder");
-        pf = new ResourceFactory(c, Person.class);
-    }
+	@Before
+	public void setUp() throws Exception {
+		c = new ResourceConnection("http://localhost:3000");
+		c.setUsername("Ace");
+		c.setPassword("newenglandclamchowder");
+		pf = new ResourceFactory(c, Person.class);
+	}
 
-    @Test
-    public void testBasicOperations() throws Exception {
-        p = pf.instantiate();
-        assertNull(p.getId());
-        p.setName("King Tut");
-        Date old = new Date(new Long("-99999999999999"));
-        p.setBirthdate(old);
-        p.save();
+	@Test
+	public void testBasicOperations() throws Exception {
+		p = pf.instantiate();
+		assertNull(p.getId());
+		p.setName("King Tut");
+		Date old = new Date(new Long("-99999999999999"));
+		p.setBirthdate(old);
+		p.save();
 
-        String id = p.getId();
-        assertEquals(p.getName(), "King Tut");
-        assertNotNull("No id present", p.getId());
+		String id = p.getId();
+		assertEquals(p.getName(), "King Tut");
+		assertNotNull("No id present", p.getId());
 
-        p = pf.find(id);
-        assertEquals(p.getName(), "King Tut");
-        p.setName("Alexander the Great");
-        p.save();
+		p = pf.find(id);
+		assertEquals(p.getName(), "King Tut");
+		p.setName("Alexander the Great");
+		p.save();
 
-        p = pf.find(id);
-        assertEquals(p.getName(), "Alexander the Great");
+		p = pf.find(id);
+		assertEquals(p.getName(), "Alexander the Great");
 
-        assertTrue(pf.exists(id));
-        p.delete();
-        assertFalse(pf.exists(id));
-    }
+		assertTrue(pf.exists(id));
+		p.delete();
+		assertFalse(pf.exists(id));
+	}
 
-    @Test
-    public void testReload() throws Exception {
-        p = pf.instantiate();
-        p.setName("George Burns");
-        p.setBirthdate(new Date());
-        p.save();
+	@Test
+	public void testReload() throws Exception {
+		p = pf.instantiate();
+		p.setName("George Burns");
+		p.setBirthdate(new Date());
+		p.save();
 
-        p.setName("Fred Flintstone");
-        p.reload();
-        assertEquals("George Burns", p.getName());
+		p.setName("Fred Flintstone");
+		p.reload();
+		assertEquals("George Burns", p.getName());
 
-        p.delete();
-    }
+		p.delete();
+	}
 
-    @Test
-    public void testFindAll() throws Exception {
-        ArrayList<Person> people, otherpeople;
-        people = pf.findAll();
+	@Test
+	public void testFindAll() throws Exception {
+		ArrayList<Person> people, otherpeople;
+		people = pf.findAll();
 
-        p = pf.instantiate();
-        p.setName("George Burns");
-        p.setBirthdate(new Date());
-        p.save();
+		p = pf.instantiate();
+		p.setName("George Burns");
+		p.setBirthdate(new Date());
+		p.save();
 
-        otherpeople = pf.findAll();
-        assertEquals(otherpeople.size(), people.size() + 1);
-        p.delete();
+		otherpeople = pf.findAll();
+		assertEquals(otherpeople.size(), people.size() + 1);
+		p.delete();
 
-        otherpeople = pf.findAll();
-        assertEquals(otherpeople.size(), people.size());
-    }
+		otherpeople = pf.findAll();
+		assertEquals(otherpeople.size(), people.size());
+	}
 
-    @Test
-    public void testValidation() throws Exception {
-        p = pf.instantiate();
-        p.setBirthdate(new Date());
-        assertFalse(p.save());
-        assertNull(p.getId());
-        p.setName("Shoeless Joe");
-        assertTrue(p.save());
-        assertNotNull(p.getId());
-        p.delete();
-    }
-    /*
-     * @Test public void testFind() throws Exception { Person p =
-     * Person.find(c,"1"); assertEquals("King Tut",p.getName()); }
-     * 
-     * @Test public void testExists() throws Exception {
-     * assertEquals(true,Person.exists(c,"1")); }
-     * 
-     * @Test public void testUpdate() throws Exception { Person p =
-     * Person.find(c,"1"); p.setName("Alexander the Great"); p.update(c); }
-     */
+	@Test
+	public void testValidation() throws Exception {
+		p = pf.instantiate();
+		p.setBirthdate(new Date());
+		assertFalse(p.save());
+		assertNull(p.getId());
+		p.setName("Shoeless Joe");
+		assertTrue(p.save());
+		assertNotNull(p.getId());
+		p.delete();
+	}
+	/*
+	 * @Test public void testFind() throws Exception { Person p =
+	 * Person.find(c,"1"); assertEquals("King Tut",p.getName()); }
+	 * 
+	 * @Test public void testExists() throws Exception {
+	 * assertEquals(true,Person.exists(c,"1")); }
+	 * 
+	 * @Test public void testUpdate() throws Exception { Person p =
+	 * Person.find(c,"1"); p.setName("Alexander the Great"); p.update(c); }
+	 */
 }

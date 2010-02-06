@@ -80,8 +80,8 @@ public abstract class ActiveResource {
 	 * @throws IOException
 	 * @throws InterruptedException
 	 */
-	public boolean update() throws URISyntaxException, HttpException, IOException,
-			InterruptedException {
+	public boolean update() throws URISyntaxException, HttpException,
+			IOException, InterruptedException {
 		return factory.update(this);
 	}
 

@@ -131,6 +131,19 @@ public class TestResourceFactory {
 		sb = new StringBuilder();
 		sb.append("<person>");
 		sb.append("<birthdate type=\"date\" nil=\"true\" />");
+		sb.append("<id type=\"integer\">2</id>");
+		sb.append("<name nil=\"true\"/>");
+		sb.append("</person>");
+		return sb.toString();
+	}
+
+	/*
+	 * a person with a null birthdate and name
+	 */
+	private String serializedPerson3() {
+		sb = new StringBuilder();
+		sb.append("<person>");
+		sb.append("<birthdate type=\"date\" nil=\"true\" />");
 		sb
 				.append("<created-at type=\"datetime\">2010-02-01T05:23:39Z</created-at>");
 		sb.append("<id type=\"integer\">2</id>");
