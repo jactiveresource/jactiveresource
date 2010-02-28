@@ -70,6 +70,23 @@ public class URLBuilder {
 	}
 
 	/**
+	 * Create a URL builder with a path already assigned. In the example below,
+	 * the URL's for A and B are the same.
+	 * 
+	 * <pre>
+	 * {@code
+	 * URLBuilder a = new URLBuilder();
+	 * a.add("people.xml");
+	 * URLBuilder b = new URLBuilder("people.xml");
+	 * }
+	 * @param base a component of the path to start the URL with
+	 */
+	public URLBuilder(String pathcomponent) {
+		init();
+		add(pathcomponent);
+	}
+
+	/**
 	 * Create a new URL builder from a given base URL
 	 * 
 	 * @param base

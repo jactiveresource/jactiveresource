@@ -64,6 +64,9 @@ public class TestURLBuilder {
 	public void testCreatePlain() {
 		u = new URLBuilder();
 		assertEquals("", u.toString());
+		
+		u = new URLBuilder("people.xml");
+		assertEquals("/people.xml", u.toString());
 	}
 
 	@Test
