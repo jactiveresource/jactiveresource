@@ -38,6 +38,7 @@ import java.net.URL;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.Map;
 
 /**
  * TODO write some good documentation here
@@ -79,7 +80,7 @@ public class URLBuilder {
 	 * a.add("people.xml");
 	 * URLBuilder b = new URLBuilder("people.xml");
 	 * }
-	 * @param base a component of the path to start the URL with
+	 * @param pathcomponent the path to start the URL with
 	 */
 	public URLBuilder(String pathcomponent) {
 		init();
@@ -142,6 +143,20 @@ public class URLBuilder {
 	 */
 	public URLBuilder addQuery(Object key, Object value) {
 		query.add(new QueryParam(key, value));
+		return this;
+	}
+
+	/**
+	 * Add a bunch of query parameters from a Map. This method provides
+	 * compatability with the query parameters provided by
+	 * javax.servlet.ServletRequest
+	 * 
+	 * @param params
+	 * @return self
+	 */
+	public URLBuilder addQuery(Map<Object, Object> params) {
+		for (Map.Entry<Object, Object> e : params.entrySet())
+			query.add(new QueryParam(e.getKey(), e.getValue()));
 		return this;
 	}
 

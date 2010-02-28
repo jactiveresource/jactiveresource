@@ -38,6 +38,7 @@ import static org.junit.Assert.assertEquals;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import org.jactiveresource.URLBuilder;
 import org.junit.Before;
@@ -64,7 +65,7 @@ public class TestURLBuilder {
 	public void testCreatePlain() {
 		u = new URLBuilder();
 		assertEquals("", u.toString());
-		
+
 		u = new URLBuilder("people.xml");
 		assertEquals("/people.xml", u.toString());
 	}
@@ -135,5 +136,18 @@ public class TestURLBuilder {
 		u.addQuery("salary", "60000");
 		assertEquals("/people/1/promote.xml?position=manager&salary=60000", u
 				.toString());
+	}
+
+	@Test
+	public void testQueryMap() {
+		HashMap<Object, Object> p = new HashMap<Object, Object>();
+		p.put("position", "manager");
+		p.put("salary", "60000");
+		u = new URLBuilder();
+		u.add("people").add("1").add("promote.xml");
+		u.addQuery(p);
+		assertEquals("/people/1/promote.xml?position=manager&salary=60000", u
+				.toString());
+
 	}
 }

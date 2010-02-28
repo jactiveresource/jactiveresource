@@ -71,11 +71,13 @@ public class ResourceFactory {
 	private ResourceConnection connection;
 	private Class<? extends ActiveResource> clazz;
 	private XStream xstream;
+	private URLBuilder collectionURL;
 
 	public ResourceFactory(ResourceConnection c,
 			Class<? extends ActiveResource> clazz) {
 		this.connection = c;
 		this.clazz = clazz;
+		collectionURL = new URLBuilder(getCollectionName());
 
 		// xstream = new XStream();
 		xstream = makeXStream();
@@ -119,9 +121,8 @@ public class ResourceFactory {
 	 */
 	public <T extends ActiveResource> T find(String id) throws HttpException,
 			IOException, InterruptedException, URISyntaxException {
-		String url = "/" + getCollectionName() + "/" + id
-				+ getResourceFormat().extension();
-		return fetchOne(url);
+		return fetchOne(collectionURL.add(id).add(
+				getResourceFormat().extension()));
 	}
 
 	/**
@@ -147,8 +148,8 @@ public class ResourceFactory {
 	public <T extends ActiveResource> ArrayList<T> findAll()
 			throws HttpException, IOException, InterruptedException,
 			URISyntaxException {
-		String url = "/" + getCollectionName()
-				+ getResourceFormat().extension();
+		URLBuilder url = new URLBuilder(getCollectionName()
+				+ getResourceFormat().extension());
 		return fetchMany(url);
 	}
 
@@ -177,11 +178,11 @@ public class ResourceFactory {
 	 * @throws URISyntaxException
 	 */
 	public <T extends ActiveResource> ArrayList<T> findAll(
-			Map<String, String> params) throws HttpException, IOException,
+			Map<Object, Object> params) throws HttpException, IOException,
 			InterruptedException, URISyntaxException {
-		String url = "/" + getCollectionName()
-				+ getResourceFormat().extension();
-		return fetchMany(appendQueryString(url, params));
+		URLBuilder url = new URLBuilder(getCollectionName()
+				+ getResourceFormat().extension());
+		return fetchMany(url.addQuery(params));
 	}
 
 	/**
@@ -211,8 +212,8 @@ public class ResourceFactory {
 	public <T extends ActiveResource> ArrayList<T> findAll(String from)
 			throws HttpException, IOException, InterruptedException,
 			URISyntaxException {
-		String url = "/" + getCollectionName() + "/" + from
-				+ getResourceFormat().extension();
+		URLBuilder url = collectionURL.add(from
+				+ getResourceFormat().extension());
 		return fetchMany(url);
 	}
 
@@ -229,13 +230,12 @@ public class ResourceFactory {
 	 * To get the ruby developers:
 	 * 
 	 * <pre>
-     * {
-     *     &#064;code
-     *     ResourceConnection c = new ResourceConnection(&quot;http://localhost:3000&quot;);
+     * {@code
+     *     ResourceConnection c = new ResourceConnection("http://localhost:3000");
      *     ResourceFactory rf = new ResourceFactory(c, Person.class);
-     *     HashMap&lt;String, String&gt; params = new HashMap&lt;String, String&gt;();
-     *     params.put(&quot;language&quot;, &quot;ruby&quot;);
-     *     ArrayList&lt;Person&gt; rubydevs = rf.findAll(&quot;developers&quot;, params);
+     *     HashMap<String, String> params = new HashMap<String, String>();
+     *     params.put("language", "ruby");
+     *     ArrayList<Person> rubydevs = rf.findAll("developers", params);
      * }
      * </pre>
 	 * 
@@ -249,11 +249,11 @@ public class ResourceFactory {
 	 * @throws URISyntaxException
 	 */
 	public <T extends ActiveResource> ArrayList<T> findAll(String from,
-			Map<String, String> params) throws HttpException, IOException,
+			Map<Object, Object> params) throws HttpException, IOException,
 			InterruptedException, URISyntaxException {
-		String url = "/" + getCollectionName() + "/" + from
-				+ getResourceFormat().extension();
-		return fetchMany(appendQueryString(url, params));
+		URLBuilder url = collectionURL.add(from
+				+ getResourceFormat().extension());
+		return fetchMany(url.addQuery(params));
 	}
 
 	/**
@@ -307,7 +307,21 @@ public class ResourceFactory {
      *     this.id = id;
      *   }
      * }
+     * }
      * </pre>
+	 * 
+	 * And:
+	 * 
+	 * <pre>
+     * {@code
+     * ResourceFactory pf = new ResourceFactory(c, Person.class);
+     * Person a = new Person();
+     * a.setFactory(pf);
+     * Person b = pf.instantiate();
+     * }
+     * </pre>
+	 * 
+	 * Person a and Person b are now equivalent.
 	 * 
 	 * @param <T>
 	 * @return a new instance of a resource
@@ -359,10 +373,9 @@ public class ResourceFactory {
 	 */
 	public boolean update(ActiveResource r) throws URISyntaxException,
 			HttpException, IOException, InterruptedException {
-		String url = "/" + getCollectionName() + "/" + r.getId()
-				+ getResourceFormat().extension();
+		URLBuilder url = collectionURL.add(r.getId() + getResourceFormat().extension());
 		String xml = xstream.toXML(r);
-		HttpResponse response = connection.put(url, xml, getResourceFormat()
+		HttpResponse response = connection.put(url.toString(), xml, getResourceFormat()
 				.contentType());
 		// now let's see what came back
 		// String entity = EntityUtils.toString(response.getEntity());
@@ -420,9 +433,8 @@ public class ResourceFactory {
 	 */
 	public void delete(ActiveResource r) throws ClientError, ServerError,
 			ClientProtocolException, IOException {
-		String url = "/" + getCollectionName() + "/" + r.getId()
-				+ getResourceFormat().extension();
-		connection.delete(url);
+		URLBuilder url = collectionURL.add(r.getId() + getResourceFormat().extension());
+		connection.delete(url.toString());
 	}
 
 	/**
@@ -439,10 +451,10 @@ public class ResourceFactory {
 	 * @throws InterruptedException
 	 * @throws URISyntaxException
 	 */
-	public <T extends ActiveResource> T fetchOne(String url)
+	public <T extends ActiveResource> T fetchOne(Object url)
 			throws HttpException, IOException, InterruptedException,
 			URISyntaxException {
-		return deserializeOne(connection.get(url));
+		return deserializeOne(connection.get(url.toString()));
 	}
 
 	/**
@@ -510,10 +522,10 @@ public class ResourceFactory {
 	 *             (or unmarshall) a list of objects from a stream
 	 * @throws URISyntaxException
 	 */
-	public <T extends ActiveResource> ArrayList<T> fetchMany(String url)
+	public <T extends ActiveResource> ArrayList<T> fetchMany(Object url)
 			throws HttpException, IOException, InterruptedException,
 			URISyntaxException {
-		return deserializeMany(connection.getStream(url));
+		return deserializeMany(connection.getStream(url.toString()));
 	}
 
 	/**
@@ -579,42 +591,6 @@ public class ResourceFactory {
 			name = Inflector.pluralize(name);
 		}
 		return name;
-	}
-
-	/**
-	 * take a url and append a query string from the map of parameters provided.
-	 * 
-	 * <pre>
-     * {@code
-     * String url = "/people.xml";
-     * HashMap<String,String> params = new HashMap<String,String>();
-     * params.put("position", "manager");
-     * url = ResourceFactory.appendQueryString(url,params); 
-     * }
-     * The url variable would now contain <code>/people.xml?position=manager</code>.
-     * </pre>
-	 * 
-	 * @param url
-	 *            the base url
-	 * @param params
-	 *            a map of query parameters
-	 * @return a new url
-	 */
-	public static final String appendQueryString(String url,
-			Map<String, String> params) {
-		StringBuffer out = new StringBuffer(url);
-
-		String querySeparator = "?";
-		if (params.size() > 0) {
-			for (Map.Entry<String, String> param : params.entrySet()) {
-				out.append(querySeparator);
-				out.append(param.getKey());
-				out.append("=");
-				out.append(param.getValue());
-				querySeparator = "&";
-			}
-		}
-		return out.toString();
 	}
 
 }
