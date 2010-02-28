@@ -126,6 +126,27 @@ public class TestURLBuilder {
 	}
 
 	@Test
+	public void testQueryMap() {
+		HashMap<Object, Object> p = new HashMap<Object, Object>();
+		p.put("position", "manager");
+		p.put("salary", "60000");
+		u = new URLBuilder();
+		u.add("people").add("1").add("promote.xml");
+		u.addQuery(p);
+		assertEquals("/people/1/promote.xml?position=manager&salary=60000", u
+				.toString());
+
+	}
+
+	@Test
+	public void testOnlyQuery() {
+		u = new URLBuilder();
+		u.addQuery("key1","value1");
+		u.addQuery("key2","value2");
+		assertEquals("","?key1=value1&key2=value2",u.toString());
+	}
+	
+	@Test
 	public void testPathAndQuery() {
 		u = new URLBuilder();
 		u.add("people").add("1");
@@ -138,16 +159,4 @@ public class TestURLBuilder {
 				.toString());
 	}
 
-	@Test
-	public void testQueryMap() {
-		HashMap<Object, Object> p = new HashMap<Object, Object>();
-		p.put("position", "manager");
-		p.put("salary", "60000");
-		u = new URLBuilder();
-		u.add("people").add("1").add("promote.xml");
-		u.addQuery(p);
-		assertEquals("/people/1/promote.xml?position=manager&salary=60000", u
-				.toString());
-
-	}
 }
