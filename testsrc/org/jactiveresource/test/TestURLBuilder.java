@@ -141,11 +141,11 @@ public class TestURLBuilder {
 	@Test
 	public void testOnlyQuery() {
 		u = new URLBuilder();
-		u.addQuery("key1","value1");
-		u.addQuery("key2","value2");
-		assertEquals("","?key1=value1&key2=value2",u.toString());
+		u.addQuery("key1", "value1");
+		u.addQuery("key2", "value2");
+		assertEquals("", "?key1=value1&key2=value2", u.toString());
 	}
-	
+
 	@Test
 	public void testPathAndQuery() {
 		u = new URLBuilder();
@@ -159,4 +159,17 @@ public class TestURLBuilder {
 				.toString());
 	}
 
+	@Test
+	public void testQueryCopy() {
+		u = new URLBuilder("people");
+		u.add("promote.xml");
+		u.addQuery("position", "manager");
+		u.addQuery("salary", "60000");
+
+		URLBuilder v = new URLBuilder("otherpeople.xml");
+		v.addQuery(u);
+		assertEquals("addQuery with another URLBuilder is broken",
+				"/otherpeople.xml?position=manager&salary=60000", v.toString());
+
+	}
 }

@@ -161,6 +161,16 @@ public class URLBuilder {
 	}
 
 	/**
+	 * 
+	 * @param params
+	 * @return
+	 */
+	public URLBuilder addQuery(URLBuilder params) {
+		query.addAll(params.query);
+		return this;
+	}
+	
+	/**
 	 * turn this URL builder object into a URLEncoded string
 	 */
 	public String toString() {
