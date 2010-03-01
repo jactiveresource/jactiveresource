@@ -121,7 +121,7 @@ public class ResourceFactory {
 	 */
 	public <T extends ActiveResource> T find(String id) throws HttpException,
 			IOException, InterruptedException, URISyntaxException {
-		return fetchOne(collectionURL.add(id + getResourceFormat().extension()));
+		return this.<T>fetchOne(collectionURL.add(id + getResourceFormat().extension()));
 	}
 
 	/**
@@ -521,7 +521,7 @@ public class ResourceFactory {
 	public <T extends ActiveResource> T fetchOne(Object url)
 			throws HttpException, IOException, InterruptedException,
 			URISyntaxException {
-		return deserializeOne(connection.get(url.toString()));
+		return this.<T>deserializeOne(connection.get(url.toString()));
 	}
 
 	/**
