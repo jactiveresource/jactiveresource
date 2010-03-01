@@ -127,10 +127,13 @@ public class TestPerson {
 		assertNotNull(p.getId());
 		p.delete();
 	}
+
+	@Test
+	public void testFind() throws Exception {
+		Person p = pf.find("1");
+		assertEquals("King Tut", p.getName());
+	}
 	/*
-	 * @Test public void testFind() throws Exception { Person p =
-	 * Person.find(c,"1"); assertEquals("King Tut",p.getName()); }
-	 * 
 	 * @Test public void testExists() throws Exception {
 	 * assertEquals(true,Person.exists(c,"1")); }
 	 * 

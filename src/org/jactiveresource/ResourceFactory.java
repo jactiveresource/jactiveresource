@@ -121,8 +121,7 @@ public class ResourceFactory {
 	 */
 	public <T extends ActiveResource> T find(String id) throws HttpException,
 			IOException, InterruptedException, URISyntaxException {
-		return fetchOne(collectionURL.add(id).add(
-				getResourceFormat().extension()));
+		return fetchOne(collectionURL.add(id + getResourceFormat().extension()));
 	}
 
 	/**
@@ -165,7 +164,7 @@ public class ResourceFactory {
      * ResourceFactory rf = new ResourceFactory(c, Person.class);
      * HashMap<String,String> params = new HashMap<String,String>();
      * params.put("position", "manager");
-     * ArrayList<Person> rubydevs = rf.findAll(,params);
+     * ArrayList<Person> rubydevs = rf.findAll(params);
      * }
      * </pre>
 	 * 
@@ -180,6 +179,37 @@ public class ResourceFactory {
 	public <T extends ActiveResource> ArrayList<T> findAll(
 			Map<Object, Object> params) throws HttpException, IOException,
 			InterruptedException, URISyntaxException {
+		URLBuilder url = new URLBuilder(getCollectionName()
+				+ getResourceFormat().extension());
+		return fetchMany(url.addQuery(params));
+	}
+
+	/**
+	 * Fetch resources using query parameters. In this case the query parameters
+	 * are taken from a URLBuilder object. To get resources from
+	 * <code>http://localhost:3000/people.xml?position=manager</code> do:
+	 * 
+	 * <pre>
+     * {@code
+     * ResourceConnection c = new ResourceConnection("http://localhost:3000");
+     * ResourceFactory rf = new ResourceFactory(c, Person.class);
+     * URLBuilder params = new URLBuilder();
+     * params.addQuery("position", "manager");
+     * ArrayList<Person> rubydevs = rf.findAll(params);
+     * }
+     * </pre>
+	 * 
+	 * @param <T>
+	 * @param params
+	 * @return a list of objects
+	 * @throws HttpException
+	 * @throws IOException
+	 * @throws InterruptedException
+	 * @throws URISyntaxException
+	 */
+	public <T extends ActiveResource> ArrayList<T> findAll(URLBuilder params)
+			throws HttpException, IOException, InterruptedException,
+			URISyntaxException {
 		URLBuilder url = new URLBuilder(getCollectionName()
 				+ getResourceFormat().extension());
 		return fetchMany(url.addQuery(params));
@@ -250,6 +280,40 @@ public class ResourceFactory {
 	 */
 	public <T extends ActiveResource> ArrayList<T> findAll(String from,
 			Map<Object, Object> params) throws HttpException, IOException,
+			InterruptedException, URISyntaxException {
+		URLBuilder url = collectionURL.add(from
+				+ getResourceFormat().extension());
+		return fetchMany(url.addQuery(params));
+	}
+
+	/**
+	 * Fetch resources using a custom method and query parameters, where the
+	 * query parameters are taken from a URLBuilder object. To get the resources
+	 * from
+	 * <code>http://localhost:3000/people/developers.xml?language=ruby</code>
+	 * do:
+	 * 
+	 * <pre>
+     * {@code
+     *     ResourceConnection c = new ResourceConnection("http://localhost:3000");
+     *     ResourceFactory rf = new ResourceFactory(c, Person.class);
+     *     URLBuilder params = new URLBuilder();
+     *     params.addQuery("language", "ruby");
+     *     ArrayList<Person> rubydevs = rf.findAll("developers", params);
+     * }
+     * </pre>
+	 * 
+	 * @param <T>
+	 * @param from
+	 * @param params
+	 * @return a list of objects
+	 * @throws HttpException
+	 * @throws IOException
+	 * @throws InterruptedException
+	 * @throws URISyntaxException
+	 */
+	public <T extends ActiveResource> ArrayList<T> findAll(String from,
+			URLBuilder params) throws HttpException, IOException,
 			InterruptedException, URISyntaxException {
 		URLBuilder url = collectionURL.add(from
 				+ getResourceFormat().extension());
@@ -328,6 +392,7 @@ public class ResourceFactory {
 	 * @throws InstantiationException
 	 * @throws IllegalAccessException
 	 */
+	@SuppressWarnings("unchecked")
 	public <T extends ActiveResource> T instantiate()
 			throws InstantiationException, IllegalAccessException {
 		T obj = (T) clazz.newInstance();
@@ -373,10 +438,11 @@ public class ResourceFactory {
 	 */
 	public boolean update(ActiveResource r) throws URISyntaxException,
 			HttpException, IOException, InterruptedException {
-		URLBuilder url = collectionURL.add(r.getId() + getResourceFormat().extension());
+		URLBuilder url = collectionURL.add(r.getId()
+				+ getResourceFormat().extension());
 		String xml = xstream.toXML(r);
-		HttpResponse response = connection.put(url.toString(), xml, getResourceFormat()
-				.contentType());
+		HttpResponse response = connection.put(url.toString(), xml,
+				getResourceFormat().contentType());
 		// now let's see what came back
 		// String entity = EntityUtils.toString(response.getEntity());
 		try {
@@ -433,7 +499,8 @@ public class ResourceFactory {
 	 */
 	public void delete(ActiveResource r) throws ClientError, ServerError,
 			ClientProtocolException, IOException {
-		URLBuilder url = collectionURL.add(r.getId() + getResourceFormat().extension());
+		URLBuilder url = collectionURL.add(r.getId()
+				+ getResourceFormat().extension());
 		connection.delete(url.toString());
 	}
 
@@ -466,6 +533,7 @@ public class ResourceFactory {
 	 * @return a new object
 	 * @throws IOException
 	 */
+	@SuppressWarnings("unchecked")
 	public <T extends ActiveResource> T deserializeOne(String data)
 			throws IOException {
 		T obj = (T) xstream.fromXML(data);
@@ -538,6 +606,7 @@ public class ResourceFactory {
 	 * @return a list of objects
 	 * @throws IOException
 	 */
+	@SuppressWarnings("unchecked")
 	public <T extends ActiveResource> ArrayList<T> deserializeMany(
 			BufferedReader stream) throws IOException {
 

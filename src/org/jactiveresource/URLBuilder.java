@@ -161,15 +161,17 @@ public class URLBuilder {
 	}
 
 	/**
+	 * Add just the query part (ignore the path) from another URLBuilder and
+	 * add it to this URLBuilder.
 	 * 
 	 * @param params
-	 * @return
+	 * @return self
 	 */
 	public URLBuilder addQuery(URLBuilder params) {
 		query.addAll(params.query);
 		return this;
 	}
-	
+
 	/**
 	 * turn this URL builder object into a URLEncoded string
 	 */
