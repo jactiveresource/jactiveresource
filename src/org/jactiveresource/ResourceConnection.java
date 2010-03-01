@@ -33,14 +33,9 @@ POSSIBILITY OF SUCH DAMAGE.
 
 package org.jactiveresource;
 
-import static org.jactiveresource.Inflector.dasherize;
-import static org.jactiveresource.Inflector.singularize;
-import static org.jactiveresource.Inflector.underscore;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.lang.reflect.Field;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
@@ -70,22 +65,36 @@ import org.apache.http.params.BasicHttpParams;
 import org.apache.http.params.HttpParams;
 import org.apache.http.params.HttpProtocolParams;
 
-import com.thoughtworks.xstream.XStream;
-import com.thoughtworks.xstream.converters.extended.ISO8601DateConverter;
-
 /**
+ * <h3>Overview</h3>
+ * <p>
+ * 
+ * <h3>HTTP Parameters</h3>
+ * <p>
+ * You can custom http parameters, like connection or socket timeouts, by
+ * changing the httpParams property. There are static methods in
+ * <code>org.apache.http.params.HttpProtocolParams</code> that set the various
+ * parameters.
+ * 
+ * <pre>
+ * {
+ *     &#064;code
+ *     ResourceConnection c = new ResourceConnection(&quot;http://localhost:3000&quot;);
+ *     HttpParams params = c.getHttpParams();
+ *     HttpProtocolParams.setConnectionTimeout(httpParams, 5000);
+ *     c.setHttpParams(params);
+ * }
+ * </pre>
  * 
  * @version $LastChangedRevision$ <br>
  *          $LastChangedDate$
  * @author $LastChangedBy$
  */
-public class Connection {
+public class ResourceConnection {
 
 	private URL site;
-	private Format format;
-	private XStream xstream;
-
-	private Format defaultFormat = Format.XML;
+	private String username;
+	private String password;
 
 	private ClientConnectionManager connectionManager;
 	private DefaultHttpClient httpclient;
@@ -93,63 +102,79 @@ public class Connection {
 	private static final String CONTENT_TYPE = "Content-type";
 
 	// TODO remove trailing slashes
-	public Connection(URL site) {
+	public ResourceConnection(URL site) {
 		this.site = site;
-		init(Format.XML);
+		init();
 	}
 
-	public Connection(String site) throws MalformedURLException {
+	public ResourceConnection(String site) throws MalformedURLException {
 		this.site = new URL(site);
-		init(defaultFormat);
+		init();
 	}
 
-	public Connection(URL site, Format format) {
+	public ResourceConnection(URL site, ResourceFormat format) {
 		this.site = site;
-		init(format);
+		init();
 	}
 
-	public Connection(String site, Format format) throws MalformedURLException {
+	public ResourceConnection(String site, ResourceFormat format)
+			throws MalformedURLException {
 		this.site = new URL(site);
-		init(format);
+		init();
 	}
 
+	/**
+	 * 
+	 * @return the URL object for the site this connection is attached to
+	 */
 	public URL getSite() {
 		return this.site;
 	}
 
-	public Format getFormat() {
-		return this.format;
-	}
-
-	public XStream getXStream() {
-		return xstream;
+	/**
+	 * @return the username used for authentication
+	 */
+	public String getUsername() {
+		return username;
 	}
 
 	/**
-	 * register a resource with this connection
-	 * 
-	 * @param <T>
-	 * @param clazz
+	 * @param username
+	 *            the username to use for authentication
 	 */
-	public void registerResource(Class<? extends ActiveResource> clazz) {
-
-		String xmlname = singularize(dasherize(ActiveResource
-				.getCollectionName(clazz)));
-		xstream.alias(xmlname, clazz);
-
-		Field[] fields = clazz.getDeclaredFields();
-		for (Field field : fields) {
-			xmlname = dasherize(underscore(field.getName()));
-			xstream.aliasField(xmlname, clazz, field.getName());
-		}
-
-		xstream.processAnnotations(clazz);
-
+	public void setUsername(String username) {
+		this.username = username;
 	}
 
-	// "#{prefix(prefix_options)}#{collection_name}/#{id}.#{format.extension}#{
-	// query_string(query_options)}"
+	/**
+	 * @return the password used for authentication
+	 */
+	public String getPassword() {
+		return password;
+	}
 
+	/**
+	 * @param password
+	 *            the password to use for authentication
+	 */
+	public void setPassword(String password) {
+		this.password = password;
+	}
+
+	/**
+	 * append url to the site this
+	 * {@link ResourceConnection#ResourceConnection(String) ResourceConnection}
+	 * was created with, issue a HTTP GET request, and return the body of the
+	 * HTTP response
+	 * 
+	 * @param url
+	 *            the url to retrieve
+	 * @return a string containing the body of the response
+	 * @throws HttpException
+	 * @throws IOException
+	 * @throws InterruptedException
+	 * @throws URISyntaxException
+	 */
 	public String get(String url) throws HttpException, IOException,
 			InterruptedException, URISyntaxException {
 
@@ -158,7 +183,7 @@ public class Connection {
 		HttpEntity entity = null;
 		try {
 			HttpResponse response = client.execute(request);
-			checkStatus(response);
+			checkHttpStatus(response);
 			entity = response.getEntity();
 			StringBuffer sb = new StringBuffer();
 			BufferedReader reader = new BufferedReader(new InputStreamReader(
@@ -176,6 +201,19 @@ public class Connection {
 		}
 	}
 
+	/**
+	 * append url to the site this
+	 * {@link ResourceConnection#ResourceConnection(String) ResourceConnection}
+	 * was created with, issue a HTTP GET request, and return a buffered input
+	 * stream of the body of the HTTP response
+	 * 
+	 * @param url
+	 * @return a buffered stream of the response
+	 * @throws HttpException
+	 * @throws IOException
+	 * @throws InterruptedException
+	 * @throws URISyntaxException
+	 */
 	public BufferedReader getStream(String url) throws HttpException,
 			IOException, InterruptedException, URISyntaxException {
 
@@ -184,7 +222,7 @@ public class Connection {
 
 		HttpEntity entity = null;
 		HttpResponse response = client.execute(request);
-		checkStatus(response);
+		checkHttpStatus(response);
 		entity = response.getEntity();
 
 		BufferedReader reader = new BufferedReader(new InputStreamReader(entity
@@ -193,7 +231,7 @@ public class Connection {
 	}
 
 	/**
-	 * send an http put request to the server.  This is a bit unique because
+	 * send an http put request to the server. This is a bit unique because
 	 * there is no response returned from the server.
 	 * 
 	 * @param url
@@ -204,17 +242,16 @@ public class Connection {
 	 * @throws IOException
 	 * @throws InterruptedException
 	 */
-	public void put(String url, String body, String contentType)
+	public HttpResponse put(String url, String body, String contentType)
 			throws URISyntaxException, HttpException, IOException,
 			InterruptedException {
-
 		HttpClient client = createHttpClient(this.getSite());
 		HttpPut request = new HttpPut(this.getSite().toString() + url);
 		request.setHeader(CONTENT_TYPE, contentType);
 		StringEntity entity = new StringEntity(body);
 		request.setEntity(entity);
 		HttpResponse response = client.execute(request);
-		checkStatus(response);
+		return response;
 	}
 
 	/**
@@ -227,7 +264,7 @@ public class Connection {
 	 * @throws ClientError
 	 * @throws ServerError
 	 */
-	public String post(String url, String body, String contentType)
+	public HttpResponse post(String url, String body, String contentType)
 			throws ClientProtocolException, IOException, ClientError,
 			ServerError {
 		HttpClient client = createHttpClient(this.getSite());
@@ -235,25 +272,8 @@ public class Connection {
 		request.setHeader(CONTENT_TYPE, contentType);
 		StringEntity entity = new StringEntity(body);
 		request.setEntity(entity);
-
-		try {
-			HttpResponse response = client.execute(request);
-			checkStatus(response);
-			HttpEntity responseBody = response.getEntity();
-			StringBuffer sb = new StringBuffer();
-			BufferedReader reader = new BufferedReader(new InputStreamReader(
-					responseBody.getContent()));
-
-			int c;
-			while ((c = reader.read()) != -1)
-				sb.append((char) c);
-
-			return sb.toString();
-		} finally {
-			// if there is no entity, the connection is already released
-			if (entity != null)
-				entity.consumeContent(); // release connection gracefully
-		}
+		HttpResponse response = client.execute(request);
+		return response;
 	}
 
 	/**
@@ -270,7 +290,7 @@ public class Connection {
 		HttpClient client = createHttpClient(this.getSite());
 		HttpDelete request = new HttpDelete(this.getSite().toString() + url);
 		HttpResponse response = client.execute(request);
-		checkStatus(response);
+		checkHttpStatus(response);
 	}
 
 	/**
@@ -280,8 +300,8 @@ public class Connection {
 	 * @throws ClientError
 	 * @throws ServerError
 	 */
-	private final void checkStatus(HttpResponse response) throws ClientError,
-			ServerError {
+	public final void checkHttpStatus(HttpResponse response)
+			throws ClientError, ServerError {
 
 		int status = response.getStatusLine().getStatusCode();
 		if (status == 400)
@@ -309,54 +329,58 @@ public class Connection {
 	 */
 	private HttpClient createHttpClient(URL site) {
 
-		// if ( this.connectionManager == null ) {
-		this.connectionManager = new ThreadSafeClientConnManager(getParams(),
-				supportedSchemes);
-		// }
+		this.connectionManager = new ThreadSafeClientConnManager(
+				getHttpParams(), supportedSchemes);
 
-		// if ( this.httpclient == null ) {
 		this.httpclient = new DefaultHttpClient(this.connectionManager,
-				getParams());
-		String userinfo = site.getUserInfo();
-		if (userinfo != null) {
-			int pos = userinfo.indexOf(":");
-			if (pos > 0) {
-				this.httpclient.getCredentialsProvider().setCredentials(
-						new AuthScope(site.getHost(), site.getPort()),
-						new UsernamePasswordCredentials(userinfo.substring(0,
-								pos), userinfo.substring(pos + 1)));
+				getHttpParams());
+
+		// check for authentication credentials
+		String u = null, p = null;
+		if (this.username != null) {
+			// we have explicit username and password
+			u = this.username;
+			p = this.password;
+		} else {
+			// check the URI
+			String userinfo = site.getUserInfo();
+			if (userinfo != null) {
+				int pos = userinfo.indexOf(":");
+				if (pos > 0) {
+					u = userinfo.substring(0, pos);
+					p = userinfo.substring(pos + 1);
+
+				}
 			}
 		}
-		// }
+		// use the credentials if we have them
+		if (u != null) {
+			this.httpclient.getCredentialsProvider().setCredentials(
+					new AuthScope(site.getHost(), site.getPort()),
+					new UsernamePasswordCredentials(u, p));
+		}
 		return this.httpclient;
 	}
 
-	private final HttpParams getParams() {
-		return defaultParameters;
+	private HttpParams httpParams;
+
+	public HttpParams getHttpParams() {
+		return httpParams;
 	}
 
-	/**
-	 * The default parameters. Instantiated in {@link #init setup}.
-	 */
-	private static HttpParams defaultParameters = null;
+	public void setHttpParams(HttpParams params) {
+		this.httpParams = params;
+	}
 
 	/**
 	 * The scheme registry. Instantiated in {@link #init setup}.
 	 */
 	private static SchemeRegistry supportedSchemes;
 
-	private void init(Format format) {
-		this.format = format;
-		// set up xstream
-		// final RailsConverter rc = new RailsConverter();
-
-		// XStream xstream = new XStream(null, new XppDriver(), new
-		// ClassLoaderReference(new
-		// CompositeClassLoader()), null, rc, rc );
-
-		xstream = new XStream();
-		xstream.registerConverter(new ISO8601DateConverter());
-
+	/**
+	 * initialize http client settings
+	 */
+	private void init() {
 		supportedSchemes = new SchemeRegistry();
 
 		// Register the "http" protocol scheme, it is required
@@ -364,13 +388,15 @@ public class Connection {
 		SocketFactory sf = PlainSocketFactory.getSocketFactory();
 		supportedSchemes.register(new Scheme("http", sf, 80));
 
-		// prepare parameters
-		HttpParams params = new BasicHttpParams();
-		HttpProtocolParams.setVersion(params, HttpVersion.HTTP_1_1);
-		HttpProtocolParams.setContentCharset(params, "UTF-8");
-		// HttpProtocolParams.setUseExpectContinue( params, true );
-		ConnManagerParams.setMaxTotalConnections(params, 400);
-		defaultParameters = params;
+		// set parameters
+		httpParams = new BasicHttpParams();
+		HttpProtocolParams.setVersion(httpParams, HttpVersion.HTTP_1_1);
+		HttpProtocolParams.setContentCharset(httpParams, "UTF-8");
+		ConnManagerParams.setMaxTotalConnections(httpParams, 400);
+
 	}
 
+	public String toString() {
+		return site.toString();
+	}
 }

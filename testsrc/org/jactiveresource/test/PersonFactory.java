@@ -1,6 +1,6 @@
 /*
 
-Copyright (c) 2008, Jared Crapo All rights reserved. 
+Copyright (c) 2010, Jared Crapo All rights reserved. 
 
 Redistribution and use in source and binary forms, with or without
 modification, are permitted provided that the following conditions
@@ -29,9 +29,12 @@ CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 
- */
+*/
 
-package org.jactiveresource;
+package org.jactiveresource.test;
+
+import org.jactiveresource.ResourceConnection;
+import org.jactiveresource.ResourceFactory;
 
 /**
  * 
@@ -39,22 +42,10 @@ package org.jactiveresource;
  *          $LastChangedDate$
  * @author $LastChangedBy$
  */
-public enum Format {
-    XML(".xml", "text/xml");
+public class PersonFactory extends ResourceFactory {
 
-    private final String extension;
-    private final String contentType;
-    
-    Format( String ext, String contentType ) {
-        this.extension = ext;
-        this.contentType = contentType;
-    }
+	public PersonFactory(ResourceConnection c) {
+		super(c, Person.class);
+	}
 
-    public String extension() {
-        return extension;
-    }
-    
-    public String contentType() {
-    	return contentType;
-    }
 }

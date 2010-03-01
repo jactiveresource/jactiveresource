@@ -33,14 +33,9 @@ POSSIBILITY OF SUCH DAMAGE.
 
 package org.jactiveresource.test;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.util.ArrayList;
 import java.util.Date;
 
-import org.apache.http.HttpException;
 import org.jactiveresource.ActiveResource;
-import org.jactiveresource.Connection;
 
 /**
  * 
@@ -50,23 +45,6 @@ import org.jactiveresource.Connection;
  */
 public class Person extends ActiveResource {
 
-	public static Person find(Connection c, String id) throws HttpException,
-			IOException, InterruptedException, URISyntaxException {
-
-		return ActiveResource.find(Person.class, c, id);
-	}
-
-	public static ArrayList<Person> findAll(Connection c) throws HttpException,
-			IOException, InterruptedException, ClassNotFoundException,
-			URISyntaxException {
-
-		return ActiveResource.findAll(Person.class, c);
-	}
-
-	public static Boolean exists(Connection c, String id) {
-		return ActiveResource.exists(Person.class, c, id);
-	}
-	
 	private String id;
 	private String name;
 	private Date birthdate;

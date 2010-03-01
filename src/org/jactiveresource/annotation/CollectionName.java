@@ -29,21 +29,32 @@ CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 
-*/
+ */
 
 package org.jactiveresource.annotation;
 
-import java.lang.annotation.*;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
- * use this annotation to tell jactiveresource what path element in the
- * URL to use to find your collection.
- * 
- * If the list of people in our application can be retrieved by
- *   GET http://localhost:3000/people.xml
- *   
- * And you have a Person class, you could annotate the class with
- *   @CollectionName("people")
+ * Specify the path element in the URL to retrieve the collection of your objects.
+ * <p>
+ * Say the list of people in our application can be retrieved from
+ * <code>http://localhost:3000/peeps.xml</code>
+ * <p>
+ * You have created a Person subclass of ActiveResource, which would wrongly
+ * guess that people could be retrieved from
+ * <code>http://localhost:3000/people.xml</code>
+ * <p>
+ * Annotate your class and specify the proper collection name.
+ * <pre>
+ * &#64;CollectionName("peeps")
+ * public class Person extends ActiveResource &#123;
+ * ....
+ * &#125;
+ * </pre>
  * 
  * @version $LastChangedRevision$ <br>
  *          $LastChangedDate$
@@ -52,5 +63,5 @@ import java.lang.annotation.*;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 public @interface CollectionName {
-    String value();
+	String value();
 }
