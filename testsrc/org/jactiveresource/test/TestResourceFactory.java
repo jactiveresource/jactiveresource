@@ -107,6 +107,11 @@ public class TestResourceFactory {
 		assertEquals(39, cal.get(Calendar.SECOND));
 	}
 
+	@Test
+	public void testDeserializeOne3() throws IOException {
+	    p = f.deserializeOne(serializedPerson3());
+	    assertEquals("3", p.getId());
+	}
 	/*
 	 * a person with all fields present and valued
 	 */
@@ -146,7 +151,7 @@ public class TestResourceFactory {
 		sb.append("<birthdate type=\"date\" nil=\"true\" />");
 		sb
 				.append("<created-at type=\"datetime\">2010-02-01T05:23:39Z</created-at>");
-		sb.append("<id type=\"integer\">2</id>");
+		sb.append("<id type=\"integer\">3</id>");
 		sb.append("<name nil=\"true\"/>");
 		sb
 				.append("<updated-at type=\"datetime\">2010-02-01T05:23:39Z</updated-at>");
