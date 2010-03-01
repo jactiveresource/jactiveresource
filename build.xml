@@ -25,7 +25,7 @@
 
 	<property name="app.name" value="jactiveresource" />
 	<property name="app.description" value="Java port of Ruby's ActiveResource" />
-	<property name="app.version" value="0.2" />
+	<property name="app.version" value="0.3" />
 	<property name="src.home" value="${basedir}/src" />
 	<property name="build.home" value="${basedir}/build" />
 	<property name="testsrc.home" value="${basedir}/testsrc" />
@@ -123,10 +123,10 @@
 	<target name="runtests" depends="compiletests">
 		<junit fork="true">
 			<classpath refid="runtest.classpath" />
-			<formatter type="brief" usefile="false" />
+			<formatter type="plain" usefile="false" />
 			<batchtest>
 				<fileset dir="${testsrc.home}">
-					<include name="**/*.java" />
+					<include name="**/Test*.java" />
 				</fileset>
 			</batchtest>
 		</junit>
