@@ -58,6 +58,7 @@ import org.apache.http.conn.scheme.PlainSocketFactory;
 import org.apache.http.conn.scheme.Scheme;
 import org.apache.http.conn.scheme.SchemeRegistry;
 import org.apache.http.conn.scheme.SocketFactory;
+import org.apache.http.conn.ssl.SSLSocketFactory;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
@@ -388,6 +389,9 @@ public class ResourceConnection {
 		SocketFactory sf = PlainSocketFactory.getSocketFactory();
 		supportedSchemes.register(new Scheme("http", sf, 80));
 
+		sf = SSLSocketFactory.getSocketFactory();
+		supportedSchemes.register(new Scheme("https", sf, 443));
+		
 		// set parameters
 		httpParams = new BasicHttpParams();
 		HttpProtocolParams.setVersion(httpParams, HttpVersion.HTTP_1_1);
