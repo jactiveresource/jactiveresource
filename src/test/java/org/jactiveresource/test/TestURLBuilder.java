@@ -80,16 +80,16 @@ public class TestURLBuilder {
 	public void testAdd() {
 		u = new URLBuilder(base);
 		u.add("people");
-		assertEquals("add with base is broken", base.toString() + "/people", u
-				.toString());
+		assertEquals("add with base is broken", base.toString() + "/people",
+				u.toString());
 
 		u = new URLBuilder();
 		u.add("people");
 		assertEquals("add with no base is broken", "/people", u.toString());
 
 		u.add("promote.xml");
-		assertEquals("add after add is broken", "/people/promote.xml", u
-				.toString());
+		assertEquals("add after add is broken", "/people/promote.xml",
+				u.toString());
 
 		u = new URLBuilder();
 		u.add("big people");
@@ -113,8 +113,8 @@ public class TestURLBuilder {
 		list.add("value1");
 		list.add("value2");
 		p = u.new QueryParam("key", list);
-		assertEquals("list of values is broken", "key=value1&key=value2", p
-				.toString());
+		assertEquals("list of values is broken", "key=value1&key=value2",
+				p.toString());
 
 		String[] array = new String[3];
 		array[0] = "value1";
@@ -133,8 +133,8 @@ public class TestURLBuilder {
 		u = new URLBuilder();
 		u.add("people").add("1").add("promote.xml");
 		u.addQuery(p);
-		assertEquals("/people/1/promote.xml?position=manager&salary=60000", u
-				.toString());
+		assertEquals("/people/1/promote.xml?position=manager&salary=60000",
+				u.toString());
 
 	}
 
@@ -155,8 +155,8 @@ public class TestURLBuilder {
 		assertEquals("/people/1/promote.xml?position=manager", u.toString());
 
 		u.addQuery("salary", "60000");
-		assertEquals("/people/1/promote.xml?position=manager&salary=60000", u
-				.toString());
+		assertEquals("/people/1/promote.xml?position=manager&salary=60000",
+				u.toString());
 	}
 
 	@Test
