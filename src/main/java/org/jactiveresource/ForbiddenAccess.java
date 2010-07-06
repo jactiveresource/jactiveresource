@@ -45,17 +45,14 @@ public class ForbiddenAccess extends ClientError {
     private static final long serialVersionUID = 1L;
 
     public ForbiddenAccess() {
-        // TODO Auto-generated constructor stub
     }
 
     public ForbiddenAccess( String s ) {
         super( s );
-        // TODO Auto-generated constructor stub
     }
 
     public ForbiddenAccess( String message, Throwable cause ) {
         super( message, cause );
-        // TODO Auto-generated constructor stub
     }
 
 }
