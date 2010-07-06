@@ -54,7 +54,6 @@ import org.jactiveresource.annotation.CollectionName;
 
 import com.thoughtworks.xstream.XStream;
 import com.thoughtworks.xstream.converters.extended.ISO8601DateConverter;
-import com.thoughtworks.xstream.core.DefaultConverterLookup;
 import com.thoughtworks.xstream.core.util.ClassLoaderReference;
 import com.thoughtworks.xstream.core.util.CompositeClassLoader;
 import com.thoughtworks.xstream.io.xml.XppDriver;
@@ -77,12 +76,7 @@ public class ResourceFactory {
 		this.connection = c;
 		this.clazz = clazz;
 
-		xstream = new XStream();
-		// xstream = makeXStream();
-		xstream.registerConverter(new ISO8601DateConverter());
-
-		// "#{prefix(prefix_options)}#{collection_name}/#{id}.#{format.extension}#{
-		// query_string(query_options)}"
+		xstream = makeXStream();
 
 		String xmlname = singularize(dasherize(getCollectionName()));
 		xstream.alias(xmlname, clazz);
@@ -96,11 +90,19 @@ public class ResourceFactory {
 		xstream.processAnnotations(clazz);
 	}
 
+	/**
+	 * create an XStream object suitable for use in parsing Rails flavored XML
+	 * @return
+	 */
 	private XStream makeXStream() {
-		RailsConverterRegistry rcr = new RailsConverterRegistry();
+		RailsConverterLookup rcl = new RailsConverterLookup();
 		XStream xstream = new XStream(null, new XppDriver(),
 				new ClassLoaderReference(new CompositeClassLoader()), null,
-				new DefaultConverterLookup(), rcr);
+				rcl, null);
+		
+		// register a special converter so we can parse rails dates
+		xstream.registerConverter(new ISO8601DateConverter());
+		
 		return xstream;
 	}
 

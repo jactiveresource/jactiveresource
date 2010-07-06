@@ -89,22 +89,8 @@ public class TestResourceFactory {
 		assertEquals("2", p.getId());
 		assertNull(p.getName());
 		assertNull(p.getBirthdate());
-		// check the created-at datetime
-		cal.setTime(p.getCreatedAt());
-		assertEquals(2010, cal.get(Calendar.YEAR));
-		assertEquals(Calendar.FEBRUARY, cal.get(Calendar.MONTH));
-		assertEquals(1, cal.get(Calendar.DAY_OF_MONTH));
-		assertEquals(5, cal.get(Calendar.HOUR_OF_DAY));
-		assertEquals(23, cal.get(Calendar.MINUTE));
-		assertEquals(39, cal.get(Calendar.SECOND));
-		// check the updated-at datetime
-		cal.setTime(p.getCreatedAt());
-		assertEquals(2010, cal.get(Calendar.YEAR));
-		assertEquals(Calendar.FEBRUARY, cal.get(Calendar.MONTH));
-		assertEquals(1, cal.get(Calendar.DAY_OF_MONTH));
-		assertEquals(5, cal.get(Calendar.HOUR_OF_DAY));
-		assertEquals(23, cal.get(Calendar.MINUTE));
-		assertEquals(39, cal.get(Calendar.SECOND));
+		assertNull(p.getCreatedAt());
+		assertNull(p.getUpdatedAt());
 	}
 
 	@Test
