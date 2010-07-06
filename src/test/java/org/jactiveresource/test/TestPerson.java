@@ -46,7 +46,6 @@ import org.junit.Test;
 public class TestPerson {
 
 	private ResourceConnection c;
-	// private PersonFactory pf;
 	private ResourceFactory pf;
 	private Person p;
 
@@ -74,7 +73,7 @@ public class TestPerson {
 		p = pf.find(id);
 		assertEquals(p.getName(), "King Tut");
 		p.setName("Alexander the Great");
-		p.save();
+		p.update();
 
 		p = pf.find(id);
 		assertEquals(p.getName(), "Alexander the Great");
@@ -100,17 +99,24 @@ public class TestPerson {
 
 	@Test
 	public void testFindAll() throws Exception {
+		Person pp;
 		ArrayList<Person> people, otherpeople;
 		people = pf.findAll();
 
 		p = pf.instantiate();
-		p.setName("George Burns");
+		p.setName("George Lopez");
 		p.setBirthdate(new Date());
 		p.save();
 
+		pp = pf.instantiate();
+		pp.setName("George Foreman");
+		pp.setBirthdate(new Date());
+		pp.save();
+
 		otherpeople = pf.findAll();
-		assertEquals(otherpeople.size(), people.size() + 1);
+		assertEquals(otherpeople.size(), people.size() + 2);
 		p.delete();
+		pp.delete();
 
 		otherpeople = pf.findAll();
 		assertEquals(otherpeople.size(), people.size());
@@ -130,14 +136,31 @@ public class TestPerson {
 
 	@Test
 	public void testFind() throws Exception {
-		Person p = pf.find("1");
-		assertEquals("King Tut", p.getName());
+		p = pf.instantiate();
+		assertNull(p.getId());
+		p.setName("Ty Cobb");
+		p.setBirthdate(new Date());
+		p.save();
+
+		String id = p.getId();
+		Person p = pf.find(id);
+		assertEquals("Ty Cobb", p.getName());
+
+		p.delete();
 	}
-	/*
-	 * @Test public void testExists() throws Exception {
-	 * assertEquals(true,Person.exists(c,"1")); }
-	 * 
-	 * @Test public void testUpdate() throws Exception { Person p =
-	 * Person.find(c,"1"); p.setName("Alexander the Great"); p.update(c); }
-	 */
+
+	@Test
+	public void testExists() throws Exception {
+		p = pf.instantiate();
+		assertNull(p.getId());
+		p.setName("Nolan Ryan");
+		p.setBirthdate(new Date());
+		p.save();
+		String id = p.getId();
+
+		assertEquals(true, pf.exists(id));
+		p.delete();
+		assertEquals(false, pf.exists(id));
+	}
+
 }
