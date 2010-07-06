@@ -52,8 +52,8 @@ import com.thoughtworks.xstream.io.HierarchicalStreamWriter;
  * A hack of <code>com.thoughtworks.xstream.core.DefaultConverterLookup</code>
  * 
  * We wrap all converters passed to <code>registerConverter</code> so that we
- * can check for the rails nil attribute on any field and return null instead
- * of an empty string.
+ * can check for the rails nil attribute on any field and return null instead of
+ * an empty string.
  * 
  * @version $LastChangedRevision: 75 $ <br>
  *          $LastChangedDate: 2010-07-05 19:07:17 -0700 (Mon, 05 Jul 2010) $
