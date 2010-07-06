@@ -46,6 +46,8 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Map;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.http.HttpException;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
@@ -70,14 +72,17 @@ public class ResourceFactory {
 	private ResourceConnection connection;
 	private Class<? extends ActiveResource> clazz;
 	private XStream xstream;
+	private Log log = LogFactory.getLog(ResourceFactory.class);
 
 	public ResourceFactory(ResourceConnection c,
 			Class<? extends ActiveResource> clazz) {
+
 		this.connection = c;
 		this.clazz = clazz;
 
 		xstream = makeXStream();
 
+		log.trace("creating class and field aliases");
 		String xmlname = singularize(dasherize(getCollectionName()));
 		xstream.alias(xmlname, clazz);
 
@@ -87,7 +92,10 @@ public class ResourceFactory {
 			xstream.aliasField(xmlname, clazz, field.getName());
 		}
 
+		log.trace("processing XStream annotations");
 		xstream.processAnnotations(clazz);
+
+		log.debug("new ResourceFactory created");
 	}
 
 	/**
@@ -95,6 +103,7 @@ public class ResourceFactory {
 	 * @return
 	 */
 	private XStream makeXStream() {
+		log.trace("creating new XStream() object");
 		RailsConverterLookup rcl = new RailsConverterLookup();
 		XStream xstream = new XStream(null, new XppDriver(),
 				new ClassLoaderReference(new CompositeClassLoader()), null,
@@ -121,6 +130,7 @@ public class ResourceFactory {
 	 */
 	public <T extends ActiveResource> T find(String id) throws HttpException,
 			IOException, InterruptedException, URISyntaxException {
+		log.trace("find(id) id=" + id);
 		return this.<T> fetchOne(getCollectionURL().add(
 				id + getResourceFormat().extension()));
 	}
@@ -150,6 +160,7 @@ public class ResourceFactory {
 			URISyntaxException {
 		URLBuilder url = new URLBuilder(getCollectionName()
 				+ getResourceFormat().extension());
+		log.trace("findAll() url=" + url.toString());
 		return fetchMany(url);
 	}
 
@@ -181,8 +192,9 @@ public class ResourceFactory {
 			Map<Object, Object> params) throws HttpException, IOException,
 			InterruptedException, URISyntaxException {
 		URLBuilder url = new URLBuilder(getCollectionName()
-				+ getResourceFormat().extension());
-		return fetchMany(url.addQuery(params));
+				+ getResourceFormat().extension()).addQuery(params);
+		log.trace("findAll(Map<Object, Object> params) url=" + url.toString());
+		return fetchMany(url);
 	}
 
 	/**
@@ -212,8 +224,9 @@ public class ResourceFactory {
 			throws HttpException, IOException, InterruptedException,
 			URISyntaxException {
 		URLBuilder url = new URLBuilder(getCollectionName()
-				+ getResourceFormat().extension());
-		return fetchMany(url.addQuery(params));
+				+ getResourceFormat().extension()).addQuery(params);
+		log.trace("findAll(URLBuilder params) url=" + url.toString());
+		return fetchMany(url);
 	}
 
 	/**
@@ -245,6 +258,7 @@ public class ResourceFactory {
 			URISyntaxException {
 		URLBuilder url = getCollectionURL().add(
 				from + getResourceFormat().extension());
+		log.trace("findAll(String from) from=" + from);
 		return fetchMany(url);
 	}
 
@@ -283,8 +297,9 @@ public class ResourceFactory {
 			Map<Object, Object> params) throws HttpException, IOException,
 			InterruptedException, URISyntaxException {
 		URLBuilder url = getCollectionURL().add(
-				from + getResourceFormat().extension());
-		return fetchMany(url.addQuery(params));
+				from + getResourceFormat().extension()).addQuery(params);
+		log.trace("findAll(String from, Map<Object, Object> params) from=" + from);
+		return fetchMany(url);
 	}
 
 	/**
@@ -317,8 +332,9 @@ public class ResourceFactory {
 			URLBuilder params) throws HttpException, IOException,
 			InterruptedException, URISyntaxException {
 		URLBuilder url = getCollectionURL().add(
-				from + getResourceFormat().extension());
-		return fetchMany(url.addQuery(params));
+				from + getResourceFormat().extension()).addQuery(params);
+		log.trace("findAll(String from, URLBuilder params) from=" + from);
+		return fetchMany(url);
 	}
 
 	/**
@@ -340,17 +356,27 @@ public class ResourceFactory {
 	 * @return true if the resource exists, false if it does not
 	 */
 	public boolean exists(String id) {
+		log.trace("exists(String id) id=" + id);
+		URLBuilder url = getCollectionURL().add(
+				id + getResourceFormat().extension());
 		try {
-			connection.get(getCollectionURL().add(
-					id + getResourceFormat().extension()).toString());
+			connection.get(url.toString());
+			log.trace(url.toString() + " exists");
 			return true;
+		} catch (ResourceNotFound e) {
+			log.trace(url.toString() + " does not exist");
+			return false;
 		} catch (HttpException e) {
+			log.info(url.toString() + " generated an HttpException", e);
 			return false;
 		} catch (IOException e) {
+			log.info(url.toString() + " generated an IOException", e);
 			return false;
 		} catch (InterruptedException e) {
+			log.info(url.toString() + " generated an InterruptedException", e);
 			return false;
 		} catch (URISyntaxException e) {
+			log.info(url.toString() + " generated an URISyntaxException", e);
 			return false;
 		}
 	}
@@ -397,6 +423,7 @@ public class ResourceFactory {
 			throws InstantiationException, IllegalAccessException {
 		T obj = (T) clazz.newInstance();
 		obj.setFactory(this);
+		log.trace("instantiated resource class=" + clazz.toString());
 		return obj;
 	}
 
@@ -411,6 +438,7 @@ public class ResourceFactory {
 	 */
 	public boolean create(ActiveResource r) throws ClientProtocolException,
 			ClientError, ServerError, IOException {
+		log.trace("trying to create resource of class=" + r.getClass().toString());
 		URLBuilder url = new URLBuilder(getCollectionName()
 				+ getResourceFormat().extension());
 		String xml = xstream.toXML(r);
@@ -421,6 +449,7 @@ public class ResourceFactory {
 			connection.checkHttpStatus(response);
 			xstream.fromXML(entity, r);
 			r.setFactory(this);
+			log.trace("resource created with id=" + r.getId());
 			return true;
 		} catch (ResourceInvalid e) {
 			return false;
@@ -438,12 +467,13 @@ public class ResourceFactory {
 	 */
 	public boolean update(ActiveResource r) throws URISyntaxException,
 			HttpException, IOException, InterruptedException {
+		log.trace("update class=" + r.getClass().toString() +
+				" id=" + r.getId());
 		URLBuilder url = getCollectionURL().add(
 				r.getId() + getResourceFormat().extension());
 		String xml = xstream.toXML(r);
 		HttpResponse response = connection.put(url.toString(), xml,
 				getResourceFormat().contentType());
-		// now let's see what came back
 		// String entity = EntityUtils.toString(response.getEntity());
 		try {
 			connection.checkHttpStatus(response);
@@ -483,9 +513,10 @@ public class ResourceFactory {
 	 */
 	public void reload(ActiveResource r) throws HttpException, IOException,
 			InterruptedException, URISyntaxException {
-		String url = "/" + getCollectionName() + "/" + r.getId()
-				+ getResourceFormat().extension();
-		fetchOne(url, r);
+		log.trace("reloading class=" + r.getClass().toString() + " id=" + r.getId());
+		URLBuilder url = getCollectionURL().add(r.getId() +
+				getResourceFormat().extension());
+		fetchOne(url.toString(), r);
 	}
 
 	/**
@@ -501,6 +532,7 @@ public class ResourceFactory {
 			ClientProtocolException, IOException {
 		URLBuilder url = getCollectionURL().add(
 				r.getId() + getResourceFormat().extension());
+		log.trace("deleting class=" + r.getClass().toString() + " id=" + r.getId());
 		connection.delete(url.toString());
 	}
 
@@ -537,6 +569,8 @@ public class ResourceFactory {
 	public <T extends ActiveResource> T deserializeOne(String data)
 			throws IOException {
 		T obj = (T) xstream.fromXML(data);
+		log.trace("deserializeOne(String data) creates new object class=" +
+				obj.getClass().toString());
 		obj.setFactory(this);
 		return obj;
 	}
@@ -574,6 +608,8 @@ public class ResourceFactory {
 	public <T extends ActiveResource> T deserializeAndUpdateOne(String data,
 			T resource) throws IOException {
 		xstream.fromXML(data, resource);
+		log.trace("deserializeAndUpdateOne(String data) updates object of class=" +
+				resource.getClass().toString() + " id=" + resource.getId());
 		resource.setFactory(this);
 		return resource;
 	}
@@ -609,9 +645,7 @@ public class ResourceFactory {
 	@SuppressWarnings("unchecked")
 	public <T extends ActiveResource> ArrayList<T> deserializeMany(
 			BufferedReader stream) throws IOException {
-
 		ObjectInputStream ostream = xstream.createObjectInputStream(stream);
-
 		ArrayList<T> list = new ArrayList<T>();
 		T obj;
 		while (true) {
@@ -626,6 +660,8 @@ public class ResourceFactory {
 			}
 		}
 		ostream.close();
+		log.trace("deserializeMany(BufferedReader stream) deserialized "
+				+ list.size() + " objects");
 		return list;
 	}
 
