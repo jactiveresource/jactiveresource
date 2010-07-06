@@ -41,7 +41,6 @@ import java.util.Iterator;
 import java.util.Map;
 
 /**
- * TODO write some good documentation here
  * 
  * @version $LastChangedRevision$ <br>
  *          $LastChangedDate$

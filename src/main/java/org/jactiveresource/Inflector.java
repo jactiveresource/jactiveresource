@@ -48,7 +48,6 @@ import java.util.regex.Pattern;
 public class Inflector {
 
 	/**
-	 * TODO
 	 * @param word
 	 * @param firstLetterInUppercase
 	 * @return camelized string
