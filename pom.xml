@@ -6,7 +6,18 @@
 
   <groupId>org.jactiveresource</groupId>
   <artifactId>jactiveresource</artifactId>
+  <name>jactiveresource</name>
   <version>0.3</version>
+
+  <description>ActiveResource goodness in Java.</description>
+  <url>http://jactiveresource.org</url>
+  <issueManagement>
+  	<system>Trac</system>
+  	<url>http://jactiveresource.org/trac/roadmap</url>
+  </issueManagement>
+  <scm>
+  	<url>http://jactiveresource.org/svn/</url>
+  </scm>
 
   <build>
     <plugins>

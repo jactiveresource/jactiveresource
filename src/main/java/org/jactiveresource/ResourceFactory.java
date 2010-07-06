@@ -71,16 +71,14 @@ public class ResourceFactory {
 	private ResourceConnection connection;
 	private Class<? extends ActiveResource> clazz;
 	private XStream xstream;
-	private URLBuilder collectionURL;
 
 	public ResourceFactory(ResourceConnection c,
 			Class<? extends ActiveResource> clazz) {
 		this.connection = c;
 		this.clazz = clazz;
-		collectionURL = new URLBuilder(getCollectionName());
 
-		// xstream = new XStream();
-		xstream = makeXStream();
+		xstream = new XStream();
+		// xstream = makeXStream();
 		xstream.registerConverter(new ISO8601DateConverter());
 
 		// "#{prefix(prefix_options)}#{collection_name}/#{id}.#{format.extension}#{
@@ -121,7 +119,8 @@ public class ResourceFactory {
 	 */
 	public <T extends ActiveResource> T find(String id) throws HttpException,
 			IOException, InterruptedException, URISyntaxException {
-		return this.<T>fetchOne(collectionURL.add(id + getResourceFormat().extension()));
+		return this.<T> fetchOne(getCollectionURL().add(
+				id + getResourceFormat().extension()));
 	}
 
 	/**
@@ -242,8 +241,8 @@ public class ResourceFactory {
 	public <T extends ActiveResource> ArrayList<T> findAll(String from)
 			throws HttpException, IOException, InterruptedException,
 			URISyntaxException {
-		URLBuilder url = collectionURL.add(from
-				+ getResourceFormat().extension());
+		URLBuilder url = getCollectionURL().add(
+				from + getResourceFormat().extension());
 		return fetchMany(url);
 	}
 
@@ -281,8 +280,8 @@ public class ResourceFactory {
 	public <T extends ActiveResource> ArrayList<T> findAll(String from,
 			Map<Object, Object> params) throws HttpException, IOException,
 			InterruptedException, URISyntaxException {
-		URLBuilder url = collectionURL.add(from
-				+ getResourceFormat().extension());
+		URLBuilder url = getCollectionURL().add(
+				from + getResourceFormat().extension());
 		return fetchMany(url.addQuery(params));
 	}
 
@@ -315,8 +314,8 @@ public class ResourceFactory {
 	public <T extends ActiveResource> ArrayList<T> findAll(String from,
 			URLBuilder params) throws HttpException, IOException,
 			InterruptedException, URISyntaxException {
-		URLBuilder url = collectionURL.add(from
-				+ getResourceFormat().extension());
+		URLBuilder url = getCollectionURL().add(
+				from + getResourceFormat().extension());
 		return fetchMany(url.addQuery(params));
 	}
 
@@ -339,10 +338,9 @@ public class ResourceFactory {
 	 * @return true if the resource exists, false if it does not
 	 */
 	public boolean exists(String id) {
-		String url = "/" + getCollectionName() + "/" + id
-				+ getResourceFormat().extension();
 		try {
-			connection.get(url);
+			connection.get(getCollectionURL().add(
+					id + getResourceFormat().extension()).toString());
 			return true;
 		} catch (HttpException e) {
 			return false;
@@ -411,11 +409,11 @@ public class ResourceFactory {
 	 */
 	public boolean create(ActiveResource r) throws ClientProtocolException,
 			ClientError, ServerError, IOException {
-		String url = "/" + getCollectionName()
-				+ getResourceFormat().extension();
+		URLBuilder url = new URLBuilder(getCollectionName()
+				+ getResourceFormat().extension());
 		String xml = xstream.toXML(r);
-		HttpResponse response = connection.post(url, xml, ResourceFormat.XML
-				.contentType());
+		HttpResponse response = connection.post(url.toString(), xml,
+				ResourceFormat.XML.contentType());
 		String entity = EntityUtils.toString(response.getEntity());
 		try {
 			connection.checkHttpStatus(response);
@@ -438,8 +436,8 @@ public class ResourceFactory {
 	 */
 	public boolean update(ActiveResource r) throws URISyntaxException,
 			HttpException, IOException, InterruptedException {
-		URLBuilder url = collectionURL.add(r.getId()
-				+ getResourceFormat().extension());
+		URLBuilder url = getCollectionURL().add(
+				r.getId() + getResourceFormat().extension());
 		String xml = xstream.toXML(r);
 		HttpResponse response = connection.put(url.toString(), xml,
 				getResourceFormat().contentType());
@@ -499,8 +497,8 @@ public class ResourceFactory {
 	 */
 	public void delete(ActiveResource r) throws ClientError, ServerError,
 			ClientProtocolException, IOException {
-		URLBuilder url = collectionURL.add(r.getId()
-				+ getResourceFormat().extension());
+		URLBuilder url = getCollectionURL().add(
+				r.getId() + getResourceFormat().extension());
 		connection.delete(url.toString());
 	}
 
@@ -521,7 +519,7 @@ public class ResourceFactory {
 	public <T extends ActiveResource> T fetchOne(Object url)
 			throws HttpException, IOException, InterruptedException,
 			URISyntaxException {
-		return this.<T>deserializeOne(connection.get(url.toString()));
+		return this.<T> deserializeOne(connection.get(url.toString()));
 	}
 
 	/**
@@ -660,6 +658,15 @@ public class ResourceFactory {
 			name = Inflector.pluralize(name);
 		}
 		return name;
+	}
+
+	/**
+	 * create a new URLBuilder object with the base collection present
+	 * 
+	 * @return
+	 */
+	private URLBuilder getCollectionURL() {
+		return new URLBuilder(getCollectionName());
 	}
 
 }

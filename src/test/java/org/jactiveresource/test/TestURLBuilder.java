@@ -170,6 +170,6 @@ public class TestURLBuilder {
 		v.addQuery(u);
 		assertEquals("addQuery with another URLBuilder is broken",
 				"/otherpeople.xml?position=manager&salary=60000", v.toString());
-
 	}
+	
 }
