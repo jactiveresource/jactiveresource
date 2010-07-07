@@ -143,11 +143,9 @@ public class ResourceFactory {
 	 * 
 	 * <code>
 	 * <pre>
-	 * {@literal
 	 * c = new ResourceConnection("http://localhost:3000");
 	 * rf = new ResourceFactory(c, Person.class);
 	 * ArrayList<Person> people = rf.findAll();
-	 * }
 	 * </pre>
 	 * </code>
 	 * 
@@ -175,13 +173,11 @@ public class ResourceFactory {
 	 * 
 	 * <code>
 	 * <pre>
-	 * {@literal
 	 * ResourceConnection c = new ResourceConnection("http://localhost:3000");
 	 * ResourceFactory rf = new ResourceFactory(c, Person.class);
 	 * HashMap<String,String> params = new HashMap<String,String>();
 	 * params.put("position", "manager");
 	 * ArrayList<Person> rubydevs = rf.findAll(params);
-	 * }
 	 * </pre>
 	 * </code>
 	 * 
@@ -209,13 +205,11 @@ public class ResourceFactory {
 	 * 
 	 * <code>
 	 * <pre>
-	 * {@literal
-	 * 	ResourceConnection c = new ResourceConnection("http://localhost:3000");
-	 * 	ResourceFactory rf = new ResourceFactory(c, Person.class);
-	 * 	URLBuilder params = new URLBuilder();
-	 * 	params.addQuery("position", "manager");
-	 * 	ArrayList<Person> rubydevs = rf.findAll(params);
-	 * }
+	 * ResourceConnection c = new ResourceConnection("http://localhost:3000");
+	 * ResourceFactory rf = new ResourceFactory(c, Person.class);
+	 * URLBuilder params = new URLBuilder();
+	 * params.addQuery("position", "manager");
+	 * ArrayList<Person> rubydevs = rf.findAll(params);
 	 * </pre>
 	 * </code>
 	 * 
@@ -245,11 +239,9 @@ public class ResourceFactory {
 	 * 
 	 * <code>
 	 * <pre>
-	 * {@literal
 	 * c = new ResourceConnection("http://localhost:3000");
 	 * rf = new ResourceFactory(c, Person.class);
 	 * ArrayList<Person> geeks = rf.findAll("geeks");
-	 * }
 	 * </pre>
 	 * </code>
 	 * 
@@ -285,13 +277,11 @@ public class ResourceFactory {
 	 * 
 	 * <code>
 	 * <pre>
-	 * {@literal
-	 * 	ResourceConnection c = new ResourceConnection("http://localhost:3000");
-	 * 	ResourceFactory rf = new ResourceFactory(c, Person.class);
-	 * 	HashMap<String, String> params = new HashMap<String, String>();
-	 * 	params.put("language", "ruby");
-	 * 	ArrayList<Person> rubydevs = rf.findAll(<developers>, params);
-	 * }
+	 * ResourceConnection c = new ResourceConnection("http://localhost:3000");
+	 * ResourceFactory rf = new ResourceFactory(c, Person.class);
+	 * HashMap<String, String> params = new HashMap<String, String>();
+	 * params.put("language", "ruby");
+	 * ArrayList<Person> rubydevs = rf.findAll(<developers>, params);
 	 * </pre>
 	 * </code>
 	 * 
@@ -323,13 +313,11 @@ public class ResourceFactory {
 	 * 
 	 * <code>
 	 * <pre>
-	 * {@literal
-	 * 	ResourceConnection c = new ResourceConnection("http://localhost:3000");
-	 * 	ResourceFactory rf = new ResourceFactory(c, Person.class);
-	 * 	URLBuilder params = new URLBuilder();
-	 * 	params.addQuery("language", "ruby");
-	 * 	ArrayList<Person> rubydevs = rf.findAll(<developers>, params);
-	 * }
+	 * ResourceConnection c = new ResourceConnection("http://localhost:3000");
+	 * ResourceFactory rf = new ResourceFactory(c, Person.class);
+	 * URLBuilder params = new URLBuilder();
+	 * params.addQuery("language", "ruby");
+	 * ArrayList<Person> rubydevs = rf.findAll(<developers>, params);
 	 * </pre>
 	 * </code>
 	 * 
@@ -359,11 +347,9 @@ public class ResourceFactory {
 	 * 
 	 * <code>
 	 * <pre>
-	 * {@literal
 	 * c = new ResourceConnection("http://localhost:3000");
 	 * rf = new ResourceFactory(c, Person.class);
 	 * boolean fred = rf.exists("5");
-	 * }
 	 * </pre>
 	 * </code>
 	 * 
@@ -404,28 +390,26 @@ public class ResourceFactory {
 	 * 
 	 * <code>
 	 * <pre>
-	 * {@literal
-	 * 	public class Person extends ActiveResource {
-	 * 		private String id;
-	 * 		public String getId() {
-	 * 			return id;
-	 * 		}
-	 * 		public void setId(String id) {
-	 * 			this.id = id;
-	 * 		}
-	 * 	}
+	 * public class Person extends ActiveResource {
+	 *   private String id;
+	 *   public String getId() {
+	 *     return id;
+	 *   }
+	 *   public void setId(String id) {
+	 *     this.id = id;
+	 *   }
 	 * }
 	 * </pre>
 	 * </code>
 	 * 
-	 * And: <code>
+	 * And:
+	 * 
+	 * <code>
 	 * <pre>
-	 * {@literal
-	 * 	ResourceFactory pf = new ResourceFactory(c, Person.class);
-	 * 	Person a = new Person();
-	 * 	a.setFactory(pf);
-	 * 	Person b = pf.instantiate();
-	 * }
+	 * ResourceFactory pf = new ResourceFactory(c, Person.class);
+	 * Person a = new Person();
+	 * a.setFactory(pf);
+	 * Person b = pf.instantiate();
 	 * </pre>
 	 * </code>
 	 * 
