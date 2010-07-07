@@ -55,6 +55,7 @@
         <configuration>
           <descriptors>
           	<descriptor>src/assemble/src-assembly.xml</descriptor>
+          	<descriptor>src/assemble/bin-assembly.xml</descriptor>
           </descriptors>
         </configuration>
         <!-- attach this plugin to the package phase -->
