@@ -100,6 +100,7 @@ public class ResourceFactory {
 
 	/**
 	 * create an XStream object suitable for use in parsing Rails flavored XML
+	 * 
 	 * @return
 	 */
 	private XStream makeXStream() {
@@ -108,10 +109,10 @@ public class ResourceFactory {
 		XStream xstream = new XStream(null, new XppDriver(),
 				new ClassLoaderReference(new CompositeClassLoader()), null,
 				rcl, null);
-		
+
 		// register a special converter so we can parse rails dates
 		xstream.registerConverter(new ISO8601DateConverter());
-		
+
 		return xstream;
 	}
 
@@ -140,13 +141,15 @@ public class ResourceFactory {
 	 * <code>http://localhost:3000/</code>. The following would return the list
 	 * of people returned by <code>http://localhost:3000/people.xml</code>.
 	 * 
+	 * <code>
 	 * <pre>
-     * {@code
-     * c = new ResourceConnection("http://localhost:3000");
-     * rf = new ResourceFactory(c, Person.class);
-     * ArrayList<Person> people = rf.findAll();
-     * }
-     * </pre>
+	 * {@literal
+	 * c = new ResourceConnection("http://localhost:3000");
+	 * rf = new ResourceFactory(c, Person.class);
+	 * ArrayList<Person> people = rf.findAll();
+	 * }
+	 * </pre>
+	 * </code>
 	 * 
 	 * @param <T>
 	 * @return a list of objects
@@ -170,15 +173,17 @@ public class ResourceFactory {
 	 * parameter to limit the people to those who hold a position of manager by
 	 * using <code>http://localhost:3000/people.xml?position=manager</code>.
 	 * 
+	 * <code>
 	 * <pre>
-     * {@code
-     * ResourceConnection c = new ResourceConnection("http://localhost:3000");
-     * ResourceFactory rf = new ResourceFactory(c, Person.class);
-     * HashMap<String,String> params = new HashMap<String,String>();
-     * params.put("position", "manager");
-     * ArrayList<Person> rubydevs = rf.findAll(params);
-     * }
-     * </pre>
+	 * {@literal
+	 * ResourceConnection c = new ResourceConnection("http://localhost:3000");
+	 * ResourceFactory rf = new ResourceFactory(c, Person.class);
+	 * HashMap<String,String> params = new HashMap<String,String>();
+	 * params.put("position", "manager");
+	 * ArrayList<Person> rubydevs = rf.findAll(params);
+	 * }
+	 * </pre>
+	 * </code>
 	 * 
 	 * @param <T>
 	 * @param params
@@ -202,15 +207,17 @@ public class ResourceFactory {
 	 * are taken from a URLBuilder object. To get resources from
 	 * <code>http://localhost:3000/people.xml?position=manager</code> do:
 	 * 
+	 * <code>
 	 * <pre>
-     * {@code
-     * ResourceConnection c = new ResourceConnection("http://localhost:3000");
-     * ResourceFactory rf = new ResourceFactory(c, Person.class);
-     * URLBuilder params = new URLBuilder();
-     * params.addQuery("position", "manager");
-     * ArrayList<Person> rubydevs = rf.findAll(params);
-     * }
-     * </pre>
+	 * {@literal
+	 * 	ResourceConnection c = new ResourceConnection("http://localhost:3000");
+	 * 	ResourceFactory rf = new ResourceFactory(c, Person.class);
+	 * 	URLBuilder params = new URLBuilder();
+	 * 	params.addQuery("position", "manager");
+	 * 	ArrayList<Person> rubydevs = rf.findAll(params);
+	 * }
+	 * </pre>
+	 * </code>
 	 * 
 	 * @param <T>
 	 * @param params
@@ -236,13 +243,15 @@ public class ResourceFactory {
 	 * <code>http://localhost:3000/people/geeks.xml</code> which returns only
 	 * the people who are geeks. To get the list of geeks I would use:
 	 * 
+	 * <code>
 	 * <pre>
-     * {@code
-     * c = new ResourceConnection("http://localhost:3000");
-     * rf = new ResourceFactory(c, Person.class);
-     * ArrayList<Person> geeks = rf.findAll("geeks");
-     * }
-     * </pre>
+	 * {@literal
+	 * c = new ResourceConnection("http://localhost:3000");
+	 * rf = new ResourceFactory(c, Person.class);
+	 * ArrayList<Person> geeks = rf.findAll("geeks");
+	 * }
+	 * </pre>
+	 * </code>
 	 * 
 	 * @param <T>
 	 * @param from
@@ -274,15 +283,17 @@ public class ResourceFactory {
 	 * <p>
 	 * To get the ruby developers:
 	 * 
+	 * <code>
 	 * <pre>
-     * {@code
-     *     ResourceConnection c = new ResourceConnection("http://localhost:3000");
-     *     ResourceFactory rf = new ResourceFactory(c, Person.class);
-     *     HashMap<String, String> params = new HashMap<String, String>();
-     *     params.put("language", "ruby");
-     *     ArrayList<Person> rubydevs = rf.findAll("developers", params);
-     * }
-     * </pre>
+	 * {@literal
+	 * 	ResourceConnection c = new ResourceConnection("http://localhost:3000");
+	 * 	ResourceFactory rf = new ResourceFactory(c, Person.class);
+	 * 	HashMap<String, String> params = new HashMap<String, String>();
+	 * 	params.put("language", "ruby");
+	 * 	ArrayList<Person> rubydevs = rf.findAll(<developers>, params);
+	 * }
+	 * </pre>
+	 * </code>
 	 * 
 	 * @param <T>
 	 * @param from
@@ -298,7 +309,8 @@ public class ResourceFactory {
 			InterruptedException, URISyntaxException {
 		URLBuilder url = getCollectionURL().add(
 				from + getResourceFormat().extension()).addQuery(params);
-		log.trace("findAll(String from, Map<Object, Object> params) from=" + from);
+		log.trace("findAll(String from, Map<Object, Object> params) from="
+				+ from);
 		return fetchMany(url);
 	}
 
@@ -309,15 +321,17 @@ public class ResourceFactory {
 	 * <code>http://localhost:3000/people/developers.xml?language=ruby</code>
 	 * do:
 	 * 
+	 * <code>
 	 * <pre>
-     * {@code
-     *     ResourceConnection c = new ResourceConnection("http://localhost:3000");
-     *     ResourceFactory rf = new ResourceFactory(c, Person.class);
-     *     URLBuilder params = new URLBuilder();
-     *     params.addQuery("language", "ruby");
-     *     ArrayList<Person> rubydevs = rf.findAll("developers", params);
-     * }
-     * </pre>
+	 * {@literal
+	 * 	ResourceConnection c = new ResourceConnection("http://localhost:3000");
+	 * 	ResourceFactory rf = new ResourceFactory(c, Person.class);
+	 * 	URLBuilder params = new URLBuilder();
+	 * 	params.addQuery("language", "ruby");
+	 * 	ArrayList<Person> rubydevs = rf.findAll(<developers>, params);
+	 * }
+	 * </pre>
+	 * </code>
 	 * 
 	 * @param <T>
 	 * @param from
@@ -343,13 +357,15 @@ public class ResourceFactory {
 	 * which returns data <code>http://localhost:3000/people/5.xml</code>, then
 	 * <code>fred</code> is true.
 	 * 
+	 * <code>
 	 * <pre>
-     * {@code
-     * c = new ResourceConnection("http://localhost:3000");
-     * rf = new ResourceFactory(c, Person.class);
-     * boolean fred = rf.exists("5");
-     * }
-     * </pre>
+	 * {@literal
+	 * c = new ResourceConnection("http://localhost:3000");
+	 * rf = new ResourceFactory(c, Person.class);
+	 * boolean fred = rf.exists("5");
+	 * }
+	 * </pre>
+	 * </code>
 	 * 
 	 * @param id
 	 *            the id you want to check
@@ -386,30 +402,32 @@ public class ResourceFactory {
 	 * constructor of your resource class, and also attaches the factory to the
 	 * resource class. Say we had a Person class like this:
 	 * 
+	 * <code>
 	 * <pre>
-     * {@code
-     * public class Person extends ActiveResource {
-     *   private String id;
-     *   public String getId() {
-     *     return id;
-     *   }
-     *   public void setId( String id ) {
-     *     this.id = id;
-     *   }
-     * }
-     * }
-     * </pre>
+	 * {@literal
+	 * 	public class Person extends ActiveResource {
+	 * 		private String id;
+	 * 		public String getId() {
+	 * 			return id;
+	 * 		}
+	 * 		public void setId(String id) {
+	 * 			this.id = id;
+	 * 		}
+	 * 	}
+	 * }
+	 * </pre>
+	 * </code>
 	 * 
-	 * And:
-	 * 
+	 * And: <code>
 	 * <pre>
-     * {@code
-     * ResourceFactory pf = new ResourceFactory(c, Person.class);
-     * Person a = new Person();
-     * a.setFactory(pf);
-     * Person b = pf.instantiate();
-     * }
-     * </pre>
+	 * {@literal
+	 * 	ResourceFactory pf = new ResourceFactory(c, Person.class);
+	 * 	Person a = new Person();
+	 * 	a.setFactory(pf);
+	 * 	Person b = pf.instantiate();
+	 * }
+	 * </pre>
+	 * </code>
 	 * 
 	 * Person a and Person b are now equivalent.
 	 * 
@@ -438,7 +456,8 @@ public class ResourceFactory {
 	 */
 	public boolean create(ActiveResource r) throws ClientProtocolException,
 			ClientError, ServerError, IOException {
-		log.trace("trying to create resource of class=" + r.getClass().toString());
+		log.trace("trying to create resource of class="
+				+ r.getClass().toString());
 		URLBuilder url = new URLBuilder(getCollectionName()
 				+ getResourceFormat().extension());
 		String xml = xstream.toXML(r);
@@ -467,8 +486,8 @@ public class ResourceFactory {
 	 */
 	public boolean update(ActiveResource r) throws URISyntaxException,
 			HttpException, IOException, InterruptedException {
-		log.trace("update class=" + r.getClass().toString() +
-				" id=" + r.getId());
+		log.trace("update class=" + r.getClass().toString() + " id="
+				+ r.getId());
 		URLBuilder url = getCollectionURL().add(
 				r.getId() + getResourceFormat().extension());
 		String xml = xstream.toXML(r);
@@ -513,9 +532,10 @@ public class ResourceFactory {
 	 */
 	public void reload(ActiveResource r) throws HttpException, IOException,
 			InterruptedException, URISyntaxException {
-		log.trace("reloading class=" + r.getClass().toString() + " id=" + r.getId());
-		URLBuilder url = getCollectionURL().add(r.getId() +
-				getResourceFormat().extension());
+		log.trace("reloading class=" + r.getClass().toString() + " id="
+				+ r.getId());
+		URLBuilder url = getCollectionURL().add(
+				r.getId() + getResourceFormat().extension());
 		fetchOne(url.toString(), r);
 	}
 
@@ -532,7 +552,8 @@ public class ResourceFactory {
 			ClientProtocolException, IOException {
 		URLBuilder url = getCollectionURL().add(
 				r.getId() + getResourceFormat().extension());
-		log.trace("deleting class=" + r.getClass().toString() + " id=" + r.getId());
+		log.trace("deleting class=" + r.getClass().toString() + " id="
+				+ r.getId());
 		connection.delete(url.toString());
 	}
 
@@ -569,8 +590,8 @@ public class ResourceFactory {
 	public <T extends ActiveResource> T deserializeOne(String data)
 			throws IOException {
 		T obj = (T) xstream.fromXML(data);
-		log.trace("deserializeOne(String data) creates new object class=" +
-				obj.getClass().toString());
+		log.trace("deserializeOne(String data) creates new object class="
+				+ obj.getClass().toString());
 		obj.setFactory(this);
 		return obj;
 	}
@@ -608,8 +629,8 @@ public class ResourceFactory {
 	public <T extends ActiveResource> T deserializeAndUpdateOne(String data,
 			T resource) throws IOException {
 		xstream.fromXML(data, resource);
-		log.trace("deserializeAndUpdateOne(String data) updates object of class=" +
-				resource.getClass().toString() + " id=" + resource.getId());
+		log.trace("deserializeAndUpdateOne(String data) updates object of class="
+				+ resource.getClass().toString() + " id=" + resource.getId());
 		resource.setFactory(this);
 		return resource;
 	}

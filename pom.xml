@@ -7,17 +7,17 @@
   <groupId>org.jactiveresource</groupId>
   <artifactId>jactiveresource</artifactId>
   <name>jactiveresource</name>
-  <version>0.3-pre</version>
+  <version>0.3</version>
   <packaging>jar</packaging>
 
   <description>ActiveResource goodness in Java.</description>
   <url>http://jactiveresource.org</url>
   <issueManagement>
-  	<system>Trac</system>
-  	<url>http://jactiveresource.org/trac/roadmap</url>
+    <system>Trac</system>
+    <url>http://jactiveresource.org/trac/roadmap</url>
   </issueManagement>
   <scm>
-  	<url>http://jactiveresource.org/svn/</url>
+    <url>http://jactiveresource.org/svn/</url>
   </scm>
 
   <build>
@@ -35,6 +35,39 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-javadoc-plugin</artifactId>
         <version>2.7</version>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <version>2.2</version>
+        <configuration>
+          <archive>
+            <manifest>
+              <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
+            </manifest>
+          </archive>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-assembly-plugin</artifactId>
+        <version>2.2-beta-5</version>
+        <configuration>
+          <descriptors>
+          	<descriptor>src/assemble/src-assembly.xml</descriptor>
+          	<descriptor>src/assemble/bin-assembly.xml</descriptor>
+          </descriptors>
+        </configuration>
+        <!-- attach this plugin to the package phase -->
+        <executions>
+          <execution>
+            <id>make-assembly</id>
+            <phase>package</phase>
+            <goals>
+              <goal>single</goal>
+            </goals>
+          </execution>
+        </executions>
       </plugin>
     </plugins>
   </build>
@@ -64,7 +97,6 @@
       <version>1.6</version>
       <scope>compile</scope>
     </dependency>
-
     <dependency>
       <groupId>org.apache.httpcomponents</groupId>
       <artifactId>httpclient</artifactId>
@@ -109,7 +141,5 @@
       <version>4.8.1</version>
       <scope>test</scope>
     </dependency>
-
   </dependencies>
-
 </project>

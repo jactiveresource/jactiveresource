@@ -40,6 +40,8 @@ import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpException;
 import org.apache.http.HttpResponse;
@@ -77,15 +79,16 @@ import org.apache.http.params.HttpProtocolParams;
  * <code>org.apache.http.params.HttpProtocolParams</code> that set the various
  * parameters.
  * 
+ * <code>
  * <pre>
- * {
- *     &#064;code
- *     ResourceConnection c = new ResourceConnection(&quot;http://localhost:3000&quot;);
- *     HttpParams params = c.getHttpParams();
- *     HttpProtocolParams.setConnectionTimeout(httpParams, 5000);
- *     c.setHttpParams(params);
- * }
- * </pre>
+ * {@literal
+ * ResourceConnection c = new ResourceConnection("http://localhost:3000");
+ * HttpParams params = c.getHttpParams();
+ * HttpProtocolParams.setConnectionTimeout(httpParams, 5000);
+ * c.setHttpParams(params);
+ * ArrayList<String> a = new ArrayList<String>();
+ * }</pre>
+ * </code>
  * 
  * @version $LastChangedRevision$ <br>
  *          $LastChangedDate$
@@ -102,22 +105,48 @@ public class ResourceConnection {
 
 	private static final String CONTENT_TYPE = "Content-type";
 
-	// TODO remove trailing slashes
+	private Log log = LogFactory.getLog(ResourceConnection.class);
+
+	/**
+	 * Connect a resource located at a site represented in a URL
+	 * 
+	 * @param site
+	 */
 	public ResourceConnection(URL site) {
 		this.site = site;
 		init();
 	}
 
+	/**
+	 * Connect a resource located at a site represented in a string
+	 * 
+	 * @param site
+	 * @throws MalformedURLException
+	 */
 	public ResourceConnection(String site) throws MalformedURLException {
 		this.site = new URL(site);
 		init();
 	}
 
+	/**
+	 * Connect to a resource located at a site represented in a URL and use a
+	 * specific resource format (XML or JSON)
+	 * 
+	 * @param site
+	 * @param format
+	 */
 	public ResourceConnection(URL site, ResourceFormat format) {
 		this.site = site;
 		init();
 	}
 
+	/**
+	 * Connect to a resource located at a site represented in a string and use a
+	 * specific resource format (XML or JSON)
+	 * 
+	 * @param site
+	 * @param format
+	 */
 	public ResourceConnection(String site, ResourceFormat format)
 			throws MalformedURLException {
 		this.site = new URL(site);
@@ -125,7 +154,6 @@ public class ResourceConnection {
 	}
 
 	/**
-	 * 
 	 * @return the URL object for the site this connection is attached to
 	 */
 	public URL getSite() {
@@ -178,10 +206,11 @@ public class ResourceConnection {
 	 */
 	public String get(String url) throws HttpException, IOException,
 			InterruptedException, URISyntaxException {
-
 		HttpClient client = createHttpClient(this.getSite());
-		HttpGet request = new HttpGet(this.getSite().toString() + url);
+		String uri = this.getSite().toString() + url;
+		HttpGet request = new HttpGet(uri);
 		HttpEntity entity = null;
+		log.trace("HttpGet uri=" + uri);
 		try {
 			HttpResponse response = client.execute(request);
 			checkHttpStatus(response);
@@ -189,7 +218,6 @@ public class ResourceConnection {
 			StringBuffer sb = new StringBuffer();
 			BufferedReader reader = new BufferedReader(new InputStreamReader(
 					entity.getContent()));
-
 			int c;
 			while ((c = reader.read()) != -1)
 				sb.append((char) c);
@@ -219,15 +247,15 @@ public class ResourceConnection {
 			IOException, InterruptedException, URISyntaxException {
 
 		HttpClient client = createHttpClient(this.getSite());
-		HttpGet request = new HttpGet(this.getSite().toString() + url);
-
+		String uri = this.getSite().toString() + url;
+		HttpGet request = new HttpGet(uri);
 		HttpEntity entity = null;
+		log.trace("HttpGet uri=" + uri);
 		HttpResponse response = client.execute(request);
 		checkHttpStatus(response);
 		entity = response.getEntity();
-
-		BufferedReader reader = new BufferedReader(new InputStreamReader(entity
-				.getContent()));
+		BufferedReader reader = new BufferedReader(new InputStreamReader(
+				entity.getContent()));
 		return reader;
 	}
 
@@ -247,7 +275,9 @@ public class ResourceConnection {
 			throws URISyntaxException, HttpException, IOException,
 			InterruptedException {
 		HttpClient client = createHttpClient(this.getSite());
-		HttpPut request = new HttpPut(this.getSite().toString() + url);
+		String uri = this.getSite().toString() + url;
+		HttpPut request = new HttpPut(uri);
+		log.trace("HttpPut uri=" + uri);
 		request.setHeader(CONTENT_TYPE, contentType);
 		StringEntity entity = new StringEntity(body);
 		request.setEntity(entity);
@@ -256,7 +286,7 @@ public class ResourceConnection {
 	}
 
 	/**
-	 * send a post request, used to create a new resource
+	 * post body to url using the supplied content type
 	 * 
 	 * @param url
 	 * @param body
@@ -269,7 +299,9 @@ public class ResourceConnection {
 			throws ClientProtocolException, IOException, ClientError,
 			ServerError {
 		HttpClient client = createHttpClient(this.getSite());
-		HttpPost request = new HttpPost(this.getSite().toString() + url);
+		String uri = this.getSite().toString() + url;
+		HttpPost request = new HttpPost(uri);
+		log.trace("HttpGet uri=" + uri);
 		request.setHeader(CONTENT_TYPE, contentType);
 		StringEntity entity = new StringEntity(body);
 		request.setEntity(entity);
@@ -289,7 +321,9 @@ public class ResourceConnection {
 	public void delete(String url) throws ClientError, ServerError,
 			ClientProtocolException, IOException {
 		HttpClient client = createHttpClient(this.getSite());
-		HttpDelete request = new HttpDelete(this.getSite().toString() + url);
+		String uri = this.getSite().toString() + url;
+		HttpDelete request = new HttpDelete(uri);
+		log.trace("HttpDelete uri=" + uri);
 		HttpResponse response = client.execute(request);
 		checkHttpStatus(response);
 	}
@@ -391,13 +425,14 @@ public class ResourceConnection {
 
 		sf = SSLSocketFactory.getSocketFactory();
 		supportedSchemes.register(new Scheme("https", sf, 443));
-		
+
 		// set parameters
 		httpParams = new BasicHttpParams();
 		HttpProtocolParams.setVersion(httpParams, HttpVersion.HTTP_1_1);
 		HttpProtocolParams.setContentCharset(httpParams, "UTF-8");
 		ConnManagerParams.setMaxTotalConnections(httpParams, 400);
 
+		log.trace("ResourceConnection initialized");
 	}
 
 	public String toString() {
