@@ -152,5 +152,16 @@ public abstract class ActiveResource {
 		return getId() == null;
 	}
 
-	public abstract String getId();
+	private String id;
+
+	/**
+	 * return the identifier for this resource. Generally you don't go setting
+	 * this yourself, they are assigned by the resource you are consuming.
+	 * 
+	 * @return the identifier for this resource
+	 */
+	public String getId() {
+		return this.id;
+	}
+
 }
