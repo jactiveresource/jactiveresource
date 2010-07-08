@@ -39,22 +39,26 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Specify the path element in the URL to retrieve the collection of your objects.
- * <p>
+ * Specify the path element in the URL to retrieve the collection of your
+ * objects.
+ * 
  * Say the list of people in our application can be retrieved from
  * <code>http://localhost:3000/peeps.xml</code>
- * <p>
+ * 
  * You have created a Person subclass of ActiveResource, which would wrongly
  * guess that people could be retrieved from
  * <code>http://localhost:3000/people.xml</code>
- * <p>
+ * 
  * Annotate your class and specify the proper collection name.
+ * 
+ * <code>
  * <pre>
- * &#64;CollectionName("peeps")
- * public class Person extends ActiveResource &#123;
+ * {@literal @CollectionName("peeps")
+ * public class Person extends ActiveResource {
  * ....
- * &#125;
+ * }
  * </pre>
+ * </code>
  * 
  * @version $LastChangedRevision$ <br>
  *          $LastChangedDate$
