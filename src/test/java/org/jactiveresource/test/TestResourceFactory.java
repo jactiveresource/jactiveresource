@@ -95,9 +95,10 @@ public class TestResourceFactory {
 
 	@Test
 	public void testDeserializeOne3() throws IOException {
-	    p = f.deserializeOne(serializedPerson3());
-	    assertEquals("3", p.getId());
+		p = f.deserializeOne(serializedPerson3());
+		assertEquals("3", p.getId());
 	}
+
 	/*
 	 * a person with all fields present and valued
 	 */
@@ -105,12 +106,10 @@ public class TestResourceFactory {
 		sb = new StringBuilder();
 		sb.append("<person>");
 		sb.append("<birthdate type=\"date\">2010-01-29</birthdate>");
-		sb
-				.append("<created-at type=\"datetime\">2010-01-29T18:33:47Z</created-at>");
+		sb.append("<created-at type=\"datetime\">2010-01-29T18:33:47Z</created-at>");
 		sb.append("<id type=\"integer\">1</id>");
 		sb.append("<name>Alexander the Great</name>");
-		sb
-				.append("<updated-at type=\"datetime\">2010-01-30T05:41:38Z</updated-at>");
+		sb.append("<updated-at type=\"datetime\">2010-01-30T05:41:38Z</updated-at>");
 		sb.append("</person>");
 		return sb.toString();
 	}
@@ -135,13 +134,12 @@ public class TestResourceFactory {
 		sb = new StringBuilder();
 		sb.append("<person>");
 		sb.append("<birthdate type=\"date\" nil=\"true\" />");
-		sb
-				.append("<created-at type=\"datetime\">2010-02-01T05:23:39Z</created-at>");
+		sb.append("<created-at type=\"datetime\">2010-02-01T05:23:39Z</created-at>");
 		sb.append("<id type=\"integer\">3</id>");
 		sb.append("<name nil=\"true\"/>");
-		sb
-				.append("<updated-at type=\"datetime\">2010-02-01T05:23:39Z</updated-at>");
+		sb.append("<updated-at type=\"datetime\">2010-02-01T05:23:39Z</updated-at>");
 		sb.append("</person>");
 		return sb.toString();
 	}
+
 }
