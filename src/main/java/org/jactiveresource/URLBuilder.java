@@ -34,6 +34,7 @@ POSSIBILITY OF SUCH DAMAGE.
 package org.jactiveresource;
 
 import java.io.UnsupportedEncodingException;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.ArrayList;
@@ -214,6 +215,15 @@ public class URLBuilder {
 		return out.toString();
 	}
 
+	/**
+	 * 
+	 * @return
+	 * @throws MalformedURLException
+	 */
+	public URL toURL() throws MalformedURLException {
+		return new URL(toString());
+	}
+	
 	/**
 	 * shamelessly took the LinkTool class in Velocity Tools 1.4 and improved it
 	 * http://velocity.apache.org/tools/releases/1.4/view/LinkTool.html
