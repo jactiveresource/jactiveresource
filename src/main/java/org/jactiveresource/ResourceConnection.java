@@ -70,10 +70,31 @@ import org.apache.http.params.HttpProtocolParams;
 
 /**
  * <h3>Overview</h3>
- * <p>
+ * 
+ * A resource connection is the channel by which to receive data from the
+ * outside world. It provides HTTP transport and that's it. You give it a URL,
+ * tell it get, put, post, or delete, and it gives you back the response.
+ * 
+ * <h3>Authentication</h3>
+ * 
+ * If your service requires HTTP based authentication, you can give the user
+ * name and password in two ways. The preferred approach is to use the
+ * {@link setUsername} and {@link setPassword} methods. <code>
+ * <pre>
+ * ResourceConnection c = new ResourceConnection("http://localhost:3000");
+ * c.setUsername("Ace");
+ * c.setPassword("newenglandclamchowder");
+ * </pre>
+ * </code>
+ * 
+ * The alternative is to embed them into the URL, like so: <code>
+ * <pre>
+ * ResourceConnection c = new ResourceConnection("http://Ace:newenglandclamchowder@localhost:3000");
+ * </pre>
+ * </code>
  * 
  * <h3>HTTP Parameters</h3>
- * <p>
+ * 
  * You can custom http parameters, like connection or socket timeouts, by
  * changing the httpParams property. There are static methods in
  * <code>org.apache.http.params.HttpProtocolParams</code> that set the various
@@ -129,31 +150,6 @@ public class ResourceConnection {
 	}
 
 	/**
-	 * Connect to a resource located at a site represented in a URL and use a
-	 * specific resource format (XML or JSON)
-	 * 
-	 * @param site
-	 * @param format
-	 */
-	public ResourceConnection(URL site, ResourceFormat format) {
-		this.site = site;
-		init();
-	}
-
-	/**
-	 * Connect to a resource located at a site represented in a string and use a
-	 * specific resource format (XML or JSON)
-	 * 
-	 * @param site
-	 * @param format
-	 */
-	public ResourceConnection(String site, ResourceFormat format)
-			throws MalformedURLException {
-		this.site = new URL(site);
-		init();
-	}
-
-	/**
 	 * @return the URL object for the site this connection is attached to
 	 */
 	public URL getSite() {
@@ -191,10 +187,8 @@ public class ResourceConnection {
 	}
 
 	/**
-	 * append url to the site this
-	 * {@link ResourceConnection#ResourceConnection(String) ResourceConnection}
-	 * was created with, issue a HTTP GET request, and return the body of the
-	 * HTTP response
+	 * append url to the site this Connection was created with, issue a HTTP GET
+	 * request, and return the body of the HTTP response
 	 * 
 	 * @param url
 	 *            the url to retrieve
@@ -231,10 +225,9 @@ public class ResourceConnection {
 	}
 
 	/**
-	 * append url to the site this
-	 * {@link ResourceConnection#ResourceConnection(String) ResourceConnection}
-	 * was created with, issue a HTTP GET request, and return a buffered input
-	 * stream of the body of the HTTP response
+	 * append url to the site this Connection was created with, issue a HTTP GET
+	 * request, and return a buffered input stream of the body of the HTTP
+	 * response
 	 * 
 	 * @param url
 	 * @return a buffered stream of the response
