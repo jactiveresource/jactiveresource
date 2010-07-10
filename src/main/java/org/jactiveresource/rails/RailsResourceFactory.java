@@ -126,52 +126,6 @@ public class RailsResourceFactory<T extends Resource> extends
 	}
 
 	/**
-	 * Retrieve the resource identified by <code>id</code>, and return a new
-	 * instance of the appropriate object
-	 * 
-	 * @param <T>
-	 * @param id
-	 *            the primary identifier
-	 * @return a new instance of a subclass of @{link ActiveResource}
-	 * @throws URISyntaxException
-	 * @throws InterruptedException
-	 * @throws IOException
-	 * @throws HttpException
-	 */
-	public T find(String id) throws HttpException, IOException,
-			InterruptedException, URISyntaxException {
-		log.trace("finding id=" + id);
-		return fetchOne(URLForOne(id));
-	}
-
-	/**
-	 * Fetch all the resources. Say I have a person service at
-	 * <code>http://localhost:3000/</code>. The following would return the list
-	 * of people returned by <code>http://localhost:3000/people.xml</code>.
-	 * 
-	 * <code>
-	 * <pre>
-	 * c = new ResourceConnection("http://localhost:3000");
-	 * rf = new ResourceFactory(c, Person.class);
-	 * ArrayList<Person> people = rf.findAll();
-	 * </pre>
-	 * </code>
-	 * 
-	 * @param <T>
-	 * @return a list of objects
-	 * @throws HttpException
-	 * @throws IOException
-	 * @throws InterruptedException
-	 * @throws URISyntaxException
-	 */
-	public ArrayList<T> findAll() throws HttpException, IOException,
-			InterruptedException, URISyntaxException {
-		URLBuilder url = URLForCollection();
-		log.error("finding all url=" + url);
-		return fetchMany(url);
-	}
-
-	/**
 	 * Fetch resources using query parameters. Say I have a collection of people
 	 * at <code>http://localhost:3000/people.xml</code>. I can specify a
 	 * parameter to limit the people to those who hold a position of manager by
@@ -180,7 +134,7 @@ public class RailsResourceFactory<T extends Resource> extends
 	 * <code>
 	 * <pre>
 	 * ResourceConnection c = new ResourceConnection("http://localhost:3000");
-	 * ResourceFactory rf = new ResourceFactory(c, Person.class);
+	 * RailsResourceFactory<Person> rf = new RailsResourceFactory<Person>(c, Person.class);
 	 * HashMap<String,String> params = new HashMap<String,String>();
 	 * params.put("position", "manager");
 	 * ArrayList<Person> rubydevs = rf.findAll(params);
@@ -211,7 +165,7 @@ public class RailsResourceFactory<T extends Resource> extends
 	 * <code>
 	 * <pre>
 	 * ResourceConnection c = new ResourceConnection("http://localhost:3000");
-	 * ResourceFactory rf = new ResourceFactory(c, Person.class);
+	 * RailsResourceFactory<Person> rf = new RailsResourceFactory<Person>(c, Person.class);
 	 * URLBuilder params = new URLBuilder();
 	 * params.addQuery("position", "manager");
 	 * ArrayList<Person> rubydevs = rf.findAll(params);
@@ -279,10 +233,10 @@ public class RailsResourceFactory<T extends Resource> extends
 	 * <code>
 	 * <pre>
 	 * ResourceConnection c = new ResourceConnection("http://localhost:3000");
-	 * ResourceFactory rf = new ResourceFactory(c, Person.class);
+	 * RailsResourceFactory<Person> rf = new RailsResourceFactory<Person>(c, Person.class);
 	 * HashMap<String, String> params = new HashMap<String, String>();
 	 * params.put("language", "ruby");
-	 * ArrayList<Person> rubydevs = rf.findAll(<developers>, params);
+	 * ArrayList<Person> rubydevs = rf.findAll("developers", params);
 	 * </pre>
 	 * </code>
 	 * 

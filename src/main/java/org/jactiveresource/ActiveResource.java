@@ -49,13 +49,14 @@ import com.thoughtworks.xstream.annotations.XStreamOmitField;
  *          $LastChangedDate$
  * @author $LastChangedBy$
  */
-public abstract class ActiveResource implements Resource {
+@SuppressWarnings("unchecked")
+public abstract class ActiveResource<T extends Resource> implements Resource {
 
 	// omit this field from serialization or you get tons of errors
 	@XStreamOmitField
-	private ResourceFactory factory;
+	private ResourceFactory<T> factory;
 
-	void setFactory(ResourceFactory factory) {
+	void setFactory(ResourceFactory<T> factory) {
 		this.factory = factory;
 	}
 
@@ -69,7 +70,7 @@ public abstract class ActiveResource implements Resource {
 	 */
 	public boolean create() throws ClientProtocolException, ClientError,
 			ServerError, IOException {
-		return factory.create(this);
+		return factory.create((T) this);
 	}
 
 	/**
@@ -82,7 +83,7 @@ public abstract class ActiveResource implements Resource {
 	 */
 	public boolean update() throws URISyntaxException, HttpException,
 			IOException, InterruptedException {
-		return factory.update(this);
+		return factory.update((T) this);
 	}
 
 	/**
@@ -97,7 +98,7 @@ public abstract class ActiveResource implements Resource {
 	 */
 	public boolean save() throws ClientProtocolException, IOException,
 			URISyntaxException, HttpException, InterruptedException {
-		return factory.save(this);
+		return factory.save((T) this);
 	}
 
 	/**
@@ -110,7 +111,7 @@ public abstract class ActiveResource implements Resource {
 	 */
 	public void reload() throws HttpException, IOException,
 			InterruptedException, URISyntaxException {
-		factory.reload(this);
+		factory.reload((T) this);
 	}
 
 	/**
@@ -123,7 +124,7 @@ public abstract class ActiveResource implements Resource {
 	 */
 	public void delete() throws ClientError, ServerError,
 			ClientProtocolException, IOException {
-		factory.delete(this);
+		factory.delete((T) this);
 	}
 
 	/**

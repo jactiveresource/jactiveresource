@@ -34,7 +34,7 @@ POSSIBILITY OF SUCH DAMAGE.
 package org.jactiveresource.test;
 
 import org.jactiveresource.ResourceConnection;
-import org.jactiveresource.ResourceFactory;
+import org.jactiveresource.rails.RailsResourceFactory;
 
 /**
  * 
@@ -42,7 +42,7 @@ import org.jactiveresource.ResourceFactory;
  *          $LastChangedDate$
  * @author $LastChangedBy$
  */
-public class PersonFactory extends ResourceFactory {
+public class PersonFactory extends RailsResourceFactory<Person> {
 
 	public PersonFactory(ResourceConnection c) {
 		super(c, Person.class);

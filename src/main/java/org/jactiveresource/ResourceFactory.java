@@ -111,6 +111,52 @@ public class ResourceFactory<T extends Resource> {
 	}
 
 	/**
+	 * Retrieve the resource identified by <code>id</code>, and return a new
+	 * instance of the appropriate object
+	 * 
+	 * @param <T>
+	 * @param id
+	 *            the primary identifier
+	 * @return a new instance of a subclass of @{link ActiveResource}
+	 * @throws URISyntaxException
+	 * @throws InterruptedException
+	 * @throws IOException
+	 * @throws HttpException
+	 */
+	public T find(String id) throws HttpException, IOException,
+			InterruptedException, URISyntaxException {
+		log.trace("finding id=" + id);
+		return fetchOne(URLForOne(id));
+	}
+
+	/**
+	 * Fetch all the resources. Say I have a person service at
+	 * <code>http://localhost:3000/</code>. The following would return the list
+	 * of people returned by <code>http://localhost:3000/people.xml</code>.
+	 * 
+	 * <code>
+	 * <pre>
+	 * c = new ResourceConnection("http://localhost:3000");
+	 * rf = new ResourceFactory<Person>(c, Person.class);
+	 * ArrayList<Person> people = rf.findAll();
+	 * </pre>
+	 * </code>
+	 * 
+	 * @param <T>
+	 * @return a list of objects
+	 * @throws HttpException
+	 * @throws IOException
+	 * @throws InterruptedException
+	 * @throws URISyntaxException
+	 */
+	public ArrayList<T> findAll() throws HttpException, IOException,
+			InterruptedException, URISyntaxException {
+		URLBuilder url = URLForCollection();
+		log.error("finding all url=" + url);
+		return fetchMany(url);
+	}
+
+	/**
 	 * Return true if a resource exists. Say I have a person service at
 	 * <code>http://localhost:3000/</code>.
 	 * 
@@ -499,9 +545,10 @@ public class ResourceFactory<T extends Resource> {
 	 * 
 	 * @param resource
 	 */
+	@SuppressWarnings("unchecked")
 	private void setFactory(T resource) {
 		if (ActiveResource.class.isInstance(resource)) {
-			ActiveResource res = (ActiveResource) resource;
+			ActiveResource<T> res = (ActiveResource<T>) resource;
 			res.setFactory(this);
 		}
 	}

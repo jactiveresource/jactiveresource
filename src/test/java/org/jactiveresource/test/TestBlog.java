@@ -34,6 +34,10 @@ POSSIBILITY OF SUCH DAMAGE.
 package org.jactiveresource.test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+
+import java.util.Calendar;
+import java.util.TimeZone;
 
 import org.jactiveresource.ResourceConnection;
 import org.jactiveresource.rails.RailsResourceFactory;
@@ -50,6 +54,8 @@ public class TestBlog {
 	private ResourceConnection c;
 	private RailsResourceFactory<Post> pf;
 	private Post p;
+	private StringBuilder sb;
+	private Calendar cal;
 
 	@Before
 	public void setUp() throws Exception {
@@ -58,11 +64,62 @@ public class TestBlog {
 		c.setPassword("newenglandclamchowder");
 		pf = new RailsResourceFactory<Post>(c, Post.class);
 		pf.registerClass(Comment.class);
+		TimeZone tz = TimeZone.getTimeZone("GMT");
+		cal = Calendar.getInstance(tz);
 	}
 
 	@Test
 	public void getPostAndComments() throws Exception {
 		p = (Post) pf.find("1");
 		assertEquals("first post", p.getTitle());
+	}
+
+	@Test
+	public void deserialize1() throws Exception {
+		p = pf.deserializeOne(serializedPost1());
+		assertEquals("1", p.getId());
+		assertEquals("first post", p.getTitle());
+		assertNull(p.getPublishedAt());
+		assertEquals(2,p.getComments().size());
+		// check a comment date
+		
+		cal.setTime(p.getComments().get(1).getUpdatedAt());
+		assertEquals(2010, cal.get(Calendar.YEAR));
+		assertEquals(Calendar.JULY, cal.get(Calendar.MONTH));
+		assertEquals(8, cal.get(Calendar.DAY_OF_MONTH));
+		assertEquals(5, cal.get(Calendar.HOUR_OF_DAY));
+		assertEquals(7, cal.get(Calendar.MINUTE));
+		assertEquals(25, cal.get(Calendar.SECOND));
+	}
+
+	private String serializedPost1() {
+		sb = new StringBuilder();
+		sb.append("<post>");
+		sb.append("<body>my very first post</body>");
+		sb.append("<created-at type=\"datetime\">2010-07-08T05:05:27Z</created-at>");
+		sb.append("<id type=\"integer\">1</id>");
+		sb.append("<published-at type=\"datetime\" nil=\"true\"/>");
+		sb.append("<title>first post</title>");
+		sb.append("<updated-at type=\"datetime\">2010-07-08T05:05:27Z</updated-at>");
+		sb.append("<comments type=\"array\">");
+		sb.append("  <comment>");
+		sb.append("  <body>the first comment on the first post</body>");
+		sb.append("  <created-at type=\"datetime\">2010-07-08T05:05:48Z</created-at>");
+		sb.append("  <id type=\"integer\">1</id>");
+		sb.append("  <post-id type=\"integer\">1</post-id>");
+		sb.append("  <published-at type=\"datetime\" nil=\"true\"/>");
+		sb.append("  <updated-at type=\"datetime\">2010-07-08T05:07:08Z</updated-at>");
+		sb.append("  </comment>");
+		sb.append("  <comment>");
+		sb.append("  <body>the second comment to the first post</body>");
+		sb.append("  <created-at type=\"datetime\">2010-07-08T05:07:25Z</created-at>");
+		sb.append("  <id type=\"integer\">2</id>");
+		sb.append("  <post-id type=\"integer\">1</post-id>");
+		sb.append("  <published-at type=\"datetime\" nil=\"true\"/>");
+		sb.append("  <updated-at type=\"datetime\">2010-07-08T05:07:25Z</updated-at>");
+		sb.append("  </comment>");
+		sb.append("</comments>");
+		sb.append("</post>");
+		return sb.toString();
 	}
 }

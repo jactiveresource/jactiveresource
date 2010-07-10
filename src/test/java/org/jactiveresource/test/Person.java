@@ -43,7 +43,7 @@ import org.jactiveresource.ActiveResource;
  *          $LastChangedDate$
  * @author $LastChangedBy$
  */
-public class Person extends ActiveResource {
+public class Person extends ActiveResource<Person> {
 
 	private String name;
 	private Date birthdate;

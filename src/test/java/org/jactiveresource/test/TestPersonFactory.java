@@ -40,7 +40,6 @@ import java.io.IOException;
 import java.util.Calendar;
 import java.util.TimeZone;
 
-import org.jactiveresource.rails.RailsResourceFactory;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -50,9 +49,9 @@ import org.junit.Test;
  *          $LastChangedDate$
  * @author $LastChangedBy$
  */
-public class TestRailsResourceFactory {
+public class TestPersonFactory {
 
-	private RailsResourceFactory<Person> f;
+	private PersonFactory f;
 	private StringBuilder sb;
 	private Person p;
 	private Calendar cal;
@@ -61,7 +60,7 @@ public class TestRailsResourceFactory {
 	public void setUp() throws Exception {
 		TimeZone tz = TimeZone.getTimeZone("GMT");
 		cal = Calendar.getInstance(tz);
-		f = new RailsResourceFactory<Person>(null, Person.class);
+		f = new PersonFactory(null);
 	}
 
 	@Test
