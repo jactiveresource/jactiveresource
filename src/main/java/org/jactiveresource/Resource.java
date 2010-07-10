@@ -31,86 +31,28 @@ POSSIBILITY OF SUCH DAMAGE.
 
  */
 
-package org.jactiveresource.test;
-
-import java.util.ArrayList;
-import java.util.Date;
-
-import org.jactiveresource.Resource;
-
-import com.thoughtworks.xstream.annotations.XStreamAlias;
+package org.jactiveresource;
 
 /**
+ * an interface which all resources produced by the ResourceFactory must
+ * implement.
+ * 
+ * Generally, your implementation of the isNew() method can be:
+ * 
+ * <code>
+ * <pre>
+ * public boolean isNew() {
+ *   return getId() == null;
+ * }
+ * </pre>
+ * </code>
  * 
  * @version $LastChangedRevision$ <br>
  *          $LastChangedDate$
  * @author $LastChangedBy$
  */
-public class Post implements Resource {
+public interface Resource {
+	public boolean isNew();
 
-	private String id;
-	private String title;
-	@XStreamAlias("body")
-	private String theBody;
-	private Date publishedAt;
-	private Date createdAt;
-	private Date updatedAt;
-	private ArrayList<Comment> comments;
-	
-	
-	public String getId() {
-		return id;
-	}
-
-	public void setId(String id) {
-		this.id = id;
-	}
-
-	public boolean isNew() {
-		return getId() == null;
-	}
-
-	public String getTitle() {
-		return title;
-	}
-
-	public void setTitle(String title) {
-		this.title = title;
-	}
-
-	public String getBody() {
-		return theBody;
-	}
-
-	public void setBody(String body) {
-		this.theBody = body;
-	}
-
-	public Date getPublishedAt() {
-		return publishedAt;
-	}
-
-	public void setPublishedAt(Date publishedAt) {
-		this.publishedAt = publishedAt;
-	}
-
-	public Date getCreatedAt() {
-		return createdAt;
-	}
-
-	public void setCreatedAt(Date createdAt) {
-		this.createdAt = createdAt;
-	}
-
-	public Date getUpdatedAt() {
-		return updatedAt;
-	}
-
-	public void setUpdatedAt(Date updatedAt) {
-		this.updatedAt = updatedAt;
-	}
-
-	public ArrayList<Comment> getComments() {
-		return this.comments;
-	}
+	public String getId();
 }

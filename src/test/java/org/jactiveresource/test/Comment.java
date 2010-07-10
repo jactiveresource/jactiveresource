@@ -35,7 +35,7 @@ package org.jactiveresource.test;
 
 import java.util.Date;
 
-import org.jactiveresource.ActiveResource;
+import org.jactiveresource.Resource;
 
 /**
  * 
@@ -43,13 +43,26 @@ import org.jactiveresource.ActiveResource;
  *          $LastChangedDate$
  * @author $LastChangedBy$
  */
-public class Comment extends ActiveResource {
+public class Comment implements Resource {
 
+	private String id;
 	private String postId;
 	private String body;
 	private Date publishedAt;
 	private Date createdAt;
 	private Date updatedAt;
+
+	public String getId() {
+		return id;
+	}
+
+	public void setId(String id) {
+		this.id = id;
+	}
+
+	public boolean isNew() {
+		return getId() == null;
+	}
 
 	public String getPostId() {
 		return postId;

@@ -48,7 +48,7 @@ import org.junit.Test;
 public class TestBlog {
 
 	private ResourceConnection c;
-	private ResourceFactory pf;
+	private ResourceFactory<Post> pf;
 	private Post p;
 
 	@Before
@@ -56,13 +56,13 @@ public class TestBlog {
 		c = new ResourceConnection("http://localhost:3000");
 		c.setUsername("Ace");
 		c.setPassword("newenglandclamchowder");
-		pf = new ResourceFactory(c, Post.class);
+		pf = new ResourceFactory<Post>(c, Post.class);
 		pf.registerClass(Comment.class);
 	}
 
 	@Test
 	public void getPostAndComments() throws Exception {
-		p = pf.find("1");
+		p = (Post) pf.find("1");
 		assertEquals("first post", p.getTitle());
 	}
 }

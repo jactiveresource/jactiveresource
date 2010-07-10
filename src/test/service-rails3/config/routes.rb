@@ -1,4 +1,8 @@
 ServiceRails3::Application.routes.draw do |map|
+  resources :comments
+
+  resources :posts
+
   resources :people
 
   # The priority is based upon order of creation:

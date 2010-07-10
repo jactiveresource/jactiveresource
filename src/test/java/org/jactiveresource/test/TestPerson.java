@@ -55,7 +55,7 @@ import org.junit.Test;
 public class TestPerson {
 
 	private ResourceConnection c;
-	private ResourceFactory pf;
+	private ResourceFactory<Person> pf;
 	private Person p;
 
 	@Before
@@ -63,7 +63,7 @@ public class TestPerson {
 		c = new ResourceConnection("http://localhost:3000");
 		c.setUsername("Ace");
 		c.setPassword("newenglandclamchowder");
-		pf = new ResourceFactory(c, Person.class);
+		pf = new ResourceFactory<Person>(c, Person.class);
 	}
 
 	@Test

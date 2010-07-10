@@ -49,7 +49,7 @@ import com.thoughtworks.xstream.annotations.XStreamOmitField;
  *          $LastChangedDate$
  * @author $LastChangedBy$
  */
-public abstract class ActiveResource {
+public abstract class ActiveResource implements Resource {
 
 	// omit this field from serialization or you get tons of errors
 	@XStreamOmitField

@@ -61,21 +61,33 @@ import com.thoughtworks.xstream.core.util.CompositeClassLoader;
 import com.thoughtworks.xstream.io.xml.XppDriver;
 
 /**
+ * <h3>Creating a Factory</h3>
+ * 
  * <h3>Finding Resources</h3>
  * 
  * @version $LastChangedRevision$ <br>
  *          $LastChangedDate$
  * @author $LastChangedBy$
  */
-public class ResourceFactory {
+public class ResourceFactory<T extends Resource> {
 
 	private ResourceConnection connection;
-	private Class<? extends ActiveResource> clazz;
+	private Class<T> clazz;
 	private XStream xstream;
 	private Log log = LogFactory.getLog(ResourceFactory.class);
 
-	public ResourceFactory(ResourceConnection c,
-			Class<? extends ActiveResource> clazz) {
+	/**
+	 * Create a new resource factory.
+	 * 
+	 * You have to pass in the class for this resource in addition to using the
+	 * concrete parameterized type because of type erasure. See <a href=
+	 * "http://www.angelikalanger.com/GenericsFAQ/FAQSections/ParameterizedTypes.html#FAQ106"
+	 * >Angelika Langer's Java Generics FAQ</a> for details.
+	 * 
+	 * @param c
+	 * @param clazz
+	 */
+	public ResourceFactory(ResourceConnection c, Class<T> clazz) {
 
 		this.connection = c;
 		this.clazz = clazz;
@@ -87,7 +99,11 @@ public class ResourceFactory {
 		log.debug("new ResourceFactory created");
 	}
 
-	public void registerClass(Class c) {
+	/**
+	 * 
+	 * @param c
+	 */
+	public void registerClass(Class<?> c) {
 		log.trace("registering class " + c.getName());
 
 		String xmlname = singularize(dasherize(underscore(c.getSimpleName())));
@@ -102,7 +118,7 @@ public class ResourceFactory {
 		log.trace("processing XStream annotations");
 		xstream.processAnnotations(c);
 	}
-	
+
 	/**
 	 * create an XStream object suitable for use in parsing Rails flavored XML
 	 * 
@@ -134,10 +150,10 @@ public class ResourceFactory {
 	 * @throws IOException
 	 * @throws HttpException
 	 */
-	public <T extends ActiveResource> T find(String id) throws HttpException,
-			IOException, InterruptedException, URISyntaxException {
+	public T find(String id) throws HttpException, IOException,
+			InterruptedException, URISyntaxException {
 		log.trace("find(id) id=" + id);
-		return this.<T> fetchOne(getCollectionURL().add(
+		return fetchOne(getCollectionURL().add(
 				id + getResourceFormat().extension()));
 	}
 
@@ -161,9 +177,8 @@ public class ResourceFactory {
 	 * @throws InterruptedException
 	 * @throws URISyntaxException
 	 */
-	public <T extends ActiveResource> ArrayList<T> findAll()
-			throws HttpException, IOException, InterruptedException,
-			URISyntaxException {
+	public ArrayList<T> findAll() throws HttpException, IOException,
+			InterruptedException, URISyntaxException {
 		URLBuilder url = new URLBuilder(getCollectionName()
 				+ getResourceFormat().extension());
 		log.trace("findAll() url=" + url.toString());
@@ -194,9 +209,9 @@ public class ResourceFactory {
 	 * @throws InterruptedException
 	 * @throws URISyntaxException
 	 */
-	public <T extends ActiveResource> ArrayList<T> findAll(
-			Map<Object, Object> params) throws HttpException, IOException,
-			InterruptedException, URISyntaxException {
+	public ArrayList<T> findAll(Map<Object, Object> params)
+			throws HttpException, IOException, InterruptedException,
+			URISyntaxException {
 		URLBuilder url = new URLBuilder(getCollectionName()
 				+ getResourceFormat().extension()).addQuery(params);
 		log.trace("findAll(Map<Object, Object> params) url=" + url.toString());
@@ -226,9 +241,8 @@ public class ResourceFactory {
 	 * @throws InterruptedException
 	 * @throws URISyntaxException
 	 */
-	public <T extends ActiveResource> ArrayList<T> findAll(URLBuilder params)
-			throws HttpException, IOException, InterruptedException,
-			URISyntaxException {
+	public ArrayList<T> findAll(URLBuilder params) throws HttpException,
+			IOException, InterruptedException, URISyntaxException {
 		URLBuilder url = new URLBuilder(getCollectionName()
 				+ getResourceFormat().extension()).addQuery(params);
 		log.trace("findAll(URLBuilder params) url=" + url.toString());
@@ -259,9 +273,8 @@ public class ResourceFactory {
 	 * @throws InterruptedException
 	 * @throws URISyntaxException
 	 */
-	public <T extends ActiveResource> ArrayList<T> findAll(String from)
-			throws HttpException, IOException, InterruptedException,
-			URISyntaxException {
+	public ArrayList<T> findAll(String from) throws HttpException, IOException,
+			InterruptedException, URISyntaxException {
 		URLBuilder url = getCollectionURL().add(
 				from + getResourceFormat().extension());
 		log.trace("findAll(String from) from=" + from);
@@ -299,9 +312,9 @@ public class ResourceFactory {
 	 * @throws InterruptedException
 	 * @throws URISyntaxException
 	 */
-	public <T extends ActiveResource> ArrayList<T> findAll(String from,
-			Map<Object, Object> params) throws HttpException, IOException,
-			InterruptedException, URISyntaxException {
+	public ArrayList<T> findAll(String from, Map<Object, Object> params)
+			throws HttpException, IOException, InterruptedException,
+			URISyntaxException {
 		URLBuilder url = getCollectionURL().add(
 				from + getResourceFormat().extension()).addQuery(params);
 		log.trace("findAll(String from, Map<Object, Object> params) from="
@@ -335,9 +348,9 @@ public class ResourceFactory {
 	 * @throws InterruptedException
 	 * @throws URISyntaxException
 	 */
-	public <T extends ActiveResource> ArrayList<T> findAll(String from,
-			URLBuilder params) throws HttpException, IOException,
-			InterruptedException, URISyntaxException {
+	public ArrayList<T> findAll(String from, URLBuilder params)
+			throws HttpException, IOException, InterruptedException,
+			URISyntaxException {
 		URLBuilder url = getCollectionURL().add(
 				from + getResourceFormat().extension()).addQuery(params);
 		log.trace("findAll(String from, URLBuilder params) from=" + from);
@@ -425,11 +438,14 @@ public class ResourceFactory {
 	 * @throws InstantiationException
 	 * @throws IllegalAccessException
 	 */
-	@SuppressWarnings("unchecked")
-	public <T extends ActiveResource> T instantiate()
-			throws InstantiationException, IllegalAccessException {
+	public T instantiate() throws InstantiationException,
+			IllegalAccessException {
 		T obj = (T) clazz.newInstance();
-		obj.setFactory(this);
+		// if T is a subclass of ActiveResource, set the factory
+		if (ActiveResource.class.isInstance(obj)) {
+			ActiveResource res = (ActiveResource) obj;
+			res.setFactory(this);
+		}
 		log.trace("instantiated resource class=" + clazz.toString());
 		return obj;
 	}
@@ -443,8 +459,8 @@ public class ResourceFactory {
 	 * @throws ServerError
 	 * @throws IOException
 	 */
-	public boolean create(ActiveResource r) throws ClientProtocolException,
-			ClientError, ServerError, IOException {
+	public boolean create(T r) throws ClientProtocolException, ClientError,
+			ServerError, IOException {
 		log.trace("trying to create resource of class="
 				+ r.getClass().toString());
 		URLBuilder url = new URLBuilder(getCollectionName()
@@ -456,8 +472,12 @@ public class ResourceFactory {
 		try {
 			connection.checkHttpStatus(response);
 			xstream.fromXML(entity, r);
-			r.setFactory(this);
-			log.trace("resource created with id=" + r.getId());
+			// if T is a subclass of ActiveResource, set the factory
+			if (ActiveResource.class.isInstance(r)) {
+				ActiveResource res = (ActiveResource) r;
+				res.setFactory(this);
+			}
+			log.trace("resource created from " + r.toString());
 			return true;
 		} catch (ResourceInvalid e) {
 			return false;
@@ -473,10 +493,9 @@ public class ResourceFactory {
 	 * @throws IOException
 	 * @throws InterruptedException
 	 */
-	public boolean update(ActiveResource r) throws URISyntaxException,
-			HttpException, IOException, InterruptedException {
-		log.trace("update class=" + r.getClass().toString() + " id="
-				+ r.getId());
+	public boolean update(T r) throws URISyntaxException, HttpException,
+			IOException, InterruptedException {
+		log.trace("update class=" + r.getClass().toString());
 		URLBuilder url = getCollectionURL().add(
 				r.getId() + getResourceFormat().extension());
 		String xml = xstream.toXML(r);
@@ -501,9 +520,8 @@ public class ResourceFactory {
 	 * @throws HttpException
 	 * @throws InterruptedException
 	 */
-	public boolean save(ActiveResource r) throws ClientProtocolException,
-			IOException, URISyntaxException, HttpException,
-			InterruptedException {
+	public boolean save(T r) throws ClientProtocolException, IOException,
+			URISyntaxException, HttpException, InterruptedException {
 		if (r.isNew())
 			return create(r);
 		else
@@ -519,10 +537,9 @@ public class ResourceFactory {
 	 * @throws InterruptedException
 	 * @throws URISyntaxException
 	 */
-	public void reload(ActiveResource r) throws HttpException, IOException,
+	public void reload(T r) throws HttpException, IOException,
 			InterruptedException, URISyntaxException {
-		log.trace("reloading class=" + r.getClass().toString() + " id="
-				+ r.getId());
+		log.trace("reloading class=" + r.getClass().toString());
 		URLBuilder url = getCollectionURL().add(
 				r.getId() + getResourceFormat().extension());
 		fetchOne(url.toString(), r);
@@ -560,28 +577,33 @@ public class ResourceFactory {
 	 * @throws InterruptedException
 	 * @throws URISyntaxException
 	 */
-	public <T extends ActiveResource> T fetchOne(Object url)
-			throws HttpException, IOException, InterruptedException,
-			URISyntaxException {
-		return this.<T> deserializeOne(connection.get(url.toString()));
+	public T fetchOne(Object url) throws HttpException, IOException,
+			InterruptedException, URISyntaxException {
+		return deserializeOne(connection.get(url.toString()));
 	}
 
 	/**
-	 * Inflate (or unmarshall) an object from serialized data
+	 * Inflate (or unmarshall) an object from serialized data.
 	 * 
-	 * @param <T>
+	 * If the inflated class inherits from {@link ActiveResource} then also call
+	 * the setFactory() method so that the convenience methods of ActiveResource
+	 * work.
+	 * 
 	 * @param data
 	 *            a string of serialized data
 	 * @return a new object
 	 * @throws IOException
 	 */
-	@SuppressWarnings("unchecked")
-	public <T extends ActiveResource> T deserializeOne(String data)
-			throws IOException {
+	public T deserializeOne(String data) throws IOException {
+		@SuppressWarnings("unchecked")
 		T obj = (T) xstream.fromXML(data);
 		log.trace("deserializeOne(String data) creates new object class="
 				+ obj.getClass().toString());
-		obj.setFactory(this);
+		// if T is a subclass of ActiveResource, set the factory
+		if (ActiveResource.class.isInstance(obj)) {
+			ActiveResource res = (ActiveResource) obj;
+			res.setFactory(this);
+		}
 		return obj;
 	}
 
@@ -598,10 +620,9 @@ public class ResourceFactory {
 	 * @throws InterruptedException
 	 * @throws URISyntaxException
 	 */
-	public <T extends ActiveResource> T fetchOne(String url, T resource)
-			throws HttpException, IOException, InterruptedException,
-			URISyntaxException {
-		return deserializeAndUpdateOne(connection.get(url), resource);
+	public T fetchOne(Object url, T resource) throws HttpException,
+			IOException, InterruptedException, URISyntaxException {
+		return deserializeAndUpdateOne(connection.get(url.toString()), resource);
 	}
 
 	/**
@@ -615,12 +636,16 @@ public class ResourceFactory {
 	 * @return the updated resource object you passed in
 	 * @throws IOException
 	 */
-	public <T extends ActiveResource> T deserializeAndUpdateOne(String data,
-			T resource) throws IOException {
+	public T deserializeAndUpdateOne(String data, T resource)
+			throws IOException {
 		xstream.fromXML(data, resource);
 		log.trace("deserializeAndUpdateOne(String data) updates object of class="
-				+ resource.getClass().toString() + " id=" + resource.getId());
-		resource.setFactory(this);
+				+ resource.getClass().toString());
+		// if T is a subclass of ActiveResource, set the factory
+		if (ActiveResource.class.isInstance(resource)) {
+			ActiveResource res = (ActiveResource) resource;
+			res.setFactory(this);
+		}
 		return resource;
 	}
 
@@ -636,9 +661,8 @@ public class ResourceFactory {
 	 *             (or unmarshall) a list of objects from a stream
 	 * @throws URISyntaxException
 	 */
-	public <T extends ActiveResource> ArrayList<T> fetchMany(Object url)
-			throws HttpException, IOException, InterruptedException,
-			URISyntaxException {
+	public ArrayList<T> fetchMany(Object url) throws HttpException,
+			IOException, InterruptedException, URISyntaxException {
 		return deserializeMany(connection.getStream(url.toString()));
 	}
 
@@ -653,15 +677,19 @@ public class ResourceFactory {
 	 * @throws IOException
 	 */
 	@SuppressWarnings("unchecked")
-	public <T extends ActiveResource> ArrayList<T> deserializeMany(
-			BufferedReader stream) throws IOException {
+	public ArrayList<T> deserializeMany(BufferedReader stream)
+			throws IOException {
 		ObjectInputStream ostream = xstream.createObjectInputStream(stream);
 		ArrayList<T> list = new ArrayList<T>();
 		T obj;
 		while (true) {
 			try {
 				obj = (T) ostream.readObject();
-				obj.setFactory(this);
+				// if T is a subclass of ActiveResource, set the factory
+				if (ActiveResource.class.isInstance(obj)) {
+					ActiveResource res = (ActiveResource) obj;
+					res.setFactory(this);
+				}
 				list.add(obj);
 			} catch (EOFException e) {
 				break;

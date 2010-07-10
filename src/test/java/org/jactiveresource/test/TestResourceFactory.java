@@ -51,7 +51,7 @@ import org.junit.Test;
  */
 public class TestResourceFactory {
 
-	private ResourceFactory f;
+	private ResourceFactory<Person> f;
 	private StringBuilder sb;
 	private Person p;
 	private Calendar cal;
@@ -60,7 +60,7 @@ public class TestResourceFactory {
 	public void setUp() throws Exception {
 		TimeZone tz = TimeZone.getTimeZone("GMT");
 		cal = Calendar.getInstance(tz);
-		f = new ResourceFactory(null, Person.class);
+		f = new ResourceFactory<Person>(null, Person.class);
 	}
 
 	@Test
