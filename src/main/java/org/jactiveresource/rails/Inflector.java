@@ -31,11 +31,12 @@ POSSIBILITY OF SUCH DAMAGE.
 
  */
 
-package org.jactiveresource;
+package org.jactiveresource.rails;
 
 import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
 
 /**
  * a port of the excellent Inflector class in ruby's ActiveSupport library

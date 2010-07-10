@@ -33,13 +33,17 @@ POSSIBILITY OF SUCH DAMAGE.
 
 package org.jactiveresource.test;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.TimeZone;
 
-import org.jactiveresource.ResourceFactory;
+import org.apache.http.HttpException;
+import org.jactiveresource.rails.RailsResourceFactory;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -49,9 +53,9 @@ import org.junit.Test;
  *          $LastChangedDate$
  * @author $LastChangedBy$
  */
-public class TestResourceFactory {
+public class TestRailsResourceFactory {
 
-	private ResourceFactory<Person> f;
+	private RailsResourceFactory<Person> f;
 	private StringBuilder sb;
 	private Person p;
 	private Calendar cal;
@@ -60,7 +64,7 @@ public class TestResourceFactory {
 	public void setUp() throws Exception {
 		TimeZone tz = TimeZone.getTimeZone("GMT");
 		cal = Calendar.getInstance(tz);
-		f = new ResourceFactory<Person>(null, Person.class);
+		f = new RailsResourceFactory<Person>(null, Person.class);
 	}
 
 	@Test

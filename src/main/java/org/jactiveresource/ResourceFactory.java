@@ -33,18 +33,12 @@ POSSIBILITY OF SUCH DAMAGE.
 
 package org.jactiveresource;
 
-import static org.jactiveresource.Inflector.dasherize;
-import static org.jactiveresource.Inflector.singularize;
-import static org.jactiveresource.Inflector.underscore;
-
 import java.io.BufferedReader;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.ObjectInputStream;
-import java.lang.reflect.Field;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
-import java.util.Map;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -55,15 +49,15 @@ import org.apache.http.util.EntityUtils;
 import org.jactiveresource.annotation.CollectionName;
 
 import com.thoughtworks.xstream.XStream;
-import com.thoughtworks.xstream.converters.extended.ISO8601DateConverter;
-import com.thoughtworks.xstream.core.util.ClassLoaderReference;
-import com.thoughtworks.xstream.core.util.CompositeClassLoader;
-import com.thoughtworks.xstream.io.xml.XppDriver;
 
 /**
+ * A resource factory provides methods that construct url's, retrieves the
+ * contents of those url's, and deserializes the contents into java objects.
+ * 
  * <h3>Creating a Factory</h3>
  * 
- * <h3>Finding Resources</h3>
+ * <h3>Testing a Factory</h3>
+ * 
  * 
  * @version $LastChangedRevision$ <br>
  *          $LastChangedDate$
@@ -74,7 +68,7 @@ public class ResourceFactory<T extends Resource> {
 	private ResourceConnection connection;
 	private Class<T> clazz;
 	private XStream xstream;
-	private Log log = LogFactory.getLog(ResourceFactory.class);
+	private Log log;
 
 	/**
 	 * Create a new resource factory.
@@ -88,14 +82,11 @@ public class ResourceFactory<T extends Resource> {
 	 * @param clazz
 	 */
 	public ResourceFactory(ResourceConnection c, Class<T> clazz) {
-
-		this.connection = c;
-		this.clazz = clazz;
-
-		xstream = makeXStream();
-
+		log = LogFactory.getLog(ResourceFactory.class);
+		this.setConnection(c);
+		this.setResourceClass(clazz);
+		makeXStream();
 		registerClass(clazz);
-
 		log.debug("new ResourceFactory created");
 	}
 
@@ -105,18 +96,8 @@ public class ResourceFactory<T extends Resource> {
 	 */
 	public void registerClass(Class<?> c) {
 		log.trace("registering class " + c.getName());
-
-		String xmlname = singularize(dasherize(underscore(c.getSimpleName())));
-		xstream.alias(xmlname, c);
-
-		Field[] fields = c.getDeclaredFields();
-		for (Field field : fields) {
-			xmlname = dasherize(underscore(field.getName()));
-			xstream.aliasField(xmlname, c, field.getName());
-		}
-
 		log.trace("processing XStream annotations");
-		xstream.processAnnotations(c);
+		getXStream().processAnnotations(c);
 	}
 
 	/**
@@ -124,244 +105,14 @@ public class ResourceFactory<T extends Resource> {
 	 * 
 	 * @return
 	 */
-	private XStream makeXStream() {
+	protected void makeXStream() {
 		log.trace("creating new XStream() object");
-		RailsConverterLookup rcl = new RailsConverterLookup();
-		XStream xstream = new XStream(null, new XppDriver(),
-				new ClassLoaderReference(new CompositeClassLoader()), null,
-				rcl, null);
-
-		// register a special converter so we can parse rails dates
-		xstream.registerConverter(new ISO8601DateConverter());
-
-		return xstream;
-	}
-
-	/**
-	 * Retrieve the resource identified by <code>id</code>, and return a new
-	 * instance of the appropriate object
-	 * 
-	 * @param <T>
-	 * @param id
-	 *            the primary identifier
-	 * @return a new instance of a subclass of @{link ActiveResource}
-	 * @throws URISyntaxException
-	 * @throws InterruptedException
-	 * @throws IOException
-	 * @throws HttpException
-	 */
-	public T find(String id) throws HttpException, IOException,
-			InterruptedException, URISyntaxException {
-		log.trace("find(id) id=" + id);
-		return fetchOne(getCollectionURL().add(
-				id + getResourceFormat().extension()));
-	}
-
-	/**
-	 * Fetch all the resources. Say I have a person service at
-	 * <code>http://localhost:3000/</code>. The following would return the list
-	 * of people returned by <code>http://localhost:3000/people.xml</code>.
-	 * 
-	 * <code>
-	 * <pre>
-	 * c = new ResourceConnection("http://localhost:3000");
-	 * rf = new ResourceFactory(c, Person.class);
-	 * ArrayList<Person> people = rf.findAll();
-	 * </pre>
-	 * </code>
-	 * 
-	 * @param <T>
-	 * @return a list of objects
-	 * @throws HttpException
-	 * @throws IOException
-	 * @throws InterruptedException
-	 * @throws URISyntaxException
-	 */
-	public ArrayList<T> findAll() throws HttpException, IOException,
-			InterruptedException, URISyntaxException {
-		URLBuilder url = new URLBuilder(getCollectionName()
-				+ getResourceFormat().extension());
-		log.trace("findAll() url=" + url.toString());
-		return fetchMany(url);
-	}
-
-	/**
-	 * Fetch resources using query parameters. Say I have a collection of people
-	 * at <code>http://localhost:3000/people.xml</code>. I can specify a
-	 * parameter to limit the people to those who hold a position of manager by
-	 * using <code>http://localhost:3000/people.xml?position=manager</code>.
-	 * 
-	 * <code>
-	 * <pre>
-	 * ResourceConnection c = new ResourceConnection("http://localhost:3000");
-	 * ResourceFactory rf = new ResourceFactory(c, Person.class);
-	 * HashMap<String,String> params = new HashMap<String,String>();
-	 * params.put("position", "manager");
-	 * ArrayList<Person> rubydevs = rf.findAll(params);
-	 * </pre>
-	 * </code>
-	 * 
-	 * @param <T>
-	 * @param params
-	 * @return a list of objects
-	 * @throws HttpException
-	 * @throws IOException
-	 * @throws InterruptedException
-	 * @throws URISyntaxException
-	 */
-	public ArrayList<T> findAll(Map<Object, Object> params)
-			throws HttpException, IOException, InterruptedException,
-			URISyntaxException {
-		URLBuilder url = new URLBuilder(getCollectionName()
-				+ getResourceFormat().extension()).addQuery(params);
-		log.trace("findAll(Map<Object, Object> params) url=" + url.toString());
-		return fetchMany(url);
-	}
-
-	/**
-	 * Fetch resources using query parameters. In this case the query parameters
-	 * are taken from a URLBuilder object. To get resources from
-	 * <code>http://localhost:3000/people.xml?position=manager</code> do:
-	 * 
-	 * <code>
-	 * <pre>
-	 * ResourceConnection c = new ResourceConnection("http://localhost:3000");
-	 * ResourceFactory rf = new ResourceFactory(c, Person.class);
-	 * URLBuilder params = new URLBuilder();
-	 * params.addQuery("position", "manager");
-	 * ArrayList<Person> rubydevs = rf.findAll(params);
-	 * </pre>
-	 * </code>
-	 * 
-	 * @param <T>
-	 * @param params
-	 * @return a list of objects
-	 * @throws HttpException
-	 * @throws IOException
-	 * @throws InterruptedException
-	 * @throws URISyntaxException
-	 */
-	public ArrayList<T> findAll(URLBuilder params) throws HttpException,
-			IOException, InterruptedException, URISyntaxException {
-		URLBuilder url = new URLBuilder(getCollectionName()
-				+ getResourceFormat().extension()).addQuery(params);
-		log.trace("findAll(URLBuilder params) url=" + url.toString());
-		return fetchMany(url);
-	}
-
-	/**
-	 * Fetch a list of resources using a custom method. Say I have a collection
-	 * of people at <code>http://localhost:3000/people.xml</code>. Say there is
-	 * a custom method managers at
-	 * <code>http://localhost:3000/people/geeks.xml</code> which returns only
-	 * the people who are geeks. To get the list of geeks I would use:
-	 * 
-	 * <code>
-	 * <pre>
-	 * c = new ResourceConnection("http://localhost:3000");
-	 * rf = new ResourceFactory(c, Person.class);
-	 * ArrayList<Person> geeks = rf.findAll("geeks");
-	 * </pre>
-	 * </code>
-	 * 
-	 * @param <T>
-	 * @param from
-	 *            the name of the custom method
-	 * @return a list of objects
-	 * @throws HttpException
-	 * @throws IOException
-	 * @throws InterruptedException
-	 * @throws URISyntaxException
-	 */
-	public ArrayList<T> findAll(String from) throws HttpException, IOException,
-			InterruptedException, URISyntaxException {
-		URLBuilder url = getCollectionURL().add(
-				from + getResourceFormat().extension());
-		log.trace("findAll(String from) from=" + from);
-		return fetchMany(url);
-	}
-
-	/**
-	 * Fetch resources using a custom method and query parameters. Say I have a
-	 * collection of people at <code>http://localhost:3000/people.xml</code>.
-	 * Say there is a custom method <code>developers</code> at
-	 * <code>http://localhost:3000/people/developers.xml</code> which returns
-	 * only the people who are developers. Additionally, I can specify a
-	 * parameter to limit the developers to those who are skilled in a
-	 * particular language by using
-	 * <code>http://localhost:3000/people/developers.xml?language=ruby</code>
-	 * <p>
-	 * To get the ruby developers:
-	 * 
-	 * <code>
-	 * <pre>
-	 * ResourceConnection c = new ResourceConnection("http://localhost:3000");
-	 * ResourceFactory rf = new ResourceFactory(c, Person.class);
-	 * HashMap<String, String> params = new HashMap<String, String>();
-	 * params.put("language", "ruby");
-	 * ArrayList<Person> rubydevs = rf.findAll(<developers>, params);
-	 * </pre>
-	 * </code>
-	 * 
-	 * @param <T>
-	 * @param from
-	 * @param params
-	 * @return a list of objects
-	 * @throws HttpException
-	 * @throws IOException
-	 * @throws InterruptedException
-	 * @throws URISyntaxException
-	 */
-	public ArrayList<T> findAll(String from, Map<Object, Object> params)
-			throws HttpException, IOException, InterruptedException,
-			URISyntaxException {
-		URLBuilder url = getCollectionURL().add(
-				from + getResourceFormat().extension()).addQuery(params);
-		log.trace("findAll(String from, Map<Object, Object> params) from="
-				+ from);
-		return fetchMany(url);
-	}
-
-	/**
-	 * Fetch resources using a custom method and query parameters, where the
-	 * query parameters are taken from a URLBuilder object. To get the resources
-	 * from
-	 * <code>http://localhost:3000/people/developers.xml?language=ruby</code>
-	 * do:
-	 * 
-	 * <code>
-	 * <pre>
-	 * ResourceConnection c = new ResourceConnection("http://localhost:3000");
-	 * ResourceFactory rf = new ResourceFactory(c, Person.class);
-	 * URLBuilder params = new URLBuilder();
-	 * params.addQuery("language", "ruby");
-	 * ArrayList<Person> rubydevs = rf.findAll(<developers>, params);
-	 * </pre>
-	 * </code>
-	 * 
-	 * @param <T>
-	 * @param from
-	 * @param params
-	 * @return a list of objects
-	 * @throws HttpException
-	 * @throws IOException
-	 * @throws InterruptedException
-	 * @throws URISyntaxException
-	 */
-	public ArrayList<T> findAll(String from, URLBuilder params)
-			throws HttpException, IOException, InterruptedException,
-			URISyntaxException {
-		URLBuilder url = getCollectionURL().add(
-				from + getResourceFormat().extension()).addQuery(params);
-		log.trace("findAll(String from, URLBuilder params) from=" + from);
-		return fetchMany(url);
+		setXStream(new XStream());
 	}
 
 	/**
 	 * Return true if a resource exists. Say I have a person service at
-	 * <code>http://localhost:3000/</code>. If the following is a valid URL
-	 * which returns data <code>http://localhost:3000/people/5.xml</code>, then
-	 * <code>fred</code> is true.
+	 * <code>http://localhost:3000/</code>.
 	 * 
 	 * <code>
 	 * <pre>
@@ -371,32 +122,34 @@ public class ResourceFactory<T extends Resource> {
 	 * </pre>
 	 * </code>
 	 * 
+	 * If <code>http://localhost:3000/people/5.xml</code> is a valid URL which
+	 * returns data , then <code>fred</code> is true.
+	 * 
 	 * @param id
 	 *            the id you want to check
 	 * @return true if the resource exists, false if it does not
 	 */
 	public boolean exists(String id) {
 		log.trace("exists(String id) id=" + id);
-		URLBuilder url = getCollectionURL().add(
-				id + getResourceFormat().extension());
+		URLBuilder url = URLForOne(id);
 		try {
-			connection.get(url.toString());
-			log.trace(url.toString() + " exists");
+			getConnection().get(url);
+			log.trace(url + " exists");
 			return true;
 		} catch (ResourceNotFound e) {
-			log.trace(url.toString() + " does not exist");
+			log.trace(url + " does not exist");
 			return false;
 		} catch (HttpException e) {
-			log.info(url.toString() + " generated an HttpException", e);
+			log.info(url + " generated an HttpException", e);
 			return false;
 		} catch (IOException e) {
-			log.info(url.toString() + " generated an IOException", e);
+			log.info(url + " generated an IOException", e);
 			return false;
 		} catch (InterruptedException e) {
-			log.info(url.toString() + " generated an InterruptedException", e);
+			log.info(url + " generated an InterruptedException", e);
 			return false;
 		} catch (URISyntaxException e) {
-			log.info(url.toString() + " generated an URISyntaxException", e);
+			log.info(url + " generated an URISyntaxException", e);
 			return false;
 		}
 	}
@@ -440,12 +193,8 @@ public class ResourceFactory<T extends Resource> {
 	 */
 	public T instantiate() throws InstantiationException,
 			IllegalAccessException {
-		T obj = (T) clazz.newInstance();
-		// if T is a subclass of ActiveResource, set the factory
-		if (ActiveResource.class.isInstance(obj)) {
-			ActiveResource res = (ActiveResource) obj;
-			res.setFactory(this);
-		}
+		T obj = (T) getResourceClass().newInstance();
+		setFactory(obj);
 		log.trace("instantiated resource class=" + clazz.toString());
 		return obj;
 	}
@@ -463,20 +212,15 @@ public class ResourceFactory<T extends Resource> {
 			ServerError, IOException {
 		log.trace("trying to create resource of class="
 				+ r.getClass().toString());
-		URLBuilder url = new URLBuilder(getCollectionName()
-				+ getResourceFormat().extension());
-		String xml = xstream.toXML(r);
-		HttpResponse response = connection.post(url.toString(), xml,
-				ResourceFormat.XML.contentType());
+		URLBuilder url = URLForCollection();
+		String xml = getXStream().toXML(r);
+		HttpResponse response = getConnection().post(url, xml,
+				getResourceFormat().contentType());
 		String entity = EntityUtils.toString(response.getEntity());
 		try {
-			connection.checkHttpStatus(response);
-			xstream.fromXML(entity, r);
-			// if T is a subclass of ActiveResource, set the factory
-			if (ActiveResource.class.isInstance(r)) {
-				ActiveResource res = (ActiveResource) r;
-				res.setFactory(this);
-			}
+			getConnection().checkHttpStatus(response);
+			getXStream().fromXML(entity, r);
+			setFactory(r);
 			log.trace("resource created from " + r.toString());
 			return true;
 		} catch (ResourceInvalid e) {
@@ -496,10 +240,9 @@ public class ResourceFactory<T extends Resource> {
 	public boolean update(T r) throws URISyntaxException, HttpException,
 			IOException, InterruptedException {
 		log.trace("update class=" + r.getClass().toString());
-		URLBuilder url = getCollectionURL().add(
-				r.getId() + getResourceFormat().extension());
-		String xml = xstream.toXML(r);
-		HttpResponse response = connection.put(url.toString(), xml,
+		URLBuilder url = URLForOne(r.getId());
+		String xml = getXStream().toXML(r);
+		HttpResponse response = getConnection().put(url, xml,
 				getResourceFormat().contentType());
 		// String entity = EntityUtils.toString(response.getEntity());
 		try {
@@ -540,9 +283,8 @@ public class ResourceFactory<T extends Resource> {
 	public void reload(T r) throws HttpException, IOException,
 			InterruptedException, URISyntaxException {
 		log.trace("reloading class=" + r.getClass().toString());
-		URLBuilder url = getCollectionURL().add(
-				r.getId() + getResourceFormat().extension());
-		fetchOne(url.toString(), r);
+		URLBuilder url = URLForOne(r.getId());
+		fetchOne(url, r);
 	}
 
 	/**
@@ -554,13 +296,12 @@ public class ResourceFactory<T extends Resource> {
 	 * @throws ClientProtocolException
 	 * @throws IOException
 	 */
-	public void delete(ActiveResource r) throws ClientError, ServerError,
+	public void delete(T r) throws ClientError, ServerError,
 			ClientProtocolException, IOException {
-		URLBuilder url = getCollectionURL().add(
-				r.getId() + getResourceFormat().extension());
+		URLBuilder url = URLForOne(r.getId());
 		log.trace("deleting class=" + r.getClass().toString() + " id="
 				+ r.getId());
-		connection.delete(url.toString());
+		getConnection().delete(url);
 	}
 
 	/**
@@ -579,7 +320,7 @@ public class ResourceFactory<T extends Resource> {
 	 */
 	public T fetchOne(Object url) throws HttpException, IOException,
 			InterruptedException, URISyntaxException {
-		return deserializeOne(connection.get(url.toString()));
+		return deserializeOne(getConnection().get(url));
 	}
 
 	/**
@@ -596,14 +337,9 @@ public class ResourceFactory<T extends Resource> {
 	 */
 	public T deserializeOne(String data) throws IOException {
 		@SuppressWarnings("unchecked")
-		T obj = (T) xstream.fromXML(data);
-		log.trace("deserializeOne(String data) creates new object class="
-				+ obj.getClass().toString());
-		// if T is a subclass of ActiveResource, set the factory
-		if (ActiveResource.class.isInstance(obj)) {
-			ActiveResource res = (ActiveResource) obj;
-			res.setFactory(this);
-		}
+		T obj = (T) getXStream().fromXML(data);
+		log.trace("create new object of class=" + obj.getClass().toString());
+		setFactory(obj);
 		return obj;
 	}
 
@@ -622,7 +358,7 @@ public class ResourceFactory<T extends Resource> {
 	 */
 	public T fetchOne(Object url, T resource) throws HttpException,
 			IOException, InterruptedException, URISyntaxException {
-		return deserializeAndUpdateOne(connection.get(url.toString()), resource);
+		return deserializeAndUpdateOne(getConnection().get(url), resource);
 	}
 
 	/**
@@ -638,14 +374,10 @@ public class ResourceFactory<T extends Resource> {
 	 */
 	public T deserializeAndUpdateOne(String data, T resource)
 			throws IOException {
-		xstream.fromXML(data, resource);
-		log.trace("deserializeAndUpdateOne(String data) updates object of class="
-				+ resource.getClass().toString());
-		// if T is a subclass of ActiveResource, set the factory
-		if (ActiveResource.class.isInstance(resource)) {
-			ActiveResource res = (ActiveResource) resource;
-			res.setFactory(this);
-		}
+		getXStream().fromXML(data, resource);
+		log.trace("updating object of class=" + resource.getClass().toString()
+				+ " id=" + resource.getId());
+		setFactory(resource);
 		return resource;
 	}
 
@@ -663,7 +395,7 @@ public class ResourceFactory<T extends Resource> {
 	 */
 	public ArrayList<T> fetchMany(Object url) throws HttpException,
 			IOException, InterruptedException, URISyntaxException {
-		return deserializeMany(connection.getStream(url.toString()));
+		return deserializeMany(getConnection().getStream(url));
 	}
 
 	/**
@@ -679,17 +411,14 @@ public class ResourceFactory<T extends Resource> {
 	@SuppressWarnings("unchecked")
 	public ArrayList<T> deserializeMany(BufferedReader stream)
 			throws IOException {
-		ObjectInputStream ostream = xstream.createObjectInputStream(stream);
+		ObjectInputStream ostream = getXStream()
+				.createObjectInputStream(stream);
 		ArrayList<T> list = new ArrayList<T>();
 		T obj;
 		while (true) {
 			try {
 				obj = (T) ostream.readObject();
-				// if T is a subclass of ActiveResource, set the factory
-				if (ActiveResource.class.isInstance(obj)) {
-					ActiveResource res = (ActiveResource) obj;
-					res.setFactory(this);
-				}
+				setFactory(obj);
 				list.add(obj);
 			} catch (EOFException e) {
 				break;
@@ -698,8 +427,7 @@ public class ResourceFactory<T extends Resource> {
 			}
 		}
 		ostream.close();
-		log.trace("deserializeMany(BufferedReader stream) deserialized "
-				+ list.size() + " objects");
+		log.trace("deserialized " + list.size() + " objects");
 		return list;
 	}
 
@@ -715,34 +443,91 @@ public class ResourceFactory<T extends Resource> {
 	}
 
 	/**
+	 * return the url that accesses the resource identified by id, ie
+	 * <code>/people/1.xml</code>
+	 * 
+	 * If you pass null, you'll get null.
+	 * 
+	 * @param id
+	 *            the identifier of the resource you want the URL to
+	 * @return
+	 */
+	protected URLBuilder URLForOne(String id) {
+		if (id == null) {
+			return null;
+		} else {
+			return new URLBuilder(getCollectionName()).add(id
+					+ getResourceFormat().extension());
+		}
+	}
+
+	/**
+	 * return the url that accesses the entire collection of resources, ie
+	 * <code>/people.xml</code>
+	 * 
+	 * @return
+	 */
+	protected URLBuilder URLForCollection() {
+		return new URLBuilder(getCollectionName()
+				+ getResourceFormat().extension());
+	}
+
+	/**
 	 * figure out the name of the collection of resources generated by the main
-	 * class of this factory.
+	 * resource of this factory.
 	 * 
 	 * This method first looks for a CollectionName annotation on the class it
-	 * knows how to create. If there is no annotation, then it guesses based on
-	 * the name of the class.
+	 * knows how to create. If there is no annotation, then the name of the
+	 * class is used.
 	 * 
 	 * @return the name of the collection
 	 */
 	protected String getCollectionName() {
 		String name;
-		CollectionName cn = clazz.getAnnotation(CollectionName.class);
+		CollectionName cn = getResourceClass().getAnnotation(CollectionName.class);
 		if (cn != null) {
 			name = cn.value();
 		} else {
-			name = Inflector.underscore(clazz.getSimpleName());
-			name = Inflector.pluralize(name);
+			name = getResourceClass().getSimpleName();
 		}
 		return name;
 	}
 
 	/**
-	 * create a new URLBuilder object with the base collection present
+	 * If the resource is a subclass of ActiveResource, then attach the factory
+	 * to it
 	 * 
-	 * @return
+	 * @param resource
 	 */
-	private URLBuilder getCollectionURL() {
-		return new URLBuilder(getCollectionName());
+	private void setFactory(T resource) {
+		if (ActiveResource.class.isInstance(resource)) {
+			ActiveResource res = (ActiveResource) resource;
+			res.setFactory(this);
+		}
+	}
+
+	public ResourceConnection getConnection() {
+		return connection;
+	}
+
+	public void setConnection(ResourceConnection connection) {
+		this.connection = connection;
+	}
+
+	protected Class<T> getResourceClass() {
+		return clazz;
+	}
+
+	protected void setResourceClass(Class<T> clazz) {
+		this.clazz = clazz;
+	}
+
+	protected XStream getXStream() {
+		return xstream;
+	}
+
+	protected void setXStream(XStream xstream) {
+		this.xstream = xstream;
 	}
 
 }

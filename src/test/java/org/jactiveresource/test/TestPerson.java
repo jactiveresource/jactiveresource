@@ -43,7 +43,7 @@ import java.util.ArrayList;
 import java.util.Date;
 
 import org.jactiveresource.ResourceConnection;
-import org.jactiveresource.ResourceFactory;
+import org.jactiveresource.rails.RailsResourceFactory;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -55,7 +55,7 @@ import org.junit.Test;
 public class TestPerson {
 
 	private ResourceConnection c;
-	private ResourceFactory<Person> pf;
+	private RailsResourceFactory<Person> pf;
 	private Person p;
 
 	@Before
@@ -63,7 +63,7 @@ public class TestPerson {
 		c = new ResourceConnection("http://localhost:3000");
 		c.setUsername("Ace");
 		c.setPassword("newenglandclamchowder");
-		pf = new ResourceFactory<Person>(c, Person.class);
+		pf = new RailsResourceFactory<Person>(c, Person.class);
 	}
 
 	@Test

@@ -31,7 +31,7 @@ POSSIBILITY OF SUCH DAMAGE.
 
  */
 
-package org.jactiveresource;
+package org.jactiveresource.rails;
 
 import java.util.Collections;
 import java.util.HashMap;

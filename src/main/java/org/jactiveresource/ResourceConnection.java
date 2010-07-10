@@ -191,17 +191,17 @@ public class ResourceConnection {
 	 * request, and return the body of the HTTP response
 	 * 
 	 * @param url
-	 *            the url to retrieve
+	 *            generates a URL when toString() is called
 	 * @return a string containing the body of the response
 	 * @throws HttpException
 	 * @throws IOException
 	 * @throws InterruptedException
 	 * @throws URISyntaxException
 	 */
-	public String get(String url) throws HttpException, IOException,
+	public String get(Object url) throws HttpException, IOException,
 			InterruptedException, URISyntaxException {
 		HttpClient client = createHttpClient(this.getSite());
-		String uri = this.getSite().toString() + url;
+		String uri = this.getSite().toString() + url.toString();
 		HttpGet request = new HttpGet(uri);
 		HttpEntity entity = null;
 		log.trace("HttpGet uri=" + uri);
@@ -236,11 +236,11 @@ public class ResourceConnection {
 	 * @throws InterruptedException
 	 * @throws URISyntaxException
 	 */
-	public BufferedReader getStream(String url) throws HttpException,
+	public BufferedReader getStream(Object url) throws HttpException,
 			IOException, InterruptedException, URISyntaxException {
 
 		HttpClient client = createHttpClient(this.getSite());
-		String uri = this.getSite().toString() + url;
+		String uri = this.getSite().toString() + url.toString();
 		HttpGet request = new HttpGet(uri);
 		HttpEntity entity = null;
 		log.trace("HttpGet uri=" + uri);
@@ -264,11 +264,11 @@ public class ResourceConnection {
 	 * @throws IOException
 	 * @throws InterruptedException
 	 */
-	public HttpResponse put(String url, String body, String contentType)
+	public HttpResponse put(Object url, String body, String contentType)
 			throws URISyntaxException, HttpException, IOException,
 			InterruptedException {
 		HttpClient client = createHttpClient(this.getSite());
-		String uri = this.getSite().toString() + url;
+		String uri = this.getSite().toString() + url.toString();
 		HttpPut request = new HttpPut(uri);
 		log.trace("HttpPut uri=" + uri);
 		request.setHeader(CONTENT_TYPE, contentType);
@@ -288,11 +288,11 @@ public class ResourceConnection {
 	 * @throws ClientError
 	 * @throws ServerError
 	 */
-	public HttpResponse post(String url, String body, String contentType)
+	public HttpResponse post(Object url, String body, String contentType)
 			throws ClientProtocolException, IOException, ClientError,
 			ServerError {
 		HttpClient client = createHttpClient(this.getSite());
-		String uri = this.getSite().toString() + url;
+		String uri = this.getSite().toString() + url.toString();
 		HttpPost request = new HttpPost(uri);
 		log.trace("HttpGet uri=" + uri);
 		request.setHeader(CONTENT_TYPE, contentType);
@@ -311,10 +311,10 @@ public class ResourceConnection {
 	 * @throws ClientProtocolException
 	 * @throws IOException
 	 */
-	public void delete(String url) throws ClientError, ServerError,
+	public void delete(Object url) throws ClientError, ServerError,
 			ClientProtocolException, IOException {
 		HttpClient client = createHttpClient(this.getSite());
-		String uri = this.getSite().toString() + url;
+		String uri = this.getSite().toString() + url.toString();
 		HttpDelete request = new HttpDelete(uri);
 		log.trace("HttpDelete uri=" + uri);
 		HttpResponse response = client.execute(request);

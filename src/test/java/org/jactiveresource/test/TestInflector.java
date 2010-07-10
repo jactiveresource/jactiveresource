@@ -34,7 +34,8 @@ POSSIBILITY OF SUCH DAMAGE.
 package org.jactiveresource.test;
 
 import static org.junit.Assert.*;
-import static org.jactiveresource.Inflector.*;
+import static org.jactiveresource.rails.Inflector.*;
+
 import org.junit.Test;
 
 /**

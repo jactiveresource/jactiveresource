@@ -35,7 +35,7 @@ package org.jactiveresource.test;
 
 import static org.junit.Assert.*;
 
-import org.jactiveresource.ReplacementRule;
+import org.jactiveresource.rails.ReplacementRule;
 import org.junit.Test;
 
 /**

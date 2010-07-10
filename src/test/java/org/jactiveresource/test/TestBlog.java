@@ -36,7 +36,7 @@ package org.jactiveresource.test;
 import static org.junit.Assert.assertEquals;
 
 import org.jactiveresource.ResourceConnection;
-import org.jactiveresource.ResourceFactory;
+import org.jactiveresource.rails.RailsResourceFactory;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -48,7 +48,7 @@ import org.junit.Test;
 public class TestBlog {
 
 	private ResourceConnection c;
-	private ResourceFactory<Post> pf;
+	private RailsResourceFactory<Post> pf;
 	private Post p;
 
 	@Before
@@ -56,7 +56,7 @@ public class TestBlog {
 		c = new ResourceConnection("http://localhost:3000");
 		c.setUsername("Ace");
 		c.setPassword("newenglandclamchowder");
-		pf = new ResourceFactory<Post>(c, Post.class);
+		pf = new RailsResourceFactory<Post>(c, Post.class);
 		pf.registerClass(Comment.class);
 	}
 
