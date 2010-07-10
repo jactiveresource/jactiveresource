@@ -43,6 +43,7 @@ import java.util.ArrayList;
 import java.util.Date;
 
 import org.jactiveresource.ResourceConnection;
+import org.jactiveresource.ResourceFormat;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -62,7 +63,7 @@ public class TestPerson {
 		c = new ResourceConnection("http://localhost:3000");
 		c.setUsername("Ace");
 		c.setPassword("newenglandclamchowder");
-		pf = new PersonFactory(c);
+		pf = new PersonFactory(c, ResourceFormat.XML);
 	}
 
 	@Test

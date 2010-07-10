@@ -49,6 +49,9 @@ import org.apache.http.util.EntityUtils;
 import org.jactiveresource.annotation.CollectionName;
 
 import com.thoughtworks.xstream.XStream;
+import com.thoughtworks.xstream.io.HierarchicalStreamDriver;
+import com.thoughtworks.xstream.io.json.JettisonMappedXmlDriver;
+import com.thoughtworks.xstream.io.xml.XppDriver;
 
 /**
  * A resource factory provides methods that construct url's, retrieves the
@@ -68,7 +71,7 @@ public class ResourceFactory<T extends Resource> {
 	private ResourceConnection connection;
 	private Class<T> clazz;
 	private XStream xstream;
-	private Log log;
+	private Log log = LogFactory.getLog(ResourceFactory.class);
 
 	/**
 	 * Create a new resource factory.
@@ -82,12 +85,16 @@ public class ResourceFactory<T extends Resource> {
 	 * @param clazz
 	 */
 	public ResourceFactory(ResourceConnection c, Class<T> clazz) {
-		log = LogFactory.getLog(ResourceFactory.class);
+		this(c, clazz, ResourceFormat.XML);
+	}
+
+	public ResourceFactory(ResourceConnection c, Class<T> clazz,
+			ResourceFormat rf) {
 		this.setConnection(c);
 		this.setResourceClass(clazz);
+		this.rf = rf;
 		makeXStream();
 		registerClass(clazz);
-		log.debug("new ResourceFactory created");
 	}
 
 	/**
@@ -106,8 +113,7 @@ public class ResourceFactory<T extends Resource> {
 	 * @return
 	 */
 	protected void makeXStream() {
-		log.trace("creating new XStream() object");
-		setXStream(new XStream());
+		setXStream(new XStream(getHSD()));
 	}
 
 	/**
@@ -477,15 +483,33 @@ public class ResourceFactory<T extends Resource> {
 		return list;
 	}
 
+	private ResourceFormat rf;
+
 	/**
-	 * by default, we use XML as the format for data exchange
-	 * 
-	 * You can override this in your subclasses to change it
 	 * 
 	 * @return a resource format
 	 */
-	protected ResourceFormat getResourceFormat() {
-		return ResourceFormat.XML;
+	public final ResourceFormat getResourceFormat() {
+		return this.rf;
+	}
+
+	/**
+	 * look at the resource format and create the appropriate Hierarchical
+	 * Stream Driver for XStream
+	 * 
+	 * @return
+	 */
+	protected HierarchicalStreamDriver getHSD() {
+		HierarchicalStreamDriver hsd = null;
+		switch (getResourceFormat()) {
+		case XML:
+			hsd = new XppDriver();
+			break;
+		case JSON:
+			hsd = new JettisonMappedXmlDriver();
+			break;
+		}
+		return hsd;
 	}
 
 	/**
@@ -530,7 +554,8 @@ public class ResourceFactory<T extends Resource> {
 	 */
 	protected String getCollectionName() {
 		String name;
-		CollectionName cn = getResourceClass().getAnnotation(CollectionName.class);
+		CollectionName cn = getResourceClass().getAnnotation(
+				CollectionName.class);
 		if (cn != null) {
 			name = cn.value();
 		} else {

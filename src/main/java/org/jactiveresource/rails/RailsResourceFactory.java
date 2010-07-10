@@ -49,6 +49,7 @@ import org.apache.http.HttpException;
 import org.jactiveresource.Resource;
 import org.jactiveresource.ResourceConnection;
 import org.jactiveresource.ResourceFactory;
+import org.jactiveresource.ResourceFormat;
 import org.jactiveresource.URLBuilder;
 import org.jactiveresource.annotation.CollectionName;
 
@@ -56,7 +57,6 @@ import com.thoughtworks.xstream.XStream;
 import com.thoughtworks.xstream.converters.extended.ISO8601DateConverter;
 import com.thoughtworks.xstream.core.util.ClassLoaderReference;
 import com.thoughtworks.xstream.core.util.CompositeClassLoader;
-import com.thoughtworks.xstream.io.xml.XppDriver;
 
 /**
  * The Rails Resource Factory is specially designed to talk to rest services
@@ -90,6 +90,11 @@ public class RailsResourceFactory<T extends Resource> extends
 		super(c, clazz);
 	}
 
+	public RailsResourceFactory(ResourceConnection c, Class<T> clazz,
+			ResourceFormat rf) {
+		super(c, clazz, rf);
+	}
+
 	/**
 	 * 
 	 * @param c
@@ -116,9 +121,8 @@ public class RailsResourceFactory<T extends Resource> extends
 	public void makeXStream() {
 		// no logging here because it gets called by the constructor
 		RailsConverterLookup rcl = new RailsConverterLookup();
-		XStream x = new XStream(null, new XppDriver(),
-				new ClassLoaderReference(new CompositeClassLoader()), null,
-				rcl, null);
+		XStream x = new XStream(null, getHSD(), new ClassLoaderReference(
+				new CompositeClassLoader()), null, rcl, null);
 
 		// register a special converter so we can parse rails dates
 		x.registerConverter(new ISO8601DateConverter());

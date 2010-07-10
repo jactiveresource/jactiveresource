@@ -29,11 +29,12 @@ CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 
-*/
+ */
 
 package org.jactiveresource.test;
 
 import org.jactiveresource.ResourceConnection;
+import org.jactiveresource.ResourceFormat;
 import org.jactiveresource.rails.RailsResourceFactory;
 
 /**
@@ -44,8 +45,8 @@ import org.jactiveresource.rails.RailsResourceFactory;
  */
 public class PersonFactory extends RailsResourceFactory<Person> {
 
-	public PersonFactory(ResourceConnection c) {
-		super(c, Person.class);
+	public PersonFactory(ResourceConnection c, ResourceFormat rf) {
+		super(c, Person.class, rf);
 	}
 
 }

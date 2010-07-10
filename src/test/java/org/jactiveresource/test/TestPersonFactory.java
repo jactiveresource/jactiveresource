@@ -40,6 +40,7 @@ import java.io.IOException;
 import java.util.Calendar;
 import java.util.TimeZone;
 
+import org.jactiveresource.ResourceFormat;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -51,7 +52,7 @@ import org.junit.Test;
  */
 public class TestPersonFactory {
 
-	private PersonFactory f;
+	private PersonFactory xf, jf;
 	private StringBuilder sb;
 	private Person p;
 	private Calendar cal;
@@ -60,12 +61,13 @@ public class TestPersonFactory {
 	public void setUp() throws Exception {
 		TimeZone tz = TimeZone.getTimeZone("GMT");
 		cal = Calendar.getInstance(tz);
-		f = new PersonFactory(null);
+		xf = new PersonFactory(null, ResourceFormat.XML);
+		jf = new PersonFactory(null, ResourceFormat.JSON);
 	}
 
 	@Test
-	public void testDeserializeOne1() throws IOException {
-		p = f.deserializeOne(serializedPerson1());
+	public void deserialize1XML() throws IOException {
+		p = xf.deserializeOne(person1XML());
 		assertEquals("1", p.getId());
 		assertEquals("Alexander the Great", p.getName());
 		// check the birthdate
@@ -84,8 +86,8 @@ public class TestPersonFactory {
 	}
 
 	@Test
-	public void testDeserializeOne2() throws IOException {
-		p = f.deserializeOne(serializedPerson2());
+	public void deserialize2XML() throws IOException {
+		p = xf.deserializeOne(person2XML());
 		assertEquals("2", p.getId());
 		assertNull(p.getName());
 		assertNull(p.getBirthdate());
@@ -94,15 +96,15 @@ public class TestPersonFactory {
 	}
 
 	@Test
-	public void testDeserializeOne3() throws IOException {
-		p = f.deserializeOne(serializedPerson3());
+	public void deserialize3XML() throws IOException {
+		p = xf.deserializeOne(person3XML());
 		assertEquals("3", p.getId());
 	}
 
 	/*
 	 * a person with all fields present and valued
 	 */
-	private String serializedPerson1() {
+	private String person1XML() {
 		sb = new StringBuilder();
 		sb.append("<person>");
 		sb.append("<birthdate type=\"date\">2010-01-29</birthdate>");
@@ -117,7 +119,7 @@ public class TestPersonFactory {
 	/*
 	 * a person with a null birthdate and name
 	 */
-	private String serializedPerson2() {
+	private String person2XML() {
 		sb = new StringBuilder();
 		sb.append("<person>");
 		sb.append("<birthdate type=\"date\" nil=\"true\" />");
@@ -130,7 +132,7 @@ public class TestPersonFactory {
 	/*
 	 * a person with a null birthdate and name
 	 */
-	private String serializedPerson3() {
+	private String person3XML() {
 		sb = new StringBuilder();
 		sb.append("<person>");
 		sb.append("<birthdate type=\"date\" nil=\"true\" />");
@@ -142,4 +144,35 @@ public class TestPersonFactory {
 		return sb.toString();
 	}
 
+	@Test
+	public void deserialize1JSON() throws IOException {
+		p = jf.deserializeOne(person1JSON());
+		assertEquals("1", p.getId());
+		assertEquals("Alexander the Great", p.getName());
+		// check the birthdate
+		cal.setTime(p.getBirthdate());
+		assertEquals(2010, cal.get(Calendar.YEAR));
+		assertEquals(Calendar.JANUARY, cal.get(Calendar.MONTH));
+		assertEquals(29, cal.get(Calendar.DAY_OF_MONTH));
+		// check the created-at datetime
+		cal.setTime(p.getCreatedAt());
+		assertEquals(2010, cal.get(Calendar.YEAR));
+		assertEquals(Calendar.JANUARY, cal.get(Calendar.MONTH));
+		assertEquals(29, cal.get(Calendar.DAY_OF_MONTH));
+		assertEquals(18, cal.get(Calendar.HOUR_OF_DAY));
+		assertEquals(33, cal.get(Calendar.MINUTE));
+		assertEquals(47, cal.get(Calendar.SECOND));
+	}
+
+	private String person1JSON() {
+		sb = new StringBuilder();
+		sb.append("{\"person\":{");
+		sb.append("  \"birthdate\":\"2010-01-29\",");
+		sb.append("  \"created-at\":\"2010-01-29T18:33:47Z\",");
+		sb.append("  \"id\":1,");
+		sb.append("  \"name\":\"Alexander the Great\",");
+		sb.append("  \"updated-at\":\"2010-01-30T05:41:38Z\"");
+		sb.append("}}");
+		return sb.toString();
+	}
 }

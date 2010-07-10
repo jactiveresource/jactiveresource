@@ -7,6 +7,7 @@ class PeopleController < ApplicationController
     respond_to do |format|
       format.html # index.html.erb
       format.xml  { render :xml => @people }
+      format.json { render :json => @people }
     end
   end
 
@@ -18,6 +19,7 @@ class PeopleController < ApplicationController
     respond_to do |format|
       format.html # show.html.erb
       format.xml  { render :xml => @person }
+      format.json { render :json => @person }
     end
   end
 
@@ -29,6 +31,7 @@ class PeopleController < ApplicationController
     respond_to do |format|
       format.html # new.html.erb
       format.xml  { render :xml => @person }
+      format.json { render :json => @person }
     end
   end
 
@@ -46,9 +49,11 @@ class PeopleController < ApplicationController
       if @person.save
         format.html { redirect_to(@person, :notice => 'Person was successfully created.') }
         format.xml  { render :xml => @person, :status => :created, :location => @person }
+        format.json { render :json => @person, :status => :created, :location => @person }
       else
         format.html { render :action => "new" }
         format.xml  { render :xml => @person.errors, :status => :unprocessable_entity }
+        format.json { render :json => @person.errors, :status => :unprocessable_entity }
       end
     end
   end
@@ -62,9 +67,11 @@ class PeopleController < ApplicationController
       if @person.update_attributes(params[:person])
         format.html { redirect_to(@person, :notice => 'Person was successfully updated.') }
         format.xml  { head :ok }
+        format.json { head :ok }
       else
         format.html { render :action => "edit" }
         format.xml  { render :xml => @person.errors, :status => :unprocessable_entity }
+        format.json { render :json => @person.errors, :status => :unprocessable_entity }
       end
     end
   end
@@ -78,6 +85,7 @@ class PeopleController < ApplicationController
     respond_to do |format|
       format.html { redirect_to(people_url) }
       format.xml  { head :ok }
+      format.json { head :ok }
     end
   end
 end

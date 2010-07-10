@@ -40,7 +40,8 @@ package org.jactiveresource;
  * @author $LastChangedBy$
  */
 public enum ResourceFormat {
-    XML(".xml", "text/xml");
+    XML(".xml", "text/xml"),
+    JSON(".json", "application/json");
 
     private final String extension;
     private final String contentType;
