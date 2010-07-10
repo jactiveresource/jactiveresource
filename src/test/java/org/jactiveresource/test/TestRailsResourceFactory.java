@@ -37,12 +37,9 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
 import java.io.IOException;
-import java.net.URISyntaxException;
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.TimeZone;
 
-import org.apache.http.HttpException;
 import org.jactiveresource.rails.RailsResourceFactory;
 import org.junit.Before;
 import org.junit.Test;
