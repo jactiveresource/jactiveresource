@@ -265,7 +265,7 @@ public class ResourceFactory<T extends Resource> {
 		log.trace("trying to create resource of class="
 				+ r.getClass().toString());
 		URLBuilder url = URLForCollection();
-		String xml = getXStream().toXML(r);
+		String xml = serializeOne(r);
 		HttpResponse response = getConnection().post(url, xml,
 				getResourceFormat().contentType());
 		String entity = EntityUtils.toString(response.getEntity());
@@ -396,6 +396,16 @@ public class ResourceFactory<T extends Resource> {
 	}
 
 	/**
+	 * serialize a single resource into a String
+	 * 
+	 * @param resource
+	 * @return
+	 */
+	public String serializeOne(T resource) {
+		return getXStream().toXML(resource);
+	}
+
+	/**
 	 * Update an existing object with data from the given url
 	 * 
 	 * @param <T>
@@ -481,6 +491,18 @@ public class ResourceFactory<T extends Resource> {
 		ostream.close();
 		log.trace("deserialized " + list.size() + " objects");
 		return list;
+	}
+
+	/**
+	 * serialize a list of resources to a string. This is mostly useful for
+	 * testing because REST doesn't really have the capability to create many or
+	 * update many.
+	 * 
+	 * @param list
+	 * @return
+	 */
+	public String serializeMany(ArrayList<T> list) {
+		return getXStream().toXML(list);
 	}
 
 	private ResourceFormat rf;

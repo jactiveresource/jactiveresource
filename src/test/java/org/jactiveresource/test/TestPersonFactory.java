@@ -36,8 +36,12 @@ package org.jactiveresource.test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.StringReader;
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.TimeZone;
 
 import org.jactiveresource.ResourceFormat;
@@ -146,7 +150,7 @@ public class TestPersonFactory {
 
 	@Test
 	public void deserialize1JSON() throws IOException {
-		p = jf.deserializeOne(person1JSON());
+		p = jf.deserializeOne(alexanderJSON());
 		assertEquals("1", p.getId());
 		assertEquals("Alexander the Great", p.getName());
 		// check the birthdate
@@ -164,15 +168,65 @@ public class TestPersonFactory {
 		assertEquals(47, cal.get(Calendar.SECOND));
 	}
 
-	private String person1JSON() {
+	/*
+	 * we can't deserialize a list of JSON objects yet.
+	 *  
+	@Test
+	public void deserializePeopleJSON() throws IOException {
+		// p = jf.deserializeOne(peopleJSON());
+
+		BufferedReader br = new BufferedReader(new StringReader(peopleJSON()));
+		ArrayList<Person> people = jf.deserializeMany(br);
+		assertEquals(2, people.size());
+	}
+
+	@Test
+	public void serializePeopleJSON() throws Exception {
+		ArrayList<Person> people = new ArrayList<Person>();
+		p = jf.instantiate();
+		p.setName("Alexander the Great");
+		p.setBirthdate(new Date());
+		people.add(p);
+		p = jf.instantiate();
+		p.setName("Saladin");
+		p.setBirthdate(new Date());
+		people.add(p);
+		String stuff = jf.serializeMany(people);
+		assertEquals("hi", stuff);
+	}
+	 */
+
+	private String alexanderJSON() {
 		sb = new StringBuilder();
 		sb.append("{\"person\":{");
 		sb.append("  \"birthdate\":\"2010-01-29\",");
-		sb.append("  \"created-at\":\"2010-01-29T18:33:47Z\",");
+		sb.append("  \"created_at\":\"2010-01-29T18:33:47Z\",");
 		sb.append("  \"id\":1,");
 		sb.append("  \"name\":\"Alexander the Great\",");
-		sb.append("  \"updated-at\":\"2010-01-30T05:41:38Z\"");
+		sb.append("  \"updated_at\":\"2010-01-30T05:41:38Z\"");
 		sb.append("}}");
+		return sb.toString();
+	}
+
+	private String peopleJSON() {
+		sb = new StringBuilder();
+		sb.append("{ \"people\": {");
+		sb.append("{\"person\":{");
+		sb.append("  \"birthdate\":\"2010-01-29\",");
+		sb.append("  \"created_at\":\"2010-01-29T18:33:47Z\",");
+		sb.append("  \"id\":1,");
+		sb.append("  \"name\":\"Alexander the Great\",");
+		sb.append("  \"updated_at\":\"2010-01-30T05:41:38Z\"");
+		sb.append("}}");
+		sb.append("}},");
+		sb.append("{\"person\":{");
+		sb.append("  \"birthdate\":\"2010-01-29\",");
+		sb.append("  \"created_at\":\"2010-01-29T18:33:47Z\",");
+		sb.append("  \"id\":1,");
+		sb.append("  \"name\":\"Saladin\",");
+		sb.append("  \"updated_at\":\"2010-01-30T05:41:38Z\"");
+		sb.append("}}");
+		sb.append("]");
 		return sb.toString();
 	}
 }

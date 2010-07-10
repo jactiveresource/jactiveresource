@@ -38,6 +38,7 @@ import static org.jactiveresource.rails.Inflector.singularize;
 import static org.jactiveresource.rails.Inflector.underscore;
 
 import java.io.IOException;
+import java.io.Writer;
 import java.lang.reflect.Field;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
@@ -57,6 +58,12 @@ import com.thoughtworks.xstream.XStream;
 import com.thoughtworks.xstream.converters.extended.ISO8601DateConverter;
 import com.thoughtworks.xstream.core.util.ClassLoaderReference;
 import com.thoughtworks.xstream.core.util.CompositeClassLoader;
+import com.thoughtworks.xstream.io.HierarchicalStreamDriver;
+import com.thoughtworks.xstream.io.HierarchicalStreamWriter;
+import com.thoughtworks.xstream.io.json.JettisonMappedXmlDriver;
+import com.thoughtworks.xstream.io.json.JsonHierarchicalStreamDriver;
+import com.thoughtworks.xstream.io.json.JsonWriter;
+import com.thoughtworks.xstream.io.xml.XppDriver;
 
 /**
  * The Rails Resource Factory is specially designed to talk to rest services
@@ -101,15 +108,38 @@ public class RailsResourceFactory<T extends Resource> extends
 	 */
 	public void registerClass(Class<?> c) {
 		// no logging here because it gets called by the constructor
-		String xmlname = singularize(dasherize(underscore(c.getSimpleName())));
-		getXStream().alias(xmlname, c);
+		String xmlName = singularize(dasherize(underscore(c.getSimpleName())));
+		getXStream().alias(xmlName, c);
 
 		Field[] fields = c.getDeclaredFields();
 		for (Field field : fields) {
-			xmlname = dasherize(underscore(field.getName()));
-			getXStream().aliasField(xmlname, c, field.getName());
-		}
+			/*
+			 * Rails dasherizes field names in XML, but underscores them in
+			 * JSON. This is desired behavior because dash is also used as a
+			 * minus sign in Javascript expressions. Here's an example:
+			 */
+			// {"person":{"birthdate":"-1200-02-26T14:13:20Z",
+			// "created_at":"2010-07-09T06:03:57Z",
+			// "id":217,
+			// "name":"King Tut",
+			// "updated_at":"2010-07-09T06:03:57Z"}}
+			//
+			// <person>
+			// <birthdate type="datetime">-1200-02-26T14:13:20Z</birthdate>
+			// <created-at type="datetime">2010-07-09T06:03:57Z</created-at>
+			// <id type="integer">217</id>
+			// <name>King Tut</name>
+			// <updated-at type="datetime">2010-07-09T06:03:57Z</updated-at>
+			// </person>
+			if (getResourceFormat() == ResourceFormat.JSON) {
+				xmlName = underscore(field.getName());
+				getXStream().aliasField(xmlName, c, field.getName());
+			} else {
+				xmlName = dasherize(underscore(field.getName()));
+				getXStream().aliasField(xmlName, c, field.getName());
+			}
 
+		}
 		getXStream().processAnnotations(c);
 	}
 
@@ -318,5 +348,23 @@ public class RailsResourceFactory<T extends Resource> extends
 			name = Inflector.pluralize(name);
 		}
 		return name;
+	}
+
+	protected HierarchicalStreamDriver getHSD() {
+		HierarchicalStreamDriver hsd = null;
+		switch (getResourceFormat()) {
+		case XML:
+			hsd = new XppDriver();
+			break;
+		case JSON:
+			hsd = new JettisonMappedXmlDriver();
+			// hsd = new JsonHierarchicalStreamDriver() {
+			// public HierarchicalStreamWriter createWriter(Writer writer) {
+			// return new JsonWriter(writer, JsonWriter.DROP_ROOT_MODE);
+			// }
+			// };
+			break;
+		}
+		return hsd;
 	}
 }

@@ -39,11 +39,17 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Date;
 
+import org.apache.http.HttpException;
+import org.apache.http.client.ClientProtocolException;
+import org.jactiveresource.ClientError;
 import org.jactiveresource.ResourceConnection;
 import org.jactiveresource.ResourceFormat;
+import org.jactiveresource.ServerError;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -55,7 +61,7 @@ import org.junit.Test;
 public class TestPerson {
 
 	private ResourceConnection c;
-	private PersonFactory pf;
+	private PersonFactory xf, jf;
 	private Person p;
 
 	@Before
@@ -63,12 +69,22 @@ public class TestPerson {
 		c = new ResourceConnection("http://localhost:3000");
 		c.setUsername("Ace");
 		c.setPassword("newenglandclamchowder");
-		pf = new PersonFactory(c, ResourceFormat.XML);
+		xf = new PersonFactory(c, ResourceFormat.XML);
+		jf = new PersonFactory(c, ResourceFormat.JSON);
 	}
 
 	@Test
-	public void testBasicOperations() throws Exception {
-		p = pf.instantiate();
+	public void basicOperationsXML() throws Exception {
+		basicOperations(xf);
+	}
+
+	@Test
+	public void basicOperationsJSON() throws Exception {
+		basicOperations(jf);
+	}
+
+	private void basicOperations(PersonFactory f) throws Exception {
+		p = f.instantiate();
 		assertNull(p.getId());
 		p.setName("King Tut");
 		Date old = new Date(new Long("-99999999999999"));
@@ -79,22 +95,31 @@ public class TestPerson {
 		assertEquals(p.getName(), "King Tut");
 		assertNotNull("No id present", p.getId());
 
-		p = pf.find(id);
+		p = xf.find(id);
 		assertEquals(p.getName(), "King Tut");
 		p.setName("Alexander the Great");
 		p.update();
 
-		p = pf.find(id);
+		p = xf.find(id);
 		assertEquals(p.getName(), "Alexander the Great");
 
-		assertTrue(pf.exists(id));
+		assertTrue(f.exists(id));
 		p.delete();
-		assertFalse(pf.exists(id));
+		assertFalse(f.exists(id));
 	}
 
 	@Test
-	public void testReload() throws Exception {
-		p = pf.instantiate();
+	public void reloadXML() throws Exception {
+		reload(xf);
+	}
+
+	@Test
+	public void reloadJSON() throws Exception {
+		reload(jf);
+	}
+
+	private void reload(PersonFactory f) throws Exception {
+		p = f.instantiate();
 		p.setName("George Burns");
 		p.setBirthdate(new Date());
 		p.save();
@@ -107,33 +132,51 @@ public class TestPerson {
 	}
 
 	@Test
-	public void testFindAll() throws Exception {
+	public void findAllXML() throws Exception {
+		findAll(xf);
+	}
+
+	@Test
+	public void findAllJSON() throws Exception {
+		findAll(jf);
+	}
+
+	private void findAll(PersonFactory f) throws Exception {
 		Person pp;
 		ArrayList<Person> people, otherpeople;
-		people = pf.findAll();
+		people = f.findAll();
 
-		p = pf.instantiate();
+		p = xf.instantiate();
 		p.setName("George Lopez");
 		p.setBirthdate(new Date());
 		p.save();
 
-		pp = pf.instantiate();
+		pp = xf.instantiate();
 		pp.setName("George Foreman");
 		pp.setBirthdate(new Date());
 		pp.save();
 
-		otherpeople = pf.findAll();
+		otherpeople = xf.findAll();
 		assertEquals(otherpeople.size(), people.size() + 2);
 		p.delete();
 		pp.delete();
 
-		otherpeople = pf.findAll();
+		otherpeople = xf.findAll();
 		assertEquals(otherpeople.size(), people.size());
 	}
 
 	@Test
-	public void testValidation() throws Exception {
-		p = pf.instantiate();
+	public void validationXML() throws Exception {
+		validation(xf);
+	}
+
+	@Test
+	public void validationJSON() throws Exception {
+		validation(jf);
+	}
+
+	public void validation(PersonFactory f) throws Exception {
+		p = f.instantiate();
 		p.setBirthdate(new Date());
 		assertFalse(p.save());
 		assertNull(p.getId());
@@ -144,32 +187,50 @@ public class TestPerson {
 	}
 
 	@Test
-	public void testFind() throws Exception {
-		p = pf.instantiate();
+	public void findXML() throws Exception {
+		find(xf);
+	}
+
+	@Test
+	public void findJSON() throws Exception {
+		find(jf);
+	}
+
+	public void find(PersonFactory f) throws Exception {
+		p = f.instantiate();
 		assertNull(p.getId());
 		p.setName("Ty Cobb");
 		p.setBirthdate(new Date());
 		p.save();
 
 		String id = p.getId();
-		Person p = pf.find(id);
+		Person p = f.find(id);
 		assertEquals("Ty Cobb", p.getName());
 
 		p.delete();
 	}
 
 	@Test
-	public void testExists() throws Exception {
-		p = pf.instantiate();
+	public void existsXML() throws Exception {
+		exists(xf);
+	}
+
+	@Test
+	public void existsJSON() throws Exception {
+		exists(jf);
+	}
+
+	public void exists(PersonFactory f) throws Exception {
+		p = f.instantiate();
 		assertNull(p.getId());
 		p.setName("Nolan Ryan");
 		p.setBirthdate(new Date());
 		p.save();
 		String id = p.getId();
 
-		assertEquals(true, pf.exists(id));
+		assertEquals(true, f.exists(id));
 		p.delete();
-		assertEquals(false, pf.exists(id));
+		assertEquals(false, f.exists(id));
 	}
 
 }
