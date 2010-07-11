@@ -38,9 +38,9 @@ import static org.jactiveresource.rails.Inflector.singularize;
 import static org.jactiveresource.rails.Inflector.underscore;
 
 import java.io.IOException;
-import java.io.Writer;
 import java.lang.reflect.Field;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Map;
 
@@ -59,10 +59,7 @@ import com.thoughtworks.xstream.converters.extended.ISO8601DateConverter;
 import com.thoughtworks.xstream.core.util.ClassLoaderReference;
 import com.thoughtworks.xstream.core.util.CompositeClassLoader;
 import com.thoughtworks.xstream.io.HierarchicalStreamDriver;
-import com.thoughtworks.xstream.io.HierarchicalStreamWriter;
 import com.thoughtworks.xstream.io.json.JettisonMappedXmlDriver;
-import com.thoughtworks.xstream.io.json.JsonHierarchicalStreamDriver;
-import com.thoughtworks.xstream.io.json.JsonWriter;
 import com.thoughtworks.xstream.io.xml.XppDriver;
 
 /**
@@ -151,8 +148,9 @@ public class RailsResourceFactory<T extends Resource> extends
 	public void makeXStream() {
 		// no logging here because it gets called by the constructor
 		RailsConverterLookup rcl = new RailsConverterLookup();
-		XStream x = new XStream(null, getHSD(), new ClassLoaderReference(
-				new CompositeClassLoader()), null, rcl, null);
+		XStream x = new XStream(null, getStreamDriver(),
+				new ClassLoaderReference(new CompositeClassLoader()), null,
+				rcl, null);
 
 		// register a special converter so we can parse rails dates
 		x.registerConverter(new ISO8601DateConverter());
@@ -186,37 +184,7 @@ public class RailsResourceFactory<T extends Resource> extends
 	public ArrayList<T> findAll(Map<Object, Object> params)
 			throws HttpException, IOException, InterruptedException,
 			URISyntaxException {
-		URLBuilder url = URLForCollection().addQuery(params);
-		log.trace("finding all url=" + url);
-		return fetchMany(url);
-	}
-
-	/**
-	 * Fetch resources using query parameters. In this case the query parameters
-	 * are taken from a URLBuilder object. To get resources from
-	 * <code>http://localhost:3000/people.xml?position=manager</code> do:
-	 * 
-	 * <code>
-	 * <pre>
-	 * ResourceConnection c = new ResourceConnection("http://localhost:3000");
-	 * RailsResourceFactory<Person> rf = new RailsResourceFactory<Person>(c, Person.class);
-	 * URLBuilder params = new URLBuilder();
-	 * params.addQuery("position", "manager");
-	 * ArrayList<Person> rubydevs = rf.findAll(params);
-	 * </pre>
-	 * </code>
-	 * 
-	 * @param <T>
-	 * @param params
-	 * @return a list of objects
-	 * @throws HttpException
-	 * @throws IOException
-	 * @throws InterruptedException
-	 * @throws URISyntaxException
-	 */
-	public ArrayList<T> findAll(URLBuilder params) throws HttpException,
-			IOException, InterruptedException, URISyntaxException {
-		URLBuilder url = URLForCollection().addQuery(params);
+		URL url = URLForCollection(params);
 		log.trace("finding all url=" + url);
 		return fetchMany(url);
 	}
@@ -247,7 +215,7 @@ public class RailsResourceFactory<T extends Resource> extends
 	 */
 	public ArrayList<T> findAll(String from) throws HttpException, IOException,
 			InterruptedException, URISyntaxException {
-		URLBuilder url = new URLBuilder(from + getResourceFormat().extension());
+		URL url = URLForCollection(from);
 		log.trace("findAll(String from) from=" + from);
 		return fetchMany(url);
 	}
@@ -263,7 +231,6 @@ public class RailsResourceFactory<T extends Resource> extends
 	 * <code>http://localhost:3000/people/developers.xml?language=ruby</code>
 	 * <p>
 	 * To get the ruby developers:
-	 * 
 	 * <code>
 	 * <pre>
 	 * ResourceConnection c = new ResourceConnection("http://localhost:3000");
@@ -286,44 +253,8 @@ public class RailsResourceFactory<T extends Resource> extends
 	public ArrayList<T> findAll(String from, Map<Object, Object> params)
 			throws HttpException, IOException, InterruptedException,
 			URISyntaxException {
-		URLBuilder url = new URLBuilder(from + getResourceFormat().extension())
-				.addQuery(params);
+		URL url = URLForCollection(from, params);
 		log.trace("findAll url=" + url);
-		return fetchMany(url);
-	}
-
-	/**
-	 * Fetch resources using a custom method and query parameters, where the
-	 * query parameters are taken from a URLBuilder object. To get the resources
-	 * from
-	 * <code>http://localhost:3000/people/developers.xml?language=ruby</code>
-	 * do:
-	 * 
-	 * <code>
-	 * <pre>
-	 * ResourceConnection c = new ResourceConnection("http://localhost:3000");
-	 * ResourceFactory rf = new ResourceFactory(c, Person.class);
-	 * URLBuilder params = new URLBuilder();
-	 * params.addQuery("language", "ruby");
-	 * ArrayList<Person> rubydevs = rf.findAll(<developers>, params);
-	 * </pre>
-	 * </code>
-	 * 
-	 * @param <T>
-	 * @param from
-	 * @param params
-	 * @return a list of objects
-	 * @throws HttpException
-	 * @throws IOException
-	 * @throws InterruptedException
-	 * @throws URISyntaxException
-	 */
-	public ArrayList<T> findAll(String from, URLBuilder params)
-			throws HttpException, IOException, InterruptedException,
-			URISyntaxException {
-		URLBuilder url = new URLBuilder(from + getResourceFormat().extension())
-				.addQuery(params);
-		log.trace("findAll url=" + from);
 		return fetchMany(url);
 	}
 
@@ -337,7 +268,7 @@ public class RailsResourceFactory<T extends Resource> extends
 	 * 
 	 * @return the name of the collection
 	 */
-	protected String getCollectionName() {
+	public String getCollectionName() {
 		String name;
 		CollectionName cn = getResourceClass().getAnnotation(
 				CollectionName.class);
@@ -350,7 +281,28 @@ public class RailsResourceFactory<T extends Resource> extends
 		return name;
 	}
 
-	protected HierarchicalStreamDriver getHSD() {
+	protected URL URLForCollection(Map<Object, Object> params) {
+		URLBuilder url;
+		url = new URLBuilder(getCollectionName()
+				+ getResourceFormat().extension());
+		url.addQuery(params);
+		return url.toURL();
+	}
+
+	protected URL URLForCollection(String from) {
+		URLBuilder url;
+		url = new URLBuilder(from + getResourceFormat().extension());
+		return url.toURL();
+	}
+
+	protected URL URLForCollection(String from, Map<Object, Object> params) {
+		URLBuilder url;
+		url = new URLBuilder(from + getResourceFormat().extension());
+		url.addQuery(params);
+		return url.toURL();
+	}
+
+	protected HierarchicalStreamDriver getStreamDriver() {
 		HierarchicalStreamDriver hsd = null;
 		switch (getResourceFormat()) {
 		case XML:

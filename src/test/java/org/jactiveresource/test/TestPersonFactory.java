@@ -36,12 +36,8 @@ package org.jactiveresource.test;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.StringReader;
-import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.TimeZone;
 
 import org.jactiveresource.ResourceFormat;
@@ -170,30 +166,20 @@ public class TestPersonFactory {
 
 	/*
 	 * we can't deserialize a list of JSON objects yet.
-	 *  
-	@Test
-	public void deserializePeopleJSON() throws IOException {
-		// p = jf.deserializeOne(peopleJSON());
-
-		BufferedReader br = new BufferedReader(new StringReader(peopleJSON()));
-		ArrayList<Person> people = jf.deserializeMany(br);
-		assertEquals(2, people.size());
-	}
-
-	@Test
-	public void serializePeopleJSON() throws Exception {
-		ArrayList<Person> people = new ArrayList<Person>();
-		p = jf.instantiate();
-		p.setName("Alexander the Great");
-		p.setBirthdate(new Date());
-		people.add(p);
-		p = jf.instantiate();
-		p.setName("Saladin");
-		p.setBirthdate(new Date());
-		people.add(p);
-		String stuff = jf.serializeMany(people);
-		assertEquals("hi", stuff);
-	}
+	 * 
+	 * @Test public void deserializePeopleJSON() throws IOException { // p =
+	 * jf.deserializeOne(peopleJSON());
+	 * 
+	 * BufferedReader br = new BufferedReader(new StringReader(peopleJSON()));
+	 * ArrayList<Person> people = jf.deserializeMany(br); assertEquals(2,
+	 * people.size()); }
+	 * 
+	 * @Test public void serializePeopleJSON() throws Exception {
+	 * ArrayList<Person> people = new ArrayList<Person>(); p = jf.instantiate();
+	 * p.setName("Alexander the Great"); p.setBirthdate(new Date());
+	 * people.add(p); p = jf.instantiate(); p.setName("Saladin");
+	 * p.setBirthdate(new Date()); people.add(p); String stuff =
+	 * jf.serializeMany(people); assertEquals("hi", stuff); }
 	 */
 
 	private String alexanderJSON() {
@@ -229,4 +215,5 @@ public class TestPersonFactory {
 		sb.append("]");
 		return sb.toString();
 	}
+
 }

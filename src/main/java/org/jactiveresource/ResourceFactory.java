@@ -37,7 +37,9 @@ import java.io.BufferedReader;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.net.MalformedURLException;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.ArrayList;
 
 import org.apache.commons.logging.Log;
@@ -113,7 +115,7 @@ public class ResourceFactory<T extends Resource> {
 	 * @return
 	 */
 	protected void makeXStream() {
-		setXStream(new XStream(getHSD()));
+		setXStream(new XStream(getStreamDriver()));
 	}
 
 	/**
@@ -157,8 +159,44 @@ public class ResourceFactory<T extends Resource> {
 	 */
 	public ArrayList<T> findAll() throws HttpException, IOException,
 			InterruptedException, URISyntaxException {
-		URLBuilder url = URLForCollection();
+		URL url = URLForCollection();
 		log.error("finding all url=" + url);
+		return fetchMany(url);
+	}
+
+	/**
+	 * Fetch resources from the URL you supply. There is a convenience class to
+	 * help you construct your URL's easily, see {@link URLBuilder}. If the URL
+	 * you pass only returns one resource, you're still going to get an array
+	 * with a single element in it.
+	 * 
+	 * To get resources from
+	 * <code>http://localhost:3000/people/wierdos.xml?haircolor=green</code> do:
+	 * 
+	 * <code>
+	 * <pre>
+	 * ResourceConnection c = new ResourceConnection("http://localhost:3000");
+	 * ResourceFactory<Person> rf = new ResourceFactory<Person>(c, Person.class);
+	 * URLBuilder urlb = new URLBuilder(rf.getCollectionName());
+	 * urlb.add("wierdos" + getResourceFormat().extension());
+	 * urlb.addQuery("haircolor", "green");
+	 * ArrayList<Person> people = rf.findAll(urlb.toURL());
+	 * </pre>
+	 * </code>
+	 * 
+	 * @param <T>
+	 *            the type of objects that will be returned
+	 * @param url
+	 *            the URL you want to retrieve the objects from
+	 * @return a list of objects
+	 * @throws HttpException
+	 * @throws IOException
+	 * @throws InterruptedException
+	 * @throws URISyntaxException
+	 */
+	public ArrayList<T> findAll(URL url) throws HttpException, IOException,
+			InterruptedException, URISyntaxException {
+		log.trace("finding all url=" + url);
 		return fetchMany(url);
 	}
 
@@ -183,7 +221,8 @@ public class ResourceFactory<T extends Resource> {
 	 */
 	public boolean exists(String id) {
 		log.trace("exists(String id) id=" + id);
-		URLBuilder url = URLForOne(id);
+
+		URL url = URLForOne(id);
 		try {
 			getConnection().get(url);
 			log.trace(url + " exists");
@@ -264,7 +303,7 @@ public class ResourceFactory<T extends Resource> {
 			ServerError, IOException {
 		log.trace("trying to create resource of class="
 				+ r.getClass().toString());
-		URLBuilder url = URLForCollection();
+		URL url = URLForCollection();
 		String xml = serializeOne(r);
 		HttpResponse response = getConnection().post(url, xml,
 				getResourceFormat().contentType());
@@ -292,7 +331,7 @@ public class ResourceFactory<T extends Resource> {
 	public boolean update(T r) throws URISyntaxException, HttpException,
 			IOException, InterruptedException {
 		log.trace("update class=" + r.getClass().toString());
-		URLBuilder url = URLForOne(r.getId());
+		URL url = URLForOne(r.getId());
 		String xml = getXStream().toXML(r);
 		HttpResponse response = getConnection().put(url, xml,
 				getResourceFormat().contentType());
@@ -335,7 +374,7 @@ public class ResourceFactory<T extends Resource> {
 	public void reload(T r) throws HttpException, IOException,
 			InterruptedException, URISyntaxException {
 		log.trace("reloading class=" + r.getClass().toString());
-		URLBuilder url = URLForOne(r.getId());
+		URL url = URLForOne(r.getId());
 		fetchOne(url, r);
 	}
 
@@ -350,7 +389,7 @@ public class ResourceFactory<T extends Resource> {
 	 */
 	public void delete(T r) throws ClientError, ServerError,
 			ClientProtocolException, IOException {
-		URLBuilder url = URLForOne(r.getId());
+		URL url = URLForOne(r.getId());
 		log.trace("deleting class=" + r.getClass().toString() + " id="
 				+ r.getId());
 		getConnection().delete(url);
@@ -521,7 +560,7 @@ public class ResourceFactory<T extends Resource> {
 	 * 
 	 * @return
 	 */
-	protected HierarchicalStreamDriver getHSD() {
+	protected HierarchicalStreamDriver getStreamDriver() {
 		HierarchicalStreamDriver hsd = null;
 		switch (getResourceFormat()) {
 		case XML:
@@ -538,18 +577,21 @@ public class ResourceFactory<T extends Resource> {
 	 * return the url that accesses the resource identified by id, ie
 	 * <code>/people/1.xml</code>
 	 * 
-	 * If you pass null, you'll get null.
+	 * If you pass null, you'll get null. If a malformed URL is created
 	 * 
 	 * @param id
 	 *            the identifier of the resource you want the URL to
 	 * @return
+	 * @throws MalformedURLException
 	 */
-	protected URLBuilder URLForOne(String id) {
+	protected URL URLForOne(String id) {
+		URLBuilder urlb;
 		if (id == null) {
 			return null;
 		} else {
-			return new URLBuilder(getCollectionName()).add(id
-					+ getResourceFormat().extension());
+			urlb = new URLBuilder(getCollectionName());
+			urlb.add(id + getResourceFormat().extension());
+			return urlb.toURL();
 		}
 	}
 
@@ -558,10 +600,13 @@ public class ResourceFactory<T extends Resource> {
 	 * <code>/people.xml</code>
 	 * 
 	 * @return
+	 * @throws MalformedURLException
 	 */
-	protected URLBuilder URLForCollection() {
-		return new URLBuilder(getCollectionName()
+	protected URL URLForCollection() {
+		URLBuilder urlb;
+		urlb = new URLBuilder(getCollectionName()
 				+ getResourceFormat().extension());
+		return urlb.toURL();
 	}
 
 	/**
