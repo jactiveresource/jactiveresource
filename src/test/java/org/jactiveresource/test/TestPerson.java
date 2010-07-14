@@ -39,17 +39,11 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Date;
 
-import org.apache.http.HttpException;
-import org.apache.http.client.ClientProtocolException;
-import org.jactiveresource.ClientError;
 import org.jactiveresource.ResourceConnection;
 import org.jactiveresource.ResourceFormat;
-import org.jactiveresource.ServerError;
 import org.junit.Before;
 import org.junit.Test;
 
