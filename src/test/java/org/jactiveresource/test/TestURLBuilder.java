@@ -35,8 +35,7 @@ package org.jactiveresource.test;
 
 import static org.junit.Assert.assertEquals;
 
-import java.net.MalformedURLException;
-import java.net.URL;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -45,6 +44,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 /**
+ * tests for the URLBuilder class
  * 
  * @version $LastChangedRevision$ <br>
  *          $LastChangedDate$
@@ -52,53 +52,86 @@ import org.junit.Test;
  */
 public class TestURLBuilder {
 
-	URLBuilder u;
+	URLBuilder u, v;
 	String BASE = "http://localhost:3000";
-	URL base;
+	URI base;
 
 	@Before
-	public void setup() throws MalformedURLException {
-		base = new URL(BASE);
+	public void setup() throws Exception {
+		base = new URI(BASE);
 	}
 
 	@Test
-	public void testCreatePlain() {
+	public void constructors() throws Exception {
 		u = new URLBuilder();
 		assertEquals("", u.toString());
 
 		u = new URLBuilder("people.xml");
 		assertEquals("/people.xml", u.toString());
-	}
 
-	@Test
-	public void testCreateWithURL() throws MalformedURLException {
 		u = new URLBuilder(base);
 		assertEquals(base.toString(), u.toString());
 	}
 
 	@Test
-	public void testAdd() {
-		u = new URLBuilder(base);
-		u.add("people");
-		assertEquals("add with base is broken", base.toString() + "/people",
-				u.toString());
+	public void add() {
 
 		u = new URLBuilder();
 		u.add("people");
 		assertEquals("add with no base is broken", "/people", u.toString());
 
-		u.add("promote.xml");
-		assertEquals("add after add is broken", "/people/promote.xml",
+		u.add("managers.xml");
+		assertEquals("add after add is broken", "/people/managers.xml",
 				u.toString());
 
 		u = new URLBuilder();
 		u.add("big people");
 		assertEquals("url encoding of path elements is broken", "/big+people",
 				u.toString());
+
+		u = new URLBuilder();
+		u.add("/people/managers.xml");
+		assertEquals("/people/managers.xml", u.toString());
+
+		u = new URLBuilder();
+		u.add("people/managers.xml");
+		assertEquals("/people/managers.xml", u.toString());
 	}
 
 	@Test
-	public void testQueryParam() {
+	public void setBase() throws Exception {
+		base = new URI("http://www.example.com:8080/path/components?parm=value");
+		u = new URLBuilder();
+		u.setBase(base);
+		assertEquals("http://www.example.com:8080/path/components", u.toString());
+		
+		base = new URI("/path/components?parm=value");
+		u = new URLBuilder();
+		u.setBase(base);
+		assertEquals("/path/components", u.toString());
+
+		base = new URI("/path/components?parm=value#fragment");
+		u = new URLBuilder();
+		u.setBase(base);
+		assertEquals("/path/components", u.toString());
+		
+		base = new URI("");
+		u = new URLBuilder();
+		u.setBase(base);
+		assertEquals("", u.toString());
+	}
+	
+	@Test
+	public void addWithBase() throws Exception {
+		u = new URLBuilder(base);
+		u.add("people.xml");
+		assertEquals("add with base is broken",
+				base.toString() + "/people.xml", u.toString());
+
+	}
+
+	@Test
+	public void queryParam() {
 		URLBuilder.QueryParam p;
 		u = new URLBuilder();
 
@@ -126,7 +159,7 @@ public class TestURLBuilder {
 	}
 
 	@Test
-	public void testQueryMap() {
+	public void queryMap() {
 		HashMap<Object, Object> p = new HashMap<Object, Object>();
 		p.put("position", "manager");
 		p.put("salary", "60000");
@@ -139,7 +172,7 @@ public class TestURLBuilder {
 	}
 
 	@Test
-	public void testOnlyQuery() {
+	public void onlyQueryParam() {
 		u = new URLBuilder();
 		u.addQuery("key1", "value1");
 		u.addQuery("key2", "value2");
@@ -147,7 +180,7 @@ public class TestURLBuilder {
 	}
 
 	@Test
-	public void testPathAndQuery() {
+	public void pathAndQuery() {
 		u = new URLBuilder();
 		u.add("people").add("1");
 		u.addQuery("position", "manager");
@@ -160,7 +193,7 @@ public class TestURLBuilder {
 	}
 
 	@Test
-	public void testQueryCopy() {
+	public void queryCopy() {
 		u = new URLBuilder("people");
 		u.add("promote.xml");
 		u.addQuery("position", "manager");
@@ -171,5 +204,5 @@ public class TestURLBuilder {
 		assertEquals("addQuery with another URLBuilder is broken",
 				"/otherpeople.xml?position=manager&salary=60000", v.toString());
 	}
-	
+
 }

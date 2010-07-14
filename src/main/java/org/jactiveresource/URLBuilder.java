@@ -35,13 +35,88 @@ package org.jactiveresource;
 
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.StringTokenizer;
 
 /**
+ * Assemble valid URL's from component parts, encoding as necessary. There are
+ * methods to add path components and query strings.
+ * 
+ * <h3>Anatomy of a URL</h3>
+ * <p>
+ * A picture is worth a thousand words, especially if it's ASCII Art. This
+ * stunning image is reproduced from <a
+ * href="http://tools.ietf.org/html/rfc3986">RFC 3986</a>
+ * 
+ * <code>
+ * <pre>
+ *        foo://example.com:8042/over/there?name=ferret#nose
+ *        \_/   \______________/\_________/ \_________/ \__/
+ *         |           |            |            |        |
+ *      scheme     authority       path        query   fragment
+ * </pre>
+ * </code>
+ * 
+ * The URL class in Java is too stringent to accept our use cases here, namely
+ * you can not create a URL class that excludes the scheme and authorith
+ * portions of a URL. However, Java does include a URI class which is suitable
+ * for our needs.
+ * 
+ * <h3>Usage Overview</h3>
+ * <p>
+ * The URLBuilder class doesn't help you build the scheme or authority parts of
+ * a URL. The URI class in java.net handles that part perfectly well. This class
+ * helps you with the path, query, and fragment parts of a URL.
+ * <p>
+ * Since this class relies on the URI class to handle the scheme and authority
+ * parts of a URI, we frequently refer to them together. We've chosen the term
+ * <code>base</code>. It's short and descriptive.
+ * <p>
+ * Here's a few examples of using URLBuilder to construct URL's. Here's an easy
+ * one:
+ * 
+ * <code>
+ * <pre>
+ * URI base = new URI("http://www.example.com");
+ * URLBuilder urlb = new URLBuilder(base);
+ * urlb.add("yellow").add("brick");
+ * urlb.add("road.html");
+ * assertEquals("http://www.example.com/yellow/brick/road.html",urlb.toString());
+ * </pre>
+ * </code>
+ * 
+ * Here's one with a query string:
+ * 
+ * <code>
+ * <pre>
+ * URI base = new URI("http://www.example.com");
+ * URLBuilder urlb = new URLBuilder(base);
+ * urlb.add("people.xml").addQuery("title","manager");
+ * assertEquals("http://www.example.com/people.xml?title=manager",urlb.toString());
+ * </pre>
+ * </code>
+ * 
+ * All of the <code>add()</code> and <code>addQuery()</code> methods do their
+ * thing, but also return <code>this</code>. Which means you can chain the
+ * methods together like we have done in both of our examples so far.
+ * 
+ * We don't have to have a base, we can create just the path component and the
+ * query string:.
+ * 
+ * <code>
+ * <pre>
+ * URLBuilder urlb = new URLBuilder();
+ * urlb.add("people.xml")
+ * urlb.addQuery("title","manager");
+ * assertEquals("people.xml?title=manager",urlb.toString());
+ * </pre>
+ * </code>
  * 
  * @version $LastChangedRevision$ <br>
  *          $LastChangedDate$
@@ -59,64 +134,119 @@ public class URLBuilder {
 
 	private static final String UTF8 = "UTF-8";
 
-	URL base;
-	ArrayList<String> path;
-	ArrayList<QueryParam> query;
+	private URI base;
+	private ArrayList<String> path;
+	private ArrayList<QueryParam> query;
 
 	/**
-	 * Create a new URL builder
+	 * Create an empty URL builder, no base, no path.
 	 */
 	public URLBuilder() {
 		init();
 	}
 
 	/**
-	 * Create a URL builder with a path already assigned. In the example below,
-	 * the URL's for A and B are the same.
+	 * Create a new URL builder using an existing URL as a base.
 	 * 
-	 * <pre>
-	 * {@code
-	 * URLBuilder a = new URLBuilder();
-	 * a.add("people.xml");
-	 * URLBuilder b = new URLBuilder("people.xml");
-	 * }
-	 * @param pathcomponent the path to start the URL with
+	 * @param base
+	 * @throws MalformedURLException
 	 */
-	public URLBuilder(String pathcomponent) {
+	public URLBuilder(URI base) throws MalformedURLException {
 		init();
-		add(pathcomponent);
+		this.setBase(base);
 	}
 
 	/**
-	 * Create a new URL builder from a given base URL
+	 * Create a URL builder with a path. In the example below, the URL's for A
+	 * and B are the same.
 	 * 
-	 * @param base
+	 * <code>
+	 * <pre>
+	 * URLBuilder a = new URLBuilder();
+	 * a.add("people.xml");
+	 * URLBuilder b = new URLBuilder("people.xml");
+	 * assertEquals(a.toString(), b.toString())
+	 * </pre>
+	 * </code>
+	 * 
+	 * @param paths
+	 *            the path to start the URL with
 	 */
-	public URLBuilder(URL base) {
-		this.base = base;
+	public URLBuilder(String path) {
 		init();
+		this.add(path);
 	}
 
 	private void init() {
-		path = new ArrayList<String>();
-		query = new ArrayList<QueryParam>();
+		clearPath();
+		clearQuery();
+	}
+
+	/**
+	 * Return the base URI object for the URLBuilder instance.
+	 * 
+	 * @return
+	 */
+	public URI getBase() {
+		return base;
+	}
+
+	/**
+	 * Set the base URI to be used for this URLBuilder instance. The scheme,
+	 * authority, and path components, if present, will be used as the base for
+	 * this URLBuilder object. Query parameters and fragments in
+	 * <code>base</code> will be silently ignored.
+	 * 
+	 * If you pass an <i>opaque</i> URI, a MalformedURLException will be thrown.
+	 * 
+	 * @param base
+	 * @throws MalformedURLException
+	 */
+	public void setBase(URI base) throws MalformedURLException {
+		StringBuffer newurl = new StringBuffer();
+		if (base.isOpaque()) {
+			throw new MalformedURLException();
+		}
+		if (base.getScheme() != null) {
+			// we assume you have scheme and authority
+			newurl.append(base.getScheme());
+			newurl.append("://");
+			newurl.append(base.getAuthority());
+		}
+		newurl.append(base.getPath());
+		try {
+			this.base = new URI(newurl.toString());
+		} catch (URISyntaxException e) {
+			// Uh-oh
+		}
 	}
 
 	/**
 	 * Append a path component to the URL. Adding slashes is taken care of for
-	 * you. If you want "/people/1/contacts.xml" then do:
+	 * you. If you want "/people/1/contacts.xml" then you have two choices:
 	 * 
+	 * <code>
 	 * <pre>
 	 * URLBuilder u = new URLBuilder();
 	 * u.add("people").add("1").add("contacts.xml");
+	 * 
+	 * URLBuilder v = new URLBuilder();
+	 * u.add("/people/1/contacts.xml");
 	 * </pre>
+	 * </code>
+	 * 
 	 * 
 	 * If you want "http://localhost:3000/people/1/contacts.xml" then do:
 	 * 
+	 * <code>
 	 * <pre>
 	 * URLBuilder u = new URLBuilder("http://localhost:3000");
 	 * u.add("people").add("1").add("contacts.xml");
 	 * </pre>
+	 * </code>
+	 * 
+	 * This method can not be used to set the scheme or authority segments of
+	 * the url.
 	 * 
 	 * @param pathcomponent
 	 *            any object that can render itself as a string
@@ -124,8 +254,19 @@ public class URLBuilder {
 	 * @return self
 	 */
 	public URLBuilder add(Object pathcomponent) {
-		path.add(pathcomponent.toString());
+		StringTokenizer st = new StringTokenizer(pathcomponent.toString(),
+				Character.toString(PATH_SEPARATOR));
+		while (st.hasMoreTokens()) {
+			path.add(st.nextToken());
+		}
 		return this;
+	}
+
+	/**
+	 * clear all path components
+	 */
+	public void clearPath() {
+		this.path = new ArrayList<String>();
 	}
 
 	/**
@@ -161,8 +302,8 @@ public class URLBuilder {
 	}
 
 	/**
-	 * Add just the query part (ignore the path) from another URLBuilder and
-	 * add it to this URLBuilder.
+	 * Add just the query part (ignore the path) from another URLBuilder and add
+	 * it to this URLBuilder.
 	 * 
 	 * @param params
 	 * @return self
@@ -170,6 +311,13 @@ public class URLBuilder {
 	public URLBuilder addQuery(URLBuilder params) {
 		query.addAll(params.query);
 		return this;
+	}
+
+	/**
+	 * clear all query parameters
+	 */
+	public void clearQuery() {
+		this.query = new ArrayList<QueryParam>();
 	}
 
 	/**
@@ -218,12 +366,16 @@ public class URLBuilder {
 	/**
 	 * 
 	 * @return
-	 * @throws MalformedURLException
 	 */
-	public URL toURL() throws MalformedURLException {
-		return new URL(toString());
+	public URL toURL() {
+		try {
+			return new URL(toString());
+		} catch (MalformedURLException e) {
+			// if this happens your URLBuilder class is broken
+			throw new RuntimeException(e);
+		}
 	}
-	
+
 	/**
 	 * shamelessly took the LinkTool class in Velocity Tools 1.4 and improved it
 	 * http://velocity.apache.org/tools/releases/1.4/view/LinkTool.html
@@ -283,8 +435,8 @@ public class URLBuilder {
 						out.append(encodedKey);
 						out.append(QUERY_PARAM_JOINER);
 						if (array[i] != null) {
-							out.append(URLEncoder.encode(String
-									.valueOf(array[i]), UTF8));
+							out.append(URLEncoder.encode(
+									String.valueOf(array[i]), UTF8));
 						}
 						if (i + 1 < array.length) {
 							out.append(QUERY_PARAM_SEPARATOR);
