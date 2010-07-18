@@ -57,6 +57,7 @@ import java.lang.annotation.Target;
  * public class Person extends ActiveResource {
  * ....
  * }
+ * }
  * </pre>
  * </code>
  * 
