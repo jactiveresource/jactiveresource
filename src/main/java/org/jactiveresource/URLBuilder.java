@@ -166,10 +166,11 @@ public class URLBuilder {
 	 * a.add("people.xml");
 	 * URLBuilder b = new URLBuilder("people.xml");
 	 * assertEquals(a.toString(), b.toString())
+	 * assertEquals("/people.xml", a.toString());
 	 * </pre>
 	 * </code>
 	 * 
-	 * @param paths
+	 * @param path
 	 *            the path to start the URL with
 	 */
 	public URLBuilder(String path) {
@@ -366,7 +367,7 @@ public class URLBuilder {
 	/**
 	 * turn this URLBuilder object into a new URI
 	 * 
-	 * @return
+	 * @return a new URI object
 	 */
 	public URI toURI() {
 		try {
