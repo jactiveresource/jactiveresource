@@ -79,7 +79,7 @@ import org.apache.http.params.HttpProtocolParams;
  * 
  * If your service requires HTTP based authentication, you can give the user
  * name and password in two ways. The preferred approach is to use the
- * {@link setUsername} and {@link setPassword} methods. <code>
+ * {@link #setUsername(String)} and {@link #setPassword(String)} methods. <code>
  * <pre>
  * ResourceConnection c = new ResourceConnection("http://localhost:3000");
  * c.setUsername("Ace");
