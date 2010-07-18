@@ -37,7 +37,6 @@ import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -102,9 +101,9 @@ import java.util.StringTokenizer;
  * </pre>
  * </code>
  * 
- * All of the <code>add()</code> and <code>addQuery()</code> methods do their
- * thing, but also return <code>this</code>. Which means you can chain the
- * methods together like we have done in both of our examples so far.
+ * All of the {@link #add(Object)} and {@link #addQuery(Object, Object)} methods
+ * do their thing, but also return <code>this</code>. Which means you can chain
+ * the methods together like we have done in both of our examples so far.
  * 
  * We don't have to have a base, we can create just the path component and the
  * query string:.
@@ -149,6 +148,7 @@ public class URLBuilder {
 	 * Create a new URL builder using an existing URL as a base.
 	 * 
 	 * @param base
+	 *            an existing URI fragment
 	 * @throws MalformedURLException
 	 */
 	public URLBuilder(URI base) throws MalformedURLException {
@@ -185,7 +185,7 @@ public class URLBuilder {
 	/**
 	 * Return the base URI object for the URLBuilder instance.
 	 * 
-	 * @return
+	 * @return the base URI
 	 */
 	public URI getBase() {
 		return base;
@@ -364,14 +364,15 @@ public class URLBuilder {
 	}
 
 	/**
+	 * turn this URLBuilder object into a new URI
 	 * 
 	 * @return
 	 */
-	public URL toURL() {
+	public URI toURI() {
 		try {
-			return new URL(toString());
-		} catch (MalformedURLException e) {
-			// if this happens your URLBuilder class is broken
+			return new URI(toString());
+		} catch (URISyntaxException e) {
+			// if this happens the URLBuilder class is broken
 			throw new RuntimeException(e);
 		}
 	}

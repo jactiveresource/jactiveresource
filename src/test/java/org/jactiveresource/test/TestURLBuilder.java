@@ -103,8 +103,9 @@ public class TestURLBuilder {
 		base = new URI("http://www.example.com:8080/path/components?parm=value");
 		u = new URLBuilder();
 		u.setBase(base);
-		assertEquals("http://www.example.com:8080/path/components", u.toString());
-		
+		assertEquals("http://www.example.com:8080/path/components",
+				u.toString());
+
 		base = new URI("/path/components?parm=value");
 		u = new URLBuilder();
 		u.setBase(base);
@@ -114,13 +115,13 @@ public class TestURLBuilder {
 		u = new URLBuilder();
 		u.setBase(base);
 		assertEquals("/path/components", u.toString());
-		
+
 		base = new URI("");
 		u = new URLBuilder();
 		u.setBase(base);
 		assertEquals("", u.toString());
 	}
-	
+
 	@Test
 	public void addWithBase() throws Exception {
 		u = new URLBuilder(base);
@@ -205,4 +206,9 @@ public class TestURLBuilder {
 				"/otherpeople.xml?position=manager&salary=60000", v.toString());
 	}
 
+	@Test
+	public void toURI() throws Exception {
+		u = new URLBuilder("people");
+		assertEquals(new URI("/people"), u.toURI());
+	}
 }
