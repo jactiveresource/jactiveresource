@@ -39,8 +39,8 @@ import static org.jactiveresource.rails.Inflector.underscore;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Map;
 
@@ -63,13 +63,24 @@ import com.thoughtworks.xstream.io.json.JettisonMappedXmlDriver;
 import com.thoughtworks.xstream.io.xml.XppDriver;
 
 /**
- * The Rails Resource Factory is specially designed to talk to rest services
- * provided by Ruby on Rails applications.
+ * This is a subclass of {@link ResourceFactory} which has been extended to
+ * include methods similar to those provided by the ActiveResource class that is
+ * part of Ruby on Rails.
  * 
- * <h3>Creating a Factory</h3>
+ * This class sprinkles some magic name mangling so it should automatically
+ * match rails naming conventions for fields and classes up with Java naming
+ * conventions. For example, if you have a java Person class, this knows to look
+ * for "/people.xml" on your Rails service.
  * 
- * <h3>Finding Resources</h3>
- * 
+ * There are also a few methods similar to those provided by ActiveResource that
+ * give you more flexibility when finding resources:
+ * <ul>
+ * <li>{@link #findAll(Map)} - adds query parameters to the standard find all
+ * method</li>
+ * <li>{@link #findAll(String)} - find resources from a custom path</li>
+ * <li>{@link #findAll(String, Map)} - find resources from a custom path with
+ * query parameters</li>
+ * </ul>
  * 
  * @version $LastChangedRevision$ <br>
  *          $LastChangedDate$
@@ -79,17 +90,6 @@ public class RailsResourceFactory<T extends Resource> extends
 		ResourceFactory<T> {
 	private Log log = LogFactory.getLog(RailsResourceFactory.class);
 
-	/**
-	 * Create a new resource factory.
-	 * 
-	 * You have to pass in the class for this resource in addition to using the
-	 * concrete parameterized type because of type erasure. See <a href=
-	 * "http://www.angelikalanger.com/GenericsFAQ/FAQSections/ParameterizedTypes.html#FAQ106"
-	 * >Angelika Langer's Java Generics FAQ</a> for details.
-	 * 
-	 * @param c
-	 * @param clazz
-	 */
 	public RailsResourceFactory(ResourceConnection c, Class<T> clazz) {
 		super(c, clazz);
 	}
@@ -100,9 +100,16 @@ public class RailsResourceFactory<T extends Resource> extends
 	}
 
 	/**
+	 * Do some magic dasherizing and underscoring to map rails naming
+	 * conventions to java naming conventions. For example, many rails resources
+	 * have an XML tag called "created-at" which contains the date the resource
+	 * was created. If your Java class has a "createdAt" variable, the code in
+	 * this method just makes it all work like one would expect.
 	 * 
 	 * @param c
+	 *            the class to register
 	 */
+	@Override
 	public void registerClass(Class<?> c) {
 		// no logging here because it gets called by the constructor
 		String xmlName = singularize(dasherize(underscore(c.getSimpleName())));
@@ -145,7 +152,7 @@ public class RailsResourceFactory<T extends Resource> extends
 	 * a converter to handle rails style dates
 	 */
 	@Override
-	public void makeXStream() {
+	public XStream makeXStream() {
 		// no logging here because it gets called by the constructor
 		RailsConverterLookup rcl = new RailsConverterLookup();
 		XStream x = new XStream(null, getStreamDriver(),
@@ -155,6 +162,7 @@ public class RailsResourceFactory<T extends Resource> extends
 		// register a special converter so we can parse rails dates
 		x.registerConverter(new ISO8601DateConverter());
 		setXStream(x);
+		return x;
 	}
 
 	/**
@@ -173,7 +181,6 @@ public class RailsResourceFactory<T extends Resource> extends
 	 * </pre>
 	 * </code>
 	 * 
-	 * @param <T>
 	 * @param params
 	 * @return a list of objects
 	 * @throws HttpException
@@ -184,7 +191,7 @@ public class RailsResourceFactory<T extends Resource> extends
 	public ArrayList<T> findAll(Map<Object, Object> params)
 			throws HttpException, IOException, InterruptedException,
 			URISyntaxException {
-		URL url = URLForCollection(params);
+		URI url = uriForCollection(params);
 		log.trace("finding all url=" + url);
 		return fetchMany(url);
 	}
@@ -204,7 +211,6 @@ public class RailsResourceFactory<T extends Resource> extends
 	 * </pre>
 	 * </code>
 	 * 
-	 * @param <T>
 	 * @param from
 	 *            the name of the custom method
 	 * @return a list of objects
@@ -215,7 +221,7 @@ public class RailsResourceFactory<T extends Resource> extends
 	 */
 	public ArrayList<T> findAll(String from) throws HttpException, IOException,
 			InterruptedException, URISyntaxException {
-		URL url = URLForCollection(from);
+		URI url = uriForCollection(from);
 		log.trace("findAll(String from) from=" + from);
 		return fetchMany(url);
 	}
@@ -230,8 +236,7 @@ public class RailsResourceFactory<T extends Resource> extends
 	 * particular language by using
 	 * <code>http://localhost:3000/people/developers.xml?language=ruby</code>
 	 * <p>
-	 * To get the ruby developers:
-	 * <code>
+	 * To get the ruby developers: <code>
 	 * <pre>
 	 * ResourceConnection c = new ResourceConnection("http://localhost:3000");
 	 * RailsResourceFactory<Person> rf = new RailsResourceFactory<Person>(c, Person.class);
@@ -241,7 +246,6 @@ public class RailsResourceFactory<T extends Resource> extends
 	 * </pre>
 	 * </code>
 	 * 
-	 * @param <T>
 	 * @param from
 	 * @param params
 	 * @return a list of objects
@@ -253,7 +257,7 @@ public class RailsResourceFactory<T extends Resource> extends
 	public ArrayList<T> findAll(String from, Map<Object, Object> params)
 			throws HttpException, IOException, InterruptedException,
 			URISyntaxException {
-		URL url = URLForCollection(from, params);
+		URI url = uriForCollection(from, params);
 		log.trace("findAll url=" + url);
 		return fetchMany(url);
 	}
@@ -268,6 +272,7 @@ public class RailsResourceFactory<T extends Resource> extends
 	 * 
 	 * @return the name of the collection
 	 */
+	@Override
 	public String getCollectionName() {
 		String name;
 		CollectionName cn = getResourceClass().getAnnotation(
@@ -281,27 +286,28 @@ public class RailsResourceFactory<T extends Resource> extends
 		return name;
 	}
 
-	protected URL URLForCollection(Map<Object, Object> params) {
+	protected URI uriForCollection(Map<Object, Object> params) {
 		URLBuilder url;
 		url = new URLBuilder(getCollectionName()
 				+ getResourceFormat().extension());
 		url.addQuery(params);
-		return url.toURL();
+		return url.toURI();
 	}
 
-	protected URL URLForCollection(String from) {
+	protected URI uriForCollection(String from) {
 		URLBuilder url;
 		url = new URLBuilder(from + getResourceFormat().extension());
-		return url.toURL();
+		return url.toURI();
 	}
 
-	protected URL URLForCollection(String from, Map<Object, Object> params) {
+	protected URI uriForCollection(String from, Map<Object, Object> params) {
 		URLBuilder url;
 		url = new URLBuilder(from + getResourceFormat().extension());
 		url.addQuery(params);
-		return url.toURL();
+		return url.toURI();
 	}
 
+	@Override
 	protected HierarchicalStreamDriver getStreamDriver() {
 		HierarchicalStreamDriver hsd = null;
 		switch (getResourceFormat()) {
