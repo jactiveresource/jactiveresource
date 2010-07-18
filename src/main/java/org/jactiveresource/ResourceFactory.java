@@ -38,9 +38,11 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -61,8 +63,61 @@ import com.thoughtworks.xstream.io.xml.XppDriver;
  * 
  * <h3>Creating a Factory</h3>
  * 
- * <h3>Testing a Factory</h3>
+ * To create a factory, you need a <code>ResourceConnection</code> object that
+ * points to the URL, and you need a class that represents the resources
+ * provided by the URL.
  * 
+ * Say there is a person resource available at
+ * <code>http://localhost:3000/people.xml</code>, and a <code>Person</code>
+ * class which models the data elements provided by that resource. You can use
+ * those two things to create a <code>ResourceFactory</code> for people.
+ * 
+ * <code>
+ * <pre>
+ * ResourceConnection c = new ResourceConnection("http://localhost:3000");
+ * ResourceFactory f = new ResourceFactory<Person>(c, Person.class);
+ * </pre>
+ * </code>
+ * 
+ * XML is the default format, but if you want to be declarative about it you
+ * could use:
+ * 
+ * <code>
+ * <pre>
+ * ResourceFactory f = new ResourceFactory<Person>(c, Person.class, ResourceFormat.XML);
+ * </pre>
+ * </code>
+ * 
+ * <h3>REST operations</h3>
+ * 
+ * The factory provides basic REST methods for creating, retrieving, updating
+ * and deleting resources. The core methods are:
+ * <ul>
+ * <li>{@link #find(String)} - find a resource on the server with the given
+ * identifier</li>
+ * <li>{@link #findAll()} - find all resources known to the server</li>
+ * <li>{@link #findAll(URL)} - find all resources meeting certain criteria</li>
+ * <li>{@link #instantiate()} - create an empty resource object</li>
+ * <li>{@link #create(Resource)} - create a new resource on the server</li>
+ * <li>{@link #update(Resource)} - update an existing resource on the server</li>
+ * <li>{@link #save(Resource)} - convenience method that creates if object is
+ * new, updates it otherwise</li>
+ * <li>{@link #reload(Resource)} - reload an object from the server</li>
+ * <li>{@link #reload(Resource)} - delete a resource from the server</li>
+ * </ul>
+ * <p>
+ * You may discover that the methods supplied are not sufficient for all of the
+ * capabilities provided by the server resource you are accessing. You can
+ * easily subclass and add additional methods specific to a particular resource.
+ * There are several lower level methods available which can do the network IO
+ * and serialization for you.
+ * <ul>
+ * <li>{@link #fetchMany(Object)} - pass this method any url, and it will fetch
+ * and deserialize the contents into a list</li>
+ * <li>{@link #deserializeMany(BufferedReader)} - if you want to do the network
+ * IO yourself, this method will deserialize a list of objects from an input
+ * stream</li>
+ * </ul>
  * 
  * @version $LastChangedRevision$ <br>
  *          $LastChangedDate$
@@ -71,12 +126,14 @@ import com.thoughtworks.xstream.io.xml.XppDriver;
 public class ResourceFactory<T extends Resource> {
 
 	private ResourceConnection connection;
+	private ResourceFormat rf;
 	private Class<T> clazz;
 	private XStream xstream;
 	private Log log = LogFactory.getLog(ResourceFactory.class);
 
 	/**
-	 * Create a new resource factory.
+	 * Create a new resource factory for a class mapped to a network resource.
+	 * By default, the format is assumed to be XML.
 	 * 
 	 * You have to pass in the class for this resource in addition to using the
 	 * concrete parameterized type because of type erasure. See <a href=
@@ -90,6 +147,14 @@ public class ResourceFactory<T extends Resource> {
 		this(c, clazz, ResourceFormat.XML);
 	}
 
+	/**
+	 * If your resources uses a ResourceFormat other than the default XML, use
+	 * this constructor to specify which ResourceFormat you would like to use.
+	 * 
+	 * @param c
+	 * @param clazz
+	 * @param rf
+	 */
 	public ResourceFactory(ResourceConnection c, Class<T> clazz,
 			ResourceFormat rf) {
 		this.setConnection(c);
@@ -100,6 +165,94 @@ public class ResourceFactory<T extends Resource> {
 	}
 
 	/**
+	 * return the connection used by this factory
+	 * 
+	 * @return the {@link ResourceConnection} for this factory
+	 */
+	public ResourceConnection getConnection() {
+		return connection;
+	}
+
+	/**
+	 * set the connection to be used by this factory
+	 * 
+	 * @param connection
+	 */
+	public void setConnection(ResourceConnection connection) {
+		this.connection = connection;
+	}
+
+	/**
+	 * return the resource format used by this factory. This is set when the
+	 * factory is created.
+	 * 
+	 * @return a resource format
+	 */
+	public final ResourceFormat getResourceFormat() {
+		return this.rf;
+	}
+
+	/**
+	 * create the appropriate Hierarchical Stream Driver for XStream based on
+	 * the resource format of this factory
+	 * 
+	 * @return a stream driver for XStream
+	 */
+	protected HierarchicalStreamDriver getStreamDriver() {
+		HierarchicalStreamDriver hsd = null;
+		switch (getResourceFormat()) {
+		case XML:
+			hsd = new XppDriver();
+			break;
+		case JSON:
+			hsd = new JettisonMappedXmlDriver();
+			break;
+		}
+		return hsd;
+	}
+
+	/**
+	 * create an XStream object for use in serialization/deserializations. The
+	 * created object is retained in the factory for future use, as well as
+	 * returned to the caller.
+	 * 
+	 * The default behavior is to create an XStream object using the stream
+	 * driver returned by {@link #getStreamDriver()}. Subclasses may include
+	 * custom xstream creation and/or/configuration of aliases, implicit
+	 * collections etc.
+	 * 
+	 * You can do your XStream configuration outside of the factory by using
+	 * either this method or {@link #getXStream()} and then putting it back with
+	 * {@link #setXStream(XStream)}
+	 * 
+	 * @return a new XStream object
+	 */
+	public XStream makeXStream() {
+		setXStream(new XStream(getStreamDriver()));
+		return getXStream();
+	}
+
+	/**
+	 * return the XStream object used by this factory
+	 * 
+	 * @return the current XStream object
+	 */
+	public XStream getXStream() {
+		return xstream;
+	}
+
+	/**
+	 * set the XStream object used by this factory
+	 * 
+	 * @param xstream
+	 */
+	public void setXStream(XStream xstream) {
+		this.xstream = xstream;
+	}
+
+	/**
+	 * Tell XStream to process the annotations on a class. This is generally the
+	 * preferred method of tweaking the xml construction or parsing.
 	 * 
 	 * @param c
 	 */
@@ -110,22 +263,12 @@ public class ResourceFactory<T extends Resource> {
 	}
 
 	/**
-	 * create an XStream object suitable for use in parsing Rails flavored XML
-	 * 
-	 * @return
-	 */
-	protected void makeXStream() {
-		setXStream(new XStream(getStreamDriver()));
-	}
-
-	/**
 	 * Retrieve the resource identified by <code>id</code>, and return a new
 	 * instance of the appropriate object
 	 * 
-	 * @param <T>
 	 * @param id
 	 *            the primary identifier
-	 * @return a new instance of a subclass of @{link ActiveResource}
+	 * @return one new resource
 	 * @throws URISyntaxException
 	 * @throws InterruptedException
 	 * @throws IOException
@@ -134,7 +277,7 @@ public class ResourceFactory<T extends Resource> {
 	public T find(String id) throws HttpException, IOException,
 			InterruptedException, URISyntaxException {
 		log.trace("finding id=" + id);
-		return fetchOne(URLForOne(id));
+		return fetchOne(uriForOne(id));
 	}
 
 	/**
@@ -150,16 +293,16 @@ public class ResourceFactory<T extends Resource> {
 	 * </pre>
 	 * </code>
 	 * 
-	 * @param <T>
-	 * @return a list of objects
+	 * @return a list of resources
 	 * @throws HttpException
 	 * @throws IOException
 	 * @throws InterruptedException
 	 * @throws URISyntaxException
 	 */
+
 	public ArrayList<T> findAll() throws HttpException, IOException,
 			InterruptedException, URISyntaxException {
-		URL url = URLForCollection();
+		URI url = uriForCollection();
 		log.error("finding all url=" + url);
 		return fetchMany(url);
 	}
@@ -184,8 +327,6 @@ public class ResourceFactory<T extends Resource> {
 	 * </pre>
 	 * </code>
 	 * 
-	 * @param <T>
-	 *            the type of objects that will be returned
 	 * @param url
 	 *            the URL you want to retrieve the objects from
 	 * @return a list of objects
@@ -222,7 +363,7 @@ public class ResourceFactory<T extends Resource> {
 	public boolean exists(String id) {
 		log.trace("exists(String id) id=" + id);
 
-		URL url = URLForOne(id);
+		URI url = uriForOne(id);
 		try {
 			getConnection().get(url);
 			log.trace(url + " exists");
@@ -277,7 +418,6 @@ public class ResourceFactory<T extends Resource> {
 	 * 
 	 * Person a and Person b are now equivalent.
 	 * 
-	 * @param <T>
 	 * @return a new instance of a resource
 	 * @throws InstantiationException
 	 * @throws IllegalAccessException
@@ -303,7 +443,7 @@ public class ResourceFactory<T extends Resource> {
 			ServerError, IOException {
 		log.trace("trying to create resource of class="
 				+ r.getClass().toString());
-		URL url = URLForCollection();
+		URI url = uriForCollection();
 		String xml = serializeOne(r);
 		HttpResponse response = getConnection().post(url, xml,
 				getResourceFormat().contentType());
@@ -331,7 +471,7 @@ public class ResourceFactory<T extends Resource> {
 	public boolean update(T r) throws URISyntaxException, HttpException,
 			IOException, InterruptedException {
 		log.trace("update class=" + r.getClass().toString());
-		URL url = URLForOne(r.getId());
+		URI url = uriForOne(r.getId());
 		String xml = getXStream().toXML(r);
 		HttpResponse response = getConnection().put(url, xml,
 				getResourceFormat().contentType());
@@ -374,7 +514,7 @@ public class ResourceFactory<T extends Resource> {
 	public void reload(T r) throws HttpException, IOException,
 			InterruptedException, URISyntaxException {
 		log.trace("reloading class=" + r.getClass().toString());
-		URL url = URLForOne(r.getId());
+		URI url = uriForOne(r.getId());
 		fetchOne(url, r);
 	}
 
@@ -389,7 +529,7 @@ public class ResourceFactory<T extends Resource> {
 	 */
 	public void delete(T r) throws ClientError, ServerError,
 			ClientProtocolException, IOException {
-		URL url = URLForOne(r.getId());
+		URI url = uriForOne(r.getId());
 		log.trace("deleting class=" + r.getClass().toString() + " id="
 				+ r.getId());
 		getConnection().delete(url);
@@ -401,7 +541,6 @@ public class ResourceFactory<T extends Resource> {
 	 * URL, they can then use this method to get the data and create the objects
 	 * from the response.
 	 * 
-	 * @param <T>
 	 * @param url
 	 * @return a new object representing the data returned by the url
 	 * @throws HttpException
@@ -438,7 +577,7 @@ public class ResourceFactory<T extends Resource> {
 	 * serialize a single resource into a String
 	 * 
 	 * @param resource
-	 * @return
+	 * @return a string representation of resource
 	 */
 	public String serializeOne(T resource) {
 		return getXStream().toXML(resource);
@@ -447,7 +586,6 @@ public class ResourceFactory<T extends Resource> {
 	/**
 	 * Update an existing object with data from the given url
 	 * 
-	 * @param <T>
 	 * @param url
 	 * @param resource
 	 *            the object to update
@@ -465,7 +603,6 @@ public class ResourceFactory<T extends Resource> {
 	/**
 	 * Weasel method to update an existing object with serialized data.
 	 * 
-	 * @param <T>
 	 * @param data
 	 *            serialized data
 	 * @param resource
@@ -485,7 +622,6 @@ public class ResourceFactory<T extends Resource> {
 	/**
 	 * Create an array of objects from the response of a given url.
 	 * 
-	 * @param <T>
 	 * @param url
 	 * @return an array of objects
 	 * @throws HttpException
@@ -503,7 +639,6 @@ public class ResourceFactory<T extends Resource> {
 	 * Inflate (or unmarshall) a list of objects from a stream using XStream.
 	 * This method exhausts and closes the stream.
 	 * 
-	 * @param <T>
 	 * @param stream
 	 *            an open input stream
 	 * @return a list of objects
@@ -538,39 +673,11 @@ public class ResourceFactory<T extends Resource> {
 	 * update many.
 	 * 
 	 * @param list
-	 * @return
+	 *            a list of objects to be serialized
+	 * @return a string serialization of the resources in list
 	 */
-	public String serializeMany(ArrayList<T> list) {
+	public String serializeMany(List<T> list) {
 		return getXStream().toXML(list);
-	}
-
-	private ResourceFormat rf;
-
-	/**
-	 * 
-	 * @return a resource format
-	 */
-	public final ResourceFormat getResourceFormat() {
-		return this.rf;
-	}
-
-	/**
-	 * look at the resource format and create the appropriate Hierarchical
-	 * Stream Driver for XStream
-	 * 
-	 * @return
-	 */
-	protected HierarchicalStreamDriver getStreamDriver() {
-		HierarchicalStreamDriver hsd = null;
-		switch (getResourceFormat()) {
-		case XML:
-			hsd = new XppDriver();
-			break;
-		case JSON:
-			hsd = new JettisonMappedXmlDriver();
-			break;
-		}
-		return hsd;
 	}
 
 	/**
@@ -581,17 +688,17 @@ public class ResourceFactory<T extends Resource> {
 	 * 
 	 * @param id
 	 *            the identifier of the resource you want the URL to
-	 * @return
+	 * @return a url fragment to be appended to a {@link ResourceConnection}
 	 * @throws MalformedURLException
 	 */
-	protected URL URLForOne(String id) {
+	protected URI uriForOne(String id) {
 		URLBuilder urlb;
 		if (id == null) {
 			return null;
 		} else {
 			urlb = new URLBuilder(getCollectionName());
 			urlb.add(id + getResourceFormat().extension());
-			return urlb.toURL();
+			return urlb.toURI();
 		}
 	}
 
@@ -599,14 +706,14 @@ public class ResourceFactory<T extends Resource> {
 	 * return the url that accesses the entire collection of resources, ie
 	 * <code>/people.xml</code>
 	 * 
-	 * @return
+	 * @return a url fragment to be appended to a {@link ResourceConnection}
 	 * @throws MalformedURLException
 	 */
-	protected URL URLForCollection() {
+	protected URI uriForCollection() {
 		URLBuilder urlb;
 		urlb = new URLBuilder(getCollectionName()
 				+ getResourceFormat().extension());
-		return urlb.toURL();
+		return urlb.toURI();
 	}
 
 	/**
@@ -645,28 +752,12 @@ public class ResourceFactory<T extends Resource> {
 		}
 	}
 
-	public ResourceConnection getConnection() {
-		return connection;
-	}
-
-	public void setConnection(ResourceConnection connection) {
-		this.connection = connection;
-	}
-
 	protected Class<T> getResourceClass() {
 		return clazz;
 	}
 
 	protected void setResourceClass(Class<T> clazz) {
 		this.clazz = clazz;
-	}
-
-	protected XStream getXStream() {
-		return xstream;
-	}
-
-	protected void setXStream(XStream xstream) {
-		this.xstream = xstream;
 	}
 
 }
