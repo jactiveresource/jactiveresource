@@ -34,6 +34,7 @@ POSSIBILITY OF SUCH DAMAGE.
 package org.jactiveresource.test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 import java.net.URI;
 import java.util.ArrayList;
@@ -204,6 +205,25 @@ public class TestURLBuilder {
 		v.addQuery(u);
 		assertEquals("addQuery with another URLBuilder is broken",
 				"/otherpeople.xml?position=manager&salary=60000", v.toString());
+	}
+
+	@Test
+	public void fragment() {
+		u = new URLBuilder("people.html");
+		u.setFragment("dorks");
+		assertEquals("/people.html#dorks", u.toString());
+		u.clearFragment();
+		assertEquals("/people.html", u.toString());
+		try {
+			u.setFragment("invalid/");
+			fail("invalid fragment did not throw IllegalArgumentException.");
+		} catch (IllegalArgumentException e) {
+		}
+		try {
+			u.setFragment("invalid?");
+			fail("invalid fragment did not throw IllegalArgumentException.");
+		} catch (IllegalArgumentException e) {
+		}
 	}
 
 	@Test

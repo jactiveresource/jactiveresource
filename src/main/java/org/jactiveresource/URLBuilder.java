@@ -123,19 +123,23 @@ import java.util.StringTokenizer;
  */
 public class URLBuilder {
 
-	private static final char PATH_SEPARATOR = '/';
+	// this separates the segments of the path
+	private static final char PATH_SEGMENT_SEPARATOR = '/';
 	// this separates the entire query string from the rest of the URL
 	private static final char QUERY_DELIMITER = '?';
 	// the separates the various query parameters from each other
 	private static final char QUERY_PARAM_SEPARATOR = '&';
 	// join the key and value into a single query parameter
 	private static final char QUERY_PARAM_JOINER = '=';
+	// this separates the fragment from the rest of the URL
+	private static final char FRAGMENT_DELIMITER = '#';
 
 	private static final String UTF8 = "UTF-8";
 
 	private URI base;
 	private ArrayList<String> path;
 	private ArrayList<QueryParam> query;
+	private String fragment;
 
 	/**
 	 * Create an empty URL builder, no base, no path.
@@ -256,7 +260,7 @@ public class URLBuilder {
 	 */
 	public URLBuilder add(Object pathcomponent) {
 		StringTokenizer st = new StringTokenizer(pathcomponent.toString(),
-				Character.toString(PATH_SEPARATOR));
+				Character.toString(PATH_SEGMENT_SEPARATOR));
 		while (st.hasMoreTokens()) {
 			path.add(st.nextToken());
 		}
@@ -322,6 +326,37 @@ public class URLBuilder {
 	}
 
 	/**
+	 * Set the fragment for this URL. Don't put a question mark or a slash in
+	 * your fragment or an IllegalArgumentException will be thrown.
+	 * 
+	 * @param fragment
+	 *            the fragment to be attached to the URL
+	 */
+	public void setFragment(String fragment) {
+		if (fragment.contains(String.valueOf(PATH_SEGMENT_SEPARATOR))
+				|| fragment.contains(String.valueOf(QUERY_DELIMITER))) {
+			throw new IllegalArgumentException();
+		}
+		this.fragment = fragment;
+	}
+
+	/**
+	 * get the fragment to be attached to the URL
+	 * 
+	 * @return the fragment to be attached to the URL
+	 */
+	public String getFragment() {
+		return this.fragment;
+	}
+
+	/**
+	 * clear any fragment associated with this URL
+	 */
+	public void clearFragment() {
+		this.fragment = null;
+	}
+
+	/**
 	 * turn this URL builder object into a URLEncoded string
 	 */
 	public String toString() {
@@ -337,29 +372,38 @@ public class URLBuilder {
 		if ((pi = path.iterator()).hasNext()) {
 			if (out.length() == 0) {
 				// nothing there yet but we have a path; tack on a slash
-				out.append(PATH_SEPARATOR);
+				out.append(PATH_SEGMENT_SEPARATOR);
 			} else {
 				// we have something already, see if it ends with a slash
 				// if not, add one
-				if (out.charAt(out.length() - 1) != PATH_SEPARATOR)
-					out.append(PATH_SEPARATOR);
+				if (out.charAt(out.length() - 1) != PATH_SEGMENT_SEPARATOR)
+					out.append(PATH_SEGMENT_SEPARATOR);
 			}
 
 			try {
 				out.append(URLEncoder.encode(pi.next(), UTF8));
 				while (pi.hasNext())
-					out.append(PATH_SEPARATOR).append(
+					out.append(PATH_SEGMENT_SEPARATOR).append(
 							URLEncoder.encode(pi.next(), UTF8));
 			} catch (UnsupportedEncodingException e) {
 			}
 		}
 
-		// and finally the query string
+		// the query string
 		if ((qi = query.iterator()).hasNext()) {
 			out.append(QUERY_DELIMITER);
 			out.append(qi.next().toString());
 			while (qi.hasNext())
 				out.append(QUERY_PARAM_SEPARATOR).append(qi.next().toString());
+		}
+
+		// and finally the fragment
+		if (this.fragment != null) {
+			try {
+				out.append(FRAGMENT_DELIMITER);
+				out.append(URLEncoder.encode(this.fragment, UTF8));
+			} catch (UnsupportedEncodingException e) {
+			}
 		}
 		return out.toString();
 	}
