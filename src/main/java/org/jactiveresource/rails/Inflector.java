@@ -34,13 +34,22 @@ POSSIBILITY OF SUCH DAMAGE.
 package org.jactiveresource.rails;
 
 import java.util.ArrayList;
+import java.util.StringTokenizer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-
 /**
- * a port of the excellent Inflector class in ruby's ActiveSupport library
- * Inflections synced with ActiveSupport 2.3.5
+ * A port of the excellent Inflector class in ruby's ActiveSupport library.
+ * Inflections synced with ActiveSupport 2.3.8. inflector.rb says:
+ * <p>
+ * "The Rails core team has stated patches for the inflections library will not
+ * be accepted in order to avoid breaking legacy applications which may be
+ * relying on errant inflections. If you discover an incorrect inflection and
+ * require it for your application, you'll need to correct it yourself
+ * (explained below)."
+ * <p>
+ * This means that we won't be updating this class much unless the Rails core
+ * team changes their minds.
  * 
  * @version $LastChangedRevision$ <br>
  *          $LastChangedDate$
@@ -49,13 +58,64 @@ import java.util.regex.Pattern;
 public class Inflector {
 
 	/**
+	 * The reverse of underscorize. Just calls
+	 * {@link #camelize(String, boolean)} with the second parameter set to
+	 * <code>true</code>.
+	 * 
 	 * @param word
+	 *            string to camelize
+	 * @return camelized string
+	 */
+	public static String camelize(String word) {
+		return camelize(word, true);
+	}
+
+	/**
+	 * The reverse of underscorize. Makes a camelized form from the expression
+	 * in the string. Changes '/' to '::' to convert paths to namespaces. The
+	 * following expressions are all true:
+	 * 
+	 * <pre>
+	 * <code>
+	 * Inflector.camelize("long_class_name", true) == "LongClassName"
+	 * Inflector.camelize("long_class_name", false) == "longClassName"
+	 * Inflector.camelize("person", true) == "Person"
+	 * Inflector.camelize("active_record/errors", true) == "ActiveRecord::Errors"
+	 * </code>
+	 * </pre>
+	 * 
+	 * @param word
+	 *            string to camelize
 	 * @param firstLetterInUppercase
+	 *            if true then the first letter will be in uppercase
 	 * @return camelized string
 	 */
 	public static String camelize(String word, boolean firstLetterInUppercase) {
-		return null;
+		String out, part;
+		StringBuffer outbuf;
+		Matcher m;
+		StringTokenizer t;
+		boolean firstToken = true;
+
+		m = slashPattern.matcher(word);
+		out = m.replaceAll("::_$1");
+
+		outbuf = new StringBuffer();
+		t = new StringTokenizer(out, "_");
+		while (t.hasMoreTokens()) {
+			part = t.nextToken();
+			if (((firstToken) && (firstLetterInUppercase)) || (!firstToken)) {
+				outbuf.append(part.substring(0, 1).toUpperCase());
+				outbuf.append(part.substring(1));
+			} else {
+				outbuf.append(part);
+			}
+			firstToken = false;
+		}
+		return outbuf.toString();
 	}
+
+	private static Pattern slashPattern = Pattern.compile("/(.?)");
 
 	private static Pattern underscorePattern = Pattern.compile("_");
 
@@ -91,22 +151,22 @@ public class Inflector {
 
 	/**
 	 * The reverse of camelize. Makes an underscored form from the expression in
-	 * the string.
-	 * <p>
-	 * Changes '::' to '/' to convert namespaces to paths.
-	 * <p>
-	 * The following expressions are all true:
+	 * the string. Changes '::' to '/' to convert namespaces to paths. The
+	 * following expressions are all true:
 	 * 
 	 * <pre>
-     * {@code
-     * Inflector.underscore("LongClassName") == "long_class_name"
-     * Inflector.underscore("Person") == "person"
-     * }
-     * @param word
-     * @return word with underscores
+	 * <code>
+	 * Inflector.underscore("LongClassName") == "long_class_name"
+	 * Inflector.underscore("Person") == "person"
+	 * Inflector.underscore("ActiveRecord::Errors") == "active_record/errors"
+	 * </code>
+	 * </pre>
+	 * 
+	 * @param word
+	 *            the word to underscore
+	 * @return underscored word
 	 */
 	public static String underscore(String word) {
-
 		String out;
 		Matcher m;
 
@@ -128,6 +188,7 @@ public class Inflector {
 	 * return the plural form of a word
 	 * 
 	 * @param word
+	 *            the word to pluralize
 	 * @return plural form
 	 */
 	public static String pluralize(String word) {
@@ -147,6 +208,7 @@ public class Inflector {
 	 * return the singular form of a word
 	 * 
 	 * @param word
+	 *            the word to singularize
 	 * @return singular form
 	 */
 	public static String singularize(String word) {
@@ -162,11 +224,20 @@ public class Inflector {
 		return out;
 	}
 
+	/**
+	 * convenience method to add appropriate rules to plurals and singulars for
+	 * words with irregular plurality
+	 * 
+	 * @param singular
+	 *            the singular form of an irregular word
+	 * @param plural
+	 *            the plural form of an irregular word
+	 */
 	public static void irregular(String singular, String plural) {
 		String regexp, repl;
 
-		if (singular.substring(0, 1).toUpperCase().equals(
-				plural.substring(0, 1).toUpperCase())) {
+		if (singular.substring(0, 1).toUpperCase()
+				.equals(plural.substring(0, 1).toUpperCase())) {
 			// singular and plural start with the same letter
 			regexp = "(?i)(" + singular.substring(0, 1) + ")"
 					+ singular.substring(1) + "$";
@@ -207,6 +278,32 @@ public class Inflector {
 	private static ArrayList<ReplacementRule> singulars;
 	private static ArrayList<String> uncountables;
 
+	/**
+	 * utility class to encapsulate a regular express and it's replacement, and
+	 * provide convenience methods to find and replace
+	 */
+	private static class ReplacementRule {
+
+		private Pattern p;
+		private Matcher m;
+		private String r;
+
+		public ReplacementRule(String regexp, String replacement) {
+			p = Pattern.compile(regexp);
+			r = replacement;
+		}
+
+		public boolean find(String word) {
+			m = p.matcher(word);
+			return m.find();
+		}
+
+		public String replace(String word) {
+			m = p.matcher(word);
+			return m.replaceAll(this.r);
+		}
+	}
+
 	static {
 		plurals = new ArrayList<ReplacementRule>(17);
 		plurals.add(0, new ReplacementRule("$", "s"));
@@ -234,8 +331,7 @@ public class Inflector {
 		singulars.add(0, new ReplacementRule("(n)ews$", "$1ews"));
 		singulars.add(0, new ReplacementRule("([ti])a$", "$1um"));
 		singulars
-				.add(
-						0,
+				.add(0,
 						new ReplacementRule(
 								"((a)naly|(b)a|(d)iagno|(p)arenthe|(p)rogno|(s)ynop|(t)he)ses$",
 								"$1$2sis"));
@@ -277,5 +373,6 @@ public class Inflector {
 		uncountables.add("series");
 		uncountables.add("fish");
 		uncountables.add("sheep");
+		uncountables.add("jeans");
 	}
 }

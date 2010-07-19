@@ -29,7 +29,7 @@ CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 
-*/
+ */
 
 package org.jactiveresource.test;
 
@@ -46,51 +46,59 @@ import org.junit.Test;
  */
 public class TestInflector {
 
-    @Test
-    public void underscoreTest() {
-        assertEquals( "asset", underscore( "Asset" ) );
-        assertEquals( "asset_type", underscore( "AssetType" ) );
-        assertEquals( "active_record/errors",
-            underscore( "ActiveRecord::Errors" ) );
-    }
+	@Test
+	public void camelizeTests() {
+		assertEquals("ActiveRecord", camelize("active_record"));
+		assertEquals("activeRecord", camelize("active_record", false));
+		assertEquals("ActiveRecord::Errors", camelize("active_record/errors"));
+		assertEquals("activeRecord::Errors",
+				camelize("active_record/errors", false));
+	}
 
-    @Test
-    public void pluralizeTest() {
-        assertEquals( "assets", pluralize( "asset" ) );
-        assertEquals( "Assets", pluralize( "Asset" ) );
-        assertEquals( "guts", pluralize( "guts" ) );
-        // assertEquals( "GUTs", pluralize( "GUTS" ) );
-        assertEquals( "axes", pluralize( "axis" ) );
-        assertEquals( "Axes", pluralize( "Axis" ) );
-        assertEquals( "calves", pluralize( "calf" ) );
-        assertEquals( "halves", pluralize( "half" ) );
-        assertEquals( "Halves", pluralize( "Half" ) );
-        assertEquals( "AXes", pluralize( "AXIS" ) );
-        assertEquals( "Hives", pluralize( "Hive" ) );
-        assertEquals( "QUEries", pluralize( "QUEry" ) );
-        assertEquals( "rice", pluralize( "rice" ) );
-        assertEquals( "oxen", pluralize( "ox" ) );
-        assertEquals( "Oxen", pluralize( "Ox" ) );
-        assertEquals( "matrices", pluralize( "matrix" ) );
-        assertEquals( "indices", pluralize( "index" ) );
-        assertEquals( "indices", pluralize( "indix" ) );
-        assertEquals( "people", pluralize( "person" ) );
-        assertEquals( "People", pluralize( "Person" ) );
-        assertEquals( "Kine", pluralize( "Cow" ) );
-        assertEquals( "kine", pluralize( "cow" ) );
-    }
+	@Test
+	public void underscoreTests() {
+		assertEquals("asset", underscore("Asset"));
+		assertEquals("asset_type", underscore("AssetType"));
+		assertEquals("active_record/errors", underscore("ActiveRecord::Errors"));
+	}
 
-    @Test
-    public void singularizeTest() {
-        assertEquals( "duck", singularize( "ducks" ) );
-        assertEquals( "thesis", singularize( "theses" ) );
-        assertEquals( "diagnosis", singularize( "diagnoses" ) );
-        assertEquals( "analysis", singularize( "analyses" ) );
-        assertEquals( "half", singularize( "halves" ) );
-        assertEquals( "alias", singularize( "aliases" ) );
-        assertEquals( "person", singularize( "people" ) );
-        assertEquals( "Person", singularize( "People" ) );
-        assertEquals( "cow", singularize( "kine" ) );
-        assertEquals( "Cow", singularize( "Kine" ) );
-    }
+	@Test
+	public void pluralizeTests() {
+		assertEquals("assets", pluralize("asset"));
+		assertEquals("Assets", pluralize("Asset"));
+		assertEquals("guts", pluralize("guts"));
+		// assertEquals( "GUTs", pluralize( "GUTS" ) );
+		assertEquals("axes", pluralize("axis"));
+		assertEquals("Axes", pluralize("Axis"));
+		assertEquals("calves", pluralize("calf"));
+		assertEquals("halves", pluralize("half"));
+		assertEquals("Halves", pluralize("Half"));
+		assertEquals("AXes", pluralize("AXIS"));
+		assertEquals("Hives", pluralize("Hive"));
+		assertEquals("QUEries", pluralize("QUEry"));
+		assertEquals("rice", pluralize("rice"));
+		assertEquals("oxen", pluralize("ox"));
+		assertEquals("Oxen", pluralize("Ox"));
+		assertEquals("matrices", pluralize("matrix"));
+		assertEquals("indices", pluralize("index"));
+		assertEquals("indices", pluralize("indix"));
+		assertEquals("people", pluralize("person"));
+		assertEquals("People", pluralize("Person"));
+		assertEquals("Kine", pluralize("Cow"));
+		assertEquals("kine", pluralize("cow"));
+	}
+
+	@Test
+	public void singularizeTests() {
+		assertEquals("duck", singularize("ducks"));
+		assertEquals("thesis", singularize("theses"));
+		assertEquals("diagnosis", singularize("diagnoses"));
+		assertEquals("analysis", singularize("analyses"));
+		assertEquals("half", singularize("halves"));
+		assertEquals("alias", singularize("aliases"));
+		assertEquals("person", singularize("people"));
+		assertEquals("Person", singularize("People"));
+		assertEquals("cow", singularize("kine"));
+		assertEquals("Cow", singularize("Kine"));
+	}
 }
