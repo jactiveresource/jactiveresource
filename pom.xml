@@ -7,7 +7,7 @@
   <groupId>org.jactiveresource</groupId>
   <artifactId>jactiveresource</artifactId>
   <name>jactiveresource</name>
-  <version>0.4-alpha</version>
+  <version>0.4-SNAPSHOT</version>
   <packaging>jar</packaging>
 
   <description>ActiveResource goodness in Java.</description>
@@ -17,7 +17,8 @@
     <url>http://jactiveresource.org/trac/roadmap</url>
   </issueManagement>
   <scm>
-    <url>http://jactiveresource.org/svn/</url>
+    <connection>scm:svn:http://jactiveresource.org/svn/trunk</connection>
+    <url>http://jactiveresource.org/svn</url>
   </scm>
 
   <build>
@@ -68,6 +69,11 @@
             </goals>
           </execution>
         </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-release-plugin</artifactId>
+        <version>2.0</version>
       </plugin>
     </plugins>
   </build>
