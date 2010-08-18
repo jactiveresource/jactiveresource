@@ -362,7 +362,7 @@ public class URLBuilder {
 	public String toString() {
 		Iterator<String> pi;
 		Iterator<URLBuilder.QueryParam> qi;
-		StringBuilder out = new StringBuilder();
+		StringBuffer out = new StringBuffer();
 
 		// first the base
 		if (base != null)
@@ -452,7 +452,7 @@ public class URLBuilder {
 		 * Return the URL-encoded query string.
 		 */
 		public String toString() {
-			StringBuilder out = new StringBuilder();
+			StringBuffer out = new StringBuffer();
 			try {
 				String encodedKey = URLEncoder.encode(key.toString(), UTF8);
 				if (value == null) {
@@ -496,7 +496,7 @@ public class URLBuilder {
 				}
 			} catch (UnsupportedEncodingException e) {
 				// make sure we return an empty string
-				out = new StringBuilder();
+				out = new StringBuffer();
 			}
 
 			return out.toString();

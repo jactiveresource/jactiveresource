@@ -54,7 +54,7 @@ public class TestBlog {
 	private ResourceConnection c;
 	private RailsResourceFactory<Post> pf;
 	private Post p;
-	private StringBuilder sb;
+	private StringBuffer sb;
 	private Calendar cal;
 
 	@Before
@@ -93,7 +93,7 @@ public class TestBlog {
 	}
 
 	private String serializedPost1() {
-		sb = new StringBuilder();
+		sb = new StringBuffer();
 		sb.append("<post>");
 		sb.append("<body>my very first post</body>");
 		sb.append("<created-at type=\"datetime\">2010-07-08T05:05:27Z</created-at>");

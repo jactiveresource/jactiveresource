@@ -53,7 +53,7 @@ import org.junit.Test;
 public class TestPersonFactory {
 
 	private PersonFactory xf, jf;
-	private StringBuilder sb;
+	private StringBuffer sb;
 	private Person p;
 	private Calendar cal;
 
@@ -105,7 +105,7 @@ public class TestPersonFactory {
 	 * a person with all fields present and valued
 	 */
 	private String person1XML() {
-		sb = new StringBuilder();
+		sb = new StringBuffer();
 		sb.append("<person>");
 		sb.append("<birthdate type=\"date\">2010-01-29</birthdate>");
 		sb.append("<created-at type=\"datetime\">2010-01-29T18:33:47Z</created-at>");
@@ -120,7 +120,7 @@ public class TestPersonFactory {
 	 * a person with a null birthdate and name
 	 */
 	private String person2XML() {
-		sb = new StringBuilder();
+		sb = new StringBuffer();
 		sb.append("<person>");
 		sb.append("<birthdate type=\"date\" nil=\"true\" />");
 		sb.append("<id type=\"integer\">2</id>");
@@ -133,7 +133,7 @@ public class TestPersonFactory {
 	 * a person with a null birthdate and name
 	 */
 	private String person3XML() {
-		sb = new StringBuilder();
+		sb = new StringBuffer();
 		sb.append("<person>");
 		sb.append("<birthdate type=\"date\" nil=\"true\" />");
 		sb.append("<created-at type=\"datetime\">2010-02-01T05:23:39Z</created-at>");
@@ -183,7 +183,7 @@ public class TestPersonFactory {
 	 */
 
 	private String alexanderJSON() {
-		sb = new StringBuilder();
+		sb = new StringBuffer();
 		sb.append("{\"person\":{");
 		sb.append("  \"birthdate\":\"2010-01-29\",");
 		sb.append("  \"created_at\":\"2010-01-29T18:33:47Z\",");
@@ -195,7 +195,7 @@ public class TestPersonFactory {
 	}
 
 	private String peopleJSON() {
-		sb = new StringBuilder();
+		sb = new StringBuffer();
 		sb.append("{ \"people\": {");
 		sb.append("{\"person\":{");
 		sb.append("  \"birthdate\":\"2010-01-29\",");
