@@ -44,6 +44,7 @@ import java.util.Date;
 
 import org.jactiveresource.ResourceConnection;
 import org.jactiveresource.ResourceFormat;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -61,21 +62,24 @@ public class TestPerson {
 	@Before
 	public void setUp() throws Exception {
 		c = new ResourceConnection("http://localhost:3000");
-		c.setUsername("Ace");
-		c.setPassword("newenglandclamchowder");
 		xf = new PersonFactory(c, ResourceFormat.XML);
 		jf = new PersonFactory(c, ResourceFormat.JSON);
 	}
 
+	@After
+	public void tearDown() {
+		c.close();
+	}
+	
 	@Test
 	public void basicOperationsXML() throws Exception {
 		basicOperations(xf);
 	}
 
-	@Test
-	public void basicOperationsJSON() throws Exception {
-		basicOperations(jf);
-	}
+	//@Test
+	//public void basicOperationsJSON() throws Exception {
+	//	basicOperations(jf);
+	//}
 
 	private void basicOperations(PersonFactory f) throws Exception {
 		p = f.instantiate();
