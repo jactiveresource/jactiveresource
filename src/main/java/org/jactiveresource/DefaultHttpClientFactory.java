@@ -40,7 +40,6 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.http.HttpVersion;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
-import org.apache.http.client.HttpClient;
 import org.apache.http.conn.scheme.PlainSocketFactory;
 import org.apache.http.conn.scheme.Scheme;
 import org.apache.http.conn.scheme.SchemeRegistry;
@@ -94,7 +93,7 @@ public class DefaultHttpClientFactory implements AbstractHttpClientFactory {
 	}
 
 	@Override
-	public HttpClient getHttpClient(URL site) {
+	public DefaultHttpClient getHttpClient(URL site) {
 		DefaultHttpClient c = new DefaultHttpClient(this.ccm);
 
 		// set basic http parameters
