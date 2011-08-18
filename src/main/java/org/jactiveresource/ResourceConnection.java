@@ -205,18 +205,10 @@ public class ResourceConnection {
 	 */
 	public String get(Object url) throws HttpException, IOException,
 			InterruptedException, URISyntaxException {
-		HttpClient client = createHttpClient(this.getSite());
-		String uri = this.getSite().toString() + url.toString();
-		HttpGet request = new HttpGet(uri);
-		HttpEntity entity = null;
+
 		StringBuffer sb = new StringBuffer();
-		log.trace("HttpGet uri=" + uri);
-		HttpResponse response = client.execute(request);
-		checkHttpStatus(response);
-		entity = response.getEntity();
-		if (entity != null) {
-			BufferedReader reader = new BufferedReader(new InputStreamReader(
-					entity.getContent()));
+		BufferedReader reader = getStream(url);
+		if (reader != null) {
 			try {
 				int c;
 				while ((c = reader.read()) != -1)
@@ -231,7 +223,10 @@ public class ResourceConnection {
 	/**
 	 * append url to the site this Connection was created with, issue a HTTP GET
 	 * request, and return a buffered input stream of the body of the HTTP
-	 * response
+	 * response. You have to call reader.close() when you are done with it in
+	 * order to clean up resources cleanly.
+	 * 
+	 * if there is no response body, return null
 	 * 
 	 * @param url
 	 * @return a buffered stream of the response
@@ -251,8 +246,12 @@ public class ResourceConnection {
 		HttpResponse response = client.execute(request);
 		checkHttpStatus(response);
 		entity = response.getEntity();
-		BufferedReader reader = new BufferedReader(new InputStreamReader(
-				entity.getContent()));
+
+		BufferedReader reader = null;
+		if (entity != null) {
+			reader = new BufferedReader(new InputStreamReader(
+					entity.getContent()));
+		}
 		return reader;
 	}
 
