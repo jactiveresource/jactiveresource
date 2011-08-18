@@ -63,7 +63,7 @@ import java.util.StringTokenizer;
  * </code>
  * 
  * The URL class in Java is too stringent to accept our use cases here, namely
- * you can not create a URL class that excludes the scheme and authorith
+ * you can not create a URL class that excludes the scheme and authority
  * portions of a URL. However, Java does include a URI class which is suitable
  * for our needs.
  * 
