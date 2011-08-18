@@ -63,7 +63,7 @@ import java.util.StringTokenizer;
  * </code>
  * 
  * The URL class in Java is too stringent to accept our use cases here, namely
- * you can not create a URL class that excludes the scheme and authorith
+ * you can not create a URL class that excludes the scheme and authority
  * portions of a URL. However, Java does include a URI class which is suitable
  * for our needs.
  * 
@@ -423,8 +423,8 @@ public class URLBuilder {
 	}
 
 	/**
-	 * shamelessly took the LinkTool class in Velocity Tools 1.4 and improved it
-	 * http://velocity.apache.org/tools/releases/1.4/view/LinkTool.html
+	 * shamelessly took the <a href="http://velocity.apache.org/tools/releases/1.4/view/LinkTool.html">LinkTool</a> class
+	 * in Velocity Tools 1.4 and improved it
 	 * 
 	 * @version $LastChangedRevision$ <br>
 	 *          $LastChangedDate$

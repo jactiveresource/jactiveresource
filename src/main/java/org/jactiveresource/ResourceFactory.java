@@ -303,7 +303,7 @@ public class ResourceFactory<T extends Resource> {
 	public ArrayList<T> findAll() throws HttpException, IOException,
 			InterruptedException, URISyntaxException {
 		URI url = uriForCollection();
-		log.error("finding all url=" + url);
+		log.trace("finding all url=" + url);
 		return fetchMany(url);
 	}
 
