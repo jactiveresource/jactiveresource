@@ -423,8 +423,8 @@ public class URLBuilder {
 	}
 
 	/**
-	 * shamelessly took the LinkTool class in Velocity Tools 1.4 and improved it
-	 * http://velocity.apache.org/tools/releases/1.4/view/LinkTool.html
+	 * shamelessly took the <a href="http://velocity.apache.org/tools/releases/1.4/view/LinkTool.html">LinkTool</a> class
+	 * in Velocity Tools 1.4 and improved it
 	 * 
 	 * @version $LastChangedRevision$ <br>
 	 *          $LastChangedDate$
