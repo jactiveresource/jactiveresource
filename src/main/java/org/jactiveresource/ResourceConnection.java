@@ -45,40 +45,55 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpException;
 import org.apache.http.HttpResponse;
-import org.apache.http.HttpVersion;
-import org.apache.http.auth.AuthScope;
-import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpDelete;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.methods.HttpPut;
-import org.apache.http.conn.ClientConnectionManager;
-import org.apache.http.conn.params.ConnManagerParams;
-import org.apache.http.conn.scheme.PlainSocketFactory;
-import org.apache.http.conn.scheme.Scheme;
-import org.apache.http.conn.scheme.SchemeRegistry;
-import org.apache.http.conn.scheme.SocketFactory;
-import org.apache.http.conn.ssl.SSLSocketFactory;
 import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
-import org.apache.http.params.BasicHttpParams;
-import org.apache.http.params.HttpParams;
-import org.apache.http.params.HttpProtocolParams;
 
 /**
  * <h3>Overview</h3>
  * 
- * A resource connection is the channel by which to receive data from the
- * outside world. It provides HTTP transport and that's it. You give it a URL,
- * tell it get, put, post, or delete, and it gives you back the response.
+ * A resource connection defines and implements a channel by which to exchange data 
+ * with a resource. It provides HTTP transport and that's it. You give it a URL,
+ * tell it get, put, post, or delete, and it gives you back the response.  This
+ * class uses <a href="http://hc.apache.org/httpcomponents-client-ga/">Apache HTTP Client</a>
+ * to do all of the real work.
+ * 
+ * <h3>Usage</h3>
+ * You create a resource connection by indicating the base URL from which one or more
+ * resources may be interacted with.
+ * 
+ * Say there is a person resource available at
+ * <code>http://localhost:3000/people.xml</code>, and a <code>Person</code>
+ * class which models the data elements provided by that resource.
+ * <code>
+ * <pre>
+ * ResourceConnection c = new ResourceConnection("http://localhost:3000");
+ * ResourceFactory f = new ResourceFactory<Person>(c, Person.class);
+ * </pre>
+ * </code>
+ * 
+ * The resource connection provides http transport, and the resource factory takes the
+ * serialized data stream sent over that transport and turns it into Person objects.
+ * 
+ * <h3>HttpClient Factories</h3>
+ * 
+ * A resource connection uses an HttpClient object to do all of the dirty work.  You may
+ * find that you want to control the creation and parameters associated with these HttpClient
+ * objects used by the resource connection.  For example, you might have a cookie based
+ * authentication scheme, and you need to get your cookies on the HttpClient objects
+ * used by the resource connection.  By default, a resource connection uses
+ * {@link DefaultHttpClientFactory} to create HttpClient objects for it's use.  You can
+ * create your own factory, as long as it implements the {@link AbstractHttpClientFactory}
+ * interface, giving you full control over TCP timeouts, cookies, authentication,
+ * and concurrency of the HttpClient objects used by the resource connection.
  * 
  * <h3>Authentication</h3>
  * 
- * If your service requires HTTP based authentication, you can give the user
- * name and password in two ways. The preferred approach is to use the
+ * If your service requires HTTP based authentication, you can use the
  * {@link #setUsername(String)} and {@link #setPassword(String)} methods. <code>
  * <pre>
  * ResourceConnection c = new ResourceConnection("http://localhost:3000");
@@ -86,30 +101,10 @@ import org.apache.http.params.HttpProtocolParams;
  * c.setPassword("newenglandclamchowder");
  * </pre>
  * </code>
- * 
- * The alternative is to embed them into the URL, like so: <code>
- * <pre>
- * ResourceConnection c = new ResourceConnection("http://Ace:newenglandclamchowder@localhost:3000");
- * </pre>
- * </code>
- * 
- * <h3>HTTP Parameters</h3>
- * 
- * You can custom http parameters, like connection or socket timeouts, by
- * changing the httpParams property. There are static methods in
- * <code>org.apache.http.params.HttpProtocolParams</code> that set the various
- * parameters.
- * 
- * <code>
- * <pre>
- * {@literal
- * ResourceConnection c = new ResourceConnection("http://localhost:3000");
- * HttpParams params = c.getHttpParams();
- * HttpProtocolParams.setConnectionTimeout(httpParams, 5000);
- * c.setHttpParams(params);
- * ArrayList<String> a = new ArrayList<String>();
- * }</pre>
- * </code>
+ * These credentials will be passed through to the HttpClientFactory object,
+ * which is responsible for using these credentials on the HTTP request.  The
+ * default HttpClientFactory object will use these credentials as basic
+ * authentication.  Authentication credentials embedded in the URL will be ignored.
  * 
  * @version $LastChangedRevision$ <br>
  *          $LastChangedDate$
@@ -118,11 +113,8 @@ import org.apache.http.params.HttpProtocolParams;
 public class ResourceConnection {
 
 	private URL site;
-	private String username;
-	private String password;
 
-	private ClientConnectionManager connectionManager;
-	private DefaultHttpClient httpclient;
+	private AbstractHttpClientFactory clientFactory;
 
 	private static final String CONTENT_TYPE = "Content-type";
 
@@ -135,7 +127,7 @@ public class ResourceConnection {
 	 */
 	public ResourceConnection(URL site) {
 		this.site = site;
-		init();
+		this.clientFactory = new DefaultHttpClientFactory();
 	}
 
 	/**
@@ -146,26 +138,63 @@ public class ResourceConnection {
 	 */
 	public ResourceConnection(String site) throws MalformedURLException {
 		this.site = new URL(site);
-		init();
-	}
-
-	public ResourceConnection(URL site, ClientConnectionManager ccm) {
-		this.site = site;
-
+		this.clientFactory = new DefaultHttpClientFactory();
 	}
 
 	/**
-	 * @return the URL object for the site this connection is attached to
+	 * Connect a resource located at a site represented in a URL
+	 * 
+	 * @param site
+	 */
+	public ResourceConnection(URL site, AbstractHttpClientFactory clientFactory) {
+		this.site = site;
+		this.clientFactory = clientFactory;
+	}
+
+	/**
+	 * Connect a resource located at a site represented in a string, using a
+	 * specific HttpClientFactory
+	 * 
+	 * @param site
+	 * @param factory
+	 * @throws MalformedURLException
+	 */
+	public ResourceConnection(String site, AbstractHttpClientFactory factory)
+			throws MalformedURLException {
+		this.site = new URL(site);
+		this.clientFactory = factory;
+	}
+
+	/**
+	 * @return the URL object for the site this connection points to
 	 */
 	public URL getSite() {
 		return this.site;
 	}
 
 	/**
+	 * set the factory used to create HttpClient objects. If you don't
+	 * set your own factory, {@link DefaultHttpClientFactory} will be used.
+	 * 
+	 * @param factory
+	 */
+	public void setHttpClientFactory(AbstractHttpClientFactory factory) {
+		this.clientFactory = factory;
+	}
+
+	/**
+	 * 
+	 * @return the factory used to create HttpClient objects
+	 */
+	public AbstractHttpClientFactory getHttpClientFactory() {
+		return this.clientFactory;
+	}
+
+	/**
 	 * @return the username used for authentication
 	 */
 	public String getUsername() {
-		return username;
+		return this.clientFactory.getUsername();
 	}
 
 	/**
@@ -173,14 +202,14 @@ public class ResourceConnection {
 	 *            the username to use for authentication
 	 */
 	public void setUsername(String username) {
-		this.username = username;
+		this.clientFactory.setUsername(username);
 	}
 
 	/**
 	 * @return the password used for authentication
 	 */
 	public String getPassword() {
-		return password;
+		return this.clientFactory.getPassword();
 	}
 
 	/**
@@ -188,9 +217,16 @@ public class ResourceConnection {
 	 *            the password to use for authentication
 	 */
 	public void setPassword(String password) {
-		this.password = password;
+		this.clientFactory.setPassword(password);
 	}
 
+	/**
+	 * Close this resource connection
+	 */
+	public void close() {
+		clientFactory.shutter();
+	}
+	
 	/**
 	 * append url to the site this Connection was created with, issue a HTTP GET
 	 * request, and return the body of the HTTP response
@@ -238,11 +274,13 @@ public class ResourceConnection {
 	public BufferedReader getStream(Object url) throws HttpException,
 			IOException, InterruptedException, URISyntaxException {
 
-		HttpClient client = createHttpClient(this.getSite());
+		HttpClient client = clientFactory.getHttpClient(this.getSite());
 		String uri = this.getSite().toString() + url.toString();
+
 		HttpGet request = new HttpGet(uri);
 		HttpEntity entity = null;
 		log.trace("HttpGet uri=" + uri);
+
 		HttpResponse response = client.execute(request);
 		checkHttpStatus(response);
 		entity = response.getEntity();
@@ -270,8 +308,9 @@ public class ResourceConnection {
 	public HttpResponse put(Object url, String body, String contentType)
 			throws URISyntaxException, HttpException, IOException,
 			InterruptedException {
-		HttpClient client = createHttpClient(this.getSite());
+		HttpClient client = clientFactory.getHttpClient(this.getSite());
 		String uri = this.getSite().toString() + url.toString();
+
 		HttpPut request = new HttpPut(uri);
 		log.trace("HttpPut uri=" + uri);
 		request.setHeader(CONTENT_TYPE, contentType);
@@ -294,8 +333,9 @@ public class ResourceConnection {
 	public HttpResponse post(Object url, String body, String contentType)
 			throws ClientProtocolException, IOException, ClientError,
 			ServerError {
-		HttpClient client = createHttpClient(this.getSite());
+		HttpClient client = clientFactory.getHttpClient(this.getSite());
 		String uri = this.getSite().toString() + url.toString();
+
 		HttpPost request = new HttpPost(uri);
 		log.trace("HttpGet uri=" + uri);
 		request.setHeader(CONTENT_TYPE, contentType);
@@ -316,7 +356,7 @@ public class ResourceConnection {
 	 */
 	public void delete(Object url) throws ClientError, ServerError,
 			ClientProtocolException, IOException {
-		HttpClient client = createHttpClient(this.getSite());
+		HttpClient client = clientFactory.getHttpClient(this.getSite());
 		String uri = this.getSite().toString() + url.toString();
 		HttpDelete request = new HttpDelete(uri);
 		log.trace("HttpDelete uri=" + uri);
@@ -353,86 +393,6 @@ public class ResourceConnection {
 			throw new ClientError();
 		else if (status >= 500 && status <= 599)
 			throw new ServerError();
-	}
-
-	/*
-	 * create or retrieve a cached HttpClient object
-	 */
-	private HttpClient createHttpClient(URL site) {
-
-		// we recreate the connection manager every time because it looks at
-		// http parameters to get created.
-		// TODO we should have an alternative way to get http params so the
-		// connection manager can persist
-		this.connectionManager = new ThreadSafeClientConnManager(
-				getHttpParams(), supportedSchemes);
-
-		this.httpclient = new DefaultHttpClient(this.connectionManager,
-				getHttpParams());
-
-		// check for authentication credentials
-		String u = null, p = null;
-		if (this.username != null) {
-			// we have explicit username and password
-			u = this.username;
-			p = this.password;
-		} else {
-			// check the URI
-			String userinfo = site.getUserInfo();
-			if (userinfo != null) {
-				int pos = userinfo.indexOf(":");
-				if (pos > 0) {
-					u = userinfo.substring(0, pos);
-					p = userinfo.substring(pos + 1);
-
-				}
-			}
-		}
-		// use the credentials if we have them
-		if (u != null) {
-			this.httpclient.getCredentialsProvider().setCredentials(
-					new AuthScope(site.getHost(), site.getPort()),
-					new UsernamePasswordCredentials(u, p));
-		}
-		return this.httpclient;
-	}
-
-	private HttpParams httpParams;
-
-	public HttpParams getHttpParams() {
-		return httpParams;
-	}
-
-	public void setHttpParams(HttpParams params) {
-		this.httpParams = params;
-	}
-
-	/**
-	 * The scheme registry. Instantiated in {@link #init setup}.
-	 */
-	private static SchemeRegistry supportedSchemes;
-
-	/**
-	 * initialize http client settings
-	 */
-	private void init() {
-		supportedSchemes = new SchemeRegistry();
-
-		// Register the "http" protocol scheme, it is required
-		// by the default operator to look up socket factories.
-		SocketFactory sf = PlainSocketFactory.getSocketFactory();
-		supportedSchemes.register(new Scheme("http", sf, 80));
-
-		sf = SSLSocketFactory.getSocketFactory();
-		supportedSchemes.register(new Scheme("https", sf, 443));
-
-		// set parameters
-		httpParams = new BasicHttpParams();
-		HttpProtocolParams.setVersion(httpParams, HttpVersion.HTTP_1_1);
-		HttpProtocolParams.setContentCharset(httpParams, "UTF-8");
-		ConnManagerParams.setMaxTotalConnections(httpParams, 400);
-
-		log.trace("ResourceConnection initialized");
 	}
 
 	public String toString() {
