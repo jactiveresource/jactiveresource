@@ -149,6 +149,11 @@ public class ResourceConnection {
 		init();
 	}
 
+	public ResourceConnection(URL site, ClientConnectionManager ccm) {
+		this.site = site;
+
+	}
+
 	/**
 	 * @return the URL object for the site this connection is attached to
 	 */
@@ -204,24 +209,23 @@ public class ResourceConnection {
 		String uri = this.getSite().toString() + url.toString();
 		HttpGet request = new HttpGet(uri);
 		HttpEntity entity = null;
+		StringBuffer sb = new StringBuffer();
 		log.trace("HttpGet uri=" + uri);
-		try {
-			HttpResponse response = client.execute(request);
-			checkHttpStatus(response);
-			entity = response.getEntity();
-			StringBuffer sb = new StringBuffer();
+		HttpResponse response = client.execute(request);
+		checkHttpStatus(response);
+		entity = response.getEntity();
+		if (entity != null) {
 			BufferedReader reader = new BufferedReader(new InputStreamReader(
 					entity.getContent()));
-			int c;
-			while ((c = reader.read()) != -1)
-				sb.append((char) c);
-
-			return sb.toString();
-		} finally {
-			// if there is no entity, the connection is already released
-			if (entity != null)
-				entity.consumeContent(); // release connection gracefully
+			try {
+				int c;
+				while ((c = reader.read()) != -1)
+					sb.append((char) c);
+			} finally {
+				reader.close();
+			}
 		}
+		return sb.toString();
 	}
 
 	/**
@@ -357,6 +361,10 @@ public class ResourceConnection {
 	 */
 	private HttpClient createHttpClient(URL site) {
 
+		// we recreate the connection manager every time because it looks at
+		// http parameters to get created.
+		// TODO we should have an alternative way to get http params so the
+		// connection manager can persist
 		this.connectionManager = new ThreadSafeClientConnManager(
 				getHttpParams(), supportedSchemes);
 
