@@ -17,13 +17,19 @@ After getting the source, compile it by:
 
 To run the unit tests, you need to start up a rails application first.  If you use rvm, which is recommended, you might want to do something like:
 
-    $ rvm 1.9.2@jactiveresourci
+    $ rvm use 1.9.2
+    $ rvm gemset create jactiveresource
+    $ rvm use 1.9.2@jactiveresource
+
+If you don't want to use rvm, you can skip the above steps, and just go straight to:
 
     $ cd src/test/service-rails3
+    $ gem install bundler
+		$ bundle install
     $ rake db:setup
     $ rails server
 
-Then in another session, you can run the tests:
+You'll now have a running rails application against which the tests can run.  Then in another session, you can run the tests:
 
     $ mvn test
 
@@ -37,5 +43,10 @@ To create the javadocs, you can do:
 
     $ mvn javadoc:javadoc
 
-The resulting documentation will be found in target/site/apidocs
+The resulting documentation will be found in target/site/apidocs.
+
+How To Use
+----------
+There are some tutorial documents in the github wiki at https://github.com/jactiveresource/jactiveresource/wiki
+
 
