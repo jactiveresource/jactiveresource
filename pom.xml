@@ -13,12 +13,13 @@
   <description>ActiveResource goodness in Java.</description>
   <url>http://jactiveresource.org</url>
   <issueManagement>
-    <system>Trac</system>
-    <url>http://jactiveresource.org/trac/roadmap</url>
+    <system>GitHub</system>
+    <url>https://github.com/jactiveresource/jactiveresource/issues</url>
   </issueManagement>
   <scm>
-    <connection>scm:svn:http://jactiveresource.org/svn/trunk</connection>
-    <url>http://jactiveresource.org/svn</url>
+		<connection>scm:git:git@github.com:jactiveresource/jactiveresource.git</connection>
+		<url>scm:git:git@github.com:jactiveresource/jactiveresource.git</url>
+		<developerConnection>scm:git:git@github.com:jactiveresource/jactiveresource.git</developerConnection>
   </scm>
 
   <build>
