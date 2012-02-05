@@ -30,7 +30,7 @@ If you don't want to use rvm, you can skip the above steps, and just go straight
 
     $ cd src/test/service-rails3
     $ gem install bundler
-		$ bundle install
+    $ bundle install
     $ rake db:setup
     $ rails server
 
