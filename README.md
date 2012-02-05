@@ -15,9 +15,12 @@ After getting the source, compile it by:
 
     $ mvn compile
 
-To run the unit tests, you need to start up a rails application first:
+To run the unit tests, you need to start up a rails application first.  If you use rvm, which is recommended, you might want to do something like:
+
+    $ rvm 1.9.2@jactiveresourci
 
     $ cd src/test/service-rails3
+    $ rake db:setup
     $ rails server
 
 Then in another session, you can run the tests:
