@@ -9,9 +9,14 @@ jactiveresource creates Java objects from RESTful services quickly and easily.  
 
 Building
 ---------
-Use Maven to compile and build jactiveresource.  If you aren't familiar with Maven, here's a quick primer.
+There are some prerequisites in order to compile and use jactiveresource.  Here's what you'll need:
 
-After getting the source, compile it by:
+ * a java virtual machine > 1.6 
+ * maven
+ * ruby - 1.9.2 or higher recommended
+ * rubygems
+
+Use Maven to compile and build jactiveresource.  After getting the source, compile it by:
 
     $ mvn compile
 
@@ -48,5 +53,3 @@ The resulting documentation will be found in target/site/apidocs.
 How To Use
 ----------
 There are some tutorial documents in the github wiki at https://github.com/jactiveresource/jactiveresource/wiki
-
-
